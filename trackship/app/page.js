@@ -1,12 +1,10 @@
-// pharmacy/app/page.js
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 
-import HeroSection from "@/components/home/HeroSection";
-import UserSection from "@/components/home/UserSection";
-export default function HomePage() {
-  return (
-    <>
-      <HeroSection />
-      <UserSection />
-    </>
-  );
+export default async function HomePage() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('access_token')?.value;
+  if (token) redirect('/dashboard');
+  redirect('/login');
 }
+
