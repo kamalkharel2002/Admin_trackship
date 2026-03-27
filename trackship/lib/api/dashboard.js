@@ -71,13 +71,17 @@ function normalizePendingTransporters(raw) {
 
 // ── Public exports ────────────────────────────────────────────────────────────
 
-// params: { date: 'YYYY-MM-DD' } or {} for all-time
+// params can be:
+//   { startDate: 'YYYY-MM-DD', endDate: 'YYYY-MM-DD' } for date range
+//   { startDate: 'YYYY-MM-DD' } for single date
 export async function getDashboardSummary(params = {}) {
   const url = ENDPOINTS.dashboard.summary + buildQueryString(params);
   return normalizeSummary(await requestWithAuth(url));
 }
 
-// params: { date: 'YYYY-MM-DD' } — filters hub shipment counts by date
+// params can be:
+//   { startDate: 'YYYY-MM-DD', endDate: 'YYYY-MM-DD' } for date range
+//   { startDate: 'YYYY-MM-DD' } for single date
 export async function getHubShipments(params = {}) {
   const url = ENDPOINTS.dashboard.hubShipments + buildQueryString(params);
   return normalizeHubs(await requestWithAuth(url));

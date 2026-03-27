@@ -8,9 +8,9 @@
 
 /* Main scrollable area — offset by sidebar width */
 .main {
-  margin-left: var(--sidebar-w);
+  margin-left: calc(var(--sidebar-w) - 174px); 
   flex: 1;
-  padding: 32px 28px;
+  padding: 32px 20px 32px 8px; 
   min-height: 100vh;
   background: var(--bg-page);
   transition: margin-left 0.3s ease;
@@ -70,10 +70,24 @@
 }
 
 @media (max-width: 768px) {
-  .main { margin-left: 0; padding: 80px 16px 24px; }  /* 80px top for mobile toggle */
-  .content { grid-template-columns: 1fr; }
-  .right { position: static; }
-  .statsRow { grid-template-columns: 1fr 1fr; }
+  .main {
+    margin-left: 0; /* keep this 0 always */
+    padding: 72px 12px 20px; /* tighter horizontal spacing */
+  }
+
+  .content {
+    grid-template-columns: 1fr;
+    gap: 16px; /* slightly tighter */
+  }
+
+  .right {
+    position: static;
+  }
+
+  .statsRow {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px; /* tighter cards */
+  }
 }
 
 @media (max-width: 480px) {

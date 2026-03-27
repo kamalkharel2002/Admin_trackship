@@ -2,7 +2,7 @@
 // app/dashboard/page.jsx
 // Dashboard orchestrator:
 //   1. Fetches summary, hub shipments, pending transporters on mount
-//   2. Refetches summary + hubs when selectedDate changes
+//   2. Refetches summary + hubs when date range changes
 //   3. Passes data down to StatCard, HubChart, RightPanel, TopBar, Sidebar
 
 import { useState, useEffect, useCallback } from 'react';
@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 import Sidebar       from '@/components/Sidebar/Sidebar';
-import TopBar        from '@/components/dashboard/TopBar';
+import TopBar        from '@/components/Topbar/Topbar';
 import StatCard      from '@/components/dashboard/StatCard';
 import HubChart      from '@/components/dashboard/HubChart';
 import RightPanel    from '@/components/dashboard/RightPanel';
@@ -30,20 +30,33 @@ export default function DashboardPage() {
   const user = getSessionUser();                  // read cached user from localStorage
 
   // ── State ────────────────────────────────────────────────────────────────
-  const [selectedDate, setSelectedDate]       = useState(null);  // 'YYYY-MM-DD' | null
-  const [summary,      setSummary]            = useState(null);
-  const [hubs,         setHubs]               = useState([]);
-  const [transporters, setTransporters]       = useState([]);
-  const [loadingMain,  setLoadingMain]        = useState(true);
-  const [loadingT,     setLoadingT]           = useState(true);
-  const [error,        setError]              = useState(null);
+  const [startDate, setStartDate] = useState(null);  // for single date or range start
+  const [endDate, setEndDate] = useState(null);     // for range end (null for single date)
+  const [summary, setSummary] = useState(null);
+  const [hubs, setHubs] = useState([]);
+  const [transporters, setTransporters] = useState([]);
+  const [loadingMain, setLoadingMain] = useState(true);
+  const [loadingT, setLoadingT] = useState(true);
+  const [error, setError] = useState(null);
 
-  // ── Fetch summary + hubs (re-runs when date changes) ──────────────────────
-  const fetchMain = useCallback(async (date) => {
+  // ── Build params based on date selection ──────────────────────────────────────
+  const buildParams = useCallback(() => {
+    if (startDate && endDate) {
+      // Date range
+      return { startDate, endDate };
+    } else if (startDate && !endDate) {
+      // Single date
+      return { startDate };
+    }
+    return {};
+  }, [startDate, endDate]);
+
+  // ── Fetch summary + hubs (re-runs when dates change) ──────────────────────────
+  const fetchMain = useCallback(async () => {
     setLoadingMain(true);
     setError(null);
     try {
-      const params = date ? { date } : {};
+      const params = buildParams();
       const [sum, hubData] = await Promise.all([
         getDashboardSummary(params),
         getHubShipments(params),
@@ -55,7 +68,7 @@ export default function DashboardPage() {
     } finally {
       setLoadingMain(false);
     }
-  }, []);
+  }, [buildParams]);
 
   // ── Fetch pending transporters once on mount ───────────────────────────────
   const fetchTransporters = useCallback(async () => {
@@ -70,15 +83,30 @@ export default function DashboardPage() {
   }, []);
 
   // Initial load
-  useEffect(() => { fetchMain(null); fetchTransporters(); }, [fetchMain, fetchTransporters]);
+  useEffect(() => { 
+    fetchMain(); 
+    fetchTransporters(); 
+  }, [fetchMain, fetchTransporters]);
 
-  // Re-fetch when date changes
-  useEffect(() => { fetchMain(selectedDate); }, [selectedDate, fetchMain]);
+  // Re-fetch when dates change
+  useEffect(() => { 
+    fetchMain(); 
+  }, [startDate, endDate, fetchMain]);
 
-  // ── Date handler ──────────────────────────────────────────────────────────
-  const handleDateChange = d => {
-    // Toggle: clicking same date clears it
-    setSelectedDate(prev => prev === d ? null : d);
+  // ── Date range handler ─────────────────────────────────────────────────────
+  const handleRangeChange = (start, end) => {
+    setStartDate(start);
+    setEndDate(end);
+  };
+
+  // ── Get subtitle text based on current selection ──────────────────────────────
+  const getSubtitle = () => {
+    if (startDate && endDate) {
+      return `Showing data from ${startDate} to ${endDate}`;
+    } else if (startDate && !endDate) {
+      return `Showing data for ${startDate}`;
+    }
+    return 'All-time overview';
   };
 
   // ── Derived values ────────────────────────────────────────────────────────
@@ -109,7 +137,7 @@ export default function DashboardPage() {
         <TopBar
           user={user}
           title="Shipment Statistics"
-          subtitle={selectedDate ? `Showing data for ${selectedDate}` : 'All-time overview'}
+          subtitle={getSubtitle()}
           hasNotifs={transporters.length > 0}
         />
 
@@ -143,7 +171,7 @@ export default function DashboardPage() {
               <StatCard
                 icon={<CheckCircle size={20} color="#22C55E" />}
                 iconBg="#DCFCE7"
-                label="Delivered"
+                label="Shipment Delivered"
                 value={loadingMain ? '…' : summary?.delivered_shipments ?? 0}
                 sub="Successfully completed"
                 blobColor="#22C55E"
@@ -181,8 +209,9 @@ export default function DashboardPage() {
           {/* ── Right column: calendar + pending transporters ── */}
           <div className={s.right}>
             <RightPanel
-              selectedDate={selectedDate}
-              onDateChange={handleDateChange}
+              startDate={startDate}
+              endDate={endDate}
+              onRangeChange={handleRangeChange}
               transporters={transporters}
               loadingT={loadingT}
             />
