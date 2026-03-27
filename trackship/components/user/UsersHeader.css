@@ -1,14 +1,34 @@
 /* ════════════════════════════════════════════
-   USERS HEADER
+   USERS HEADER  —  fully standalone
+   No global CSS dependencies
 ════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+/* ── Scoped design tokens ── */
 .users-header {
+  --uh-font:         'Plus Jakarta Sans', sans-serif;
+  --uh-yellow:       #F5B700;
+  --uh-yellow-dark:  #e5a900;
+  --uh-yellow-ring:  rgba(245, 183, 0, 0.15);
+  --uh-yellow-bg:    rgba(245, 183, 0, 0.08);
+  --uh-yellow-border:rgba(245, 183, 0, 0.30);
+  --uh-text:         #1A1A2E;
+  --uh-muted:        #94A3B8;
+  --uh-border:       #E8E4DC;
+  --uh-card:         #FFFFFF;
+  --uh-surface:      #F8F7F3;
+  --uh-shadow:       0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --uh-ease:         cubic-bezier(0.16, 1, 0.3, 1);
+
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
+  font-family: var(--uh-font);
 }
 
-/* Search Input */
+/* ── Search ── */
 .users-header-search-wrap {
   position: relative;
   display: flex;
@@ -17,61 +37,73 @@
 
 .users-header-search-icon {
   position: absolute;
-  left: 12px;
-  color: var(--muted);
-  font-size: 0.85rem;
+  left: 11px;
+  color: var(--uh-muted);
   pointer-events: none;
   display: flex;
   align-items: center;
 }
 
 .users-header-search {
-  padding: 9px 14px 9px 36px;
+  padding: 9px 14px 9px 34px;
   border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--card);
-  width: 260px;
+  border: 1.5px solid var(--uh-border);
+  background: var(--uh-card);
+  width: 250px;
   outline: none;
   font-size: 0.82rem;
-  font-family: var(--font-b);
-  color: var(--text);
-  box-shadow: var(--shadow-sm);
-  transition: border-color 0.2s, box-shadow 0.2s, width 0.3s cubic-bezier(0.16,1,0.3,1);
+  font-family: var(--uh-font);
+  font-weight: 400;
+  color: var(--uh-text);
+  box-shadow: var(--uh-shadow);
+  transition:
+    border-color 0.2s var(--uh-ease),
+    box-shadow   0.2s var(--uh-ease),
+    width        0.3s var(--uh-ease),
+    background   0.2s var(--uh-ease);
 }
 
 .users-header-search::placeholder {
-  color: var(--muted);
+  color: var(--uh-muted);
 }
 
 .users-header-search:focus {
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-  width: 300px;
+  border-color: var(--uh-yellow);
+  background: #fff;
+  box-shadow: 0 0 0 3px var(--uh-yellow-ring);
+  width: 290px;
 }
 
-/* Selected Count Pill */
+/* ── Selected pill ── */
 .users-header-selected-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
+  padding: 5px 11px;
   border-radius: 20px;
-  background: rgba(37, 99, 235, 0.08);
-  border: 1px solid var(--blue-border);
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--blue);
-  animation: fadeUp 0.25s var(--ease) both;
+  background: var(--uh-yellow-bg);
+  border: 1px solid var(--uh-yellow-border);
+  font-size: 0.73rem;
+  font-weight: 700;
+  color: #9a7400;
+  font-family: var(--uh-font);
+  animation: uh-fade-up 0.22s var(--uh-ease) both;
+}
+
+@keyframes uh-fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
 }
 
 .users-header-selected-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--blue);
+  background: var(--uh-yellow);
+  flex-shrink: 0;
 }
 
-/* Right-side group */
+/* ── Right action group ── */
 .users-header-actions {
   display: flex;
   align-items: center;
@@ -79,66 +111,69 @@
   margin-left: auto;
 }
 
-/* Filter Button */
+/* ── Filter button ── */
 .users-header-filter-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 9px 14px;
+  padding: 8px 14px;
   border-radius: 9px;
-  border: 1px solid var(--border);
-  background: var(--card);
+  border: 1.5px solid var(--uh-border);
+  background: var(--uh-card);
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--muted);
-  font-family: var(--font-b);
-  box-shadow: var(--shadow-sm);
-  transition: all 0.2s var(--ease);
+  font-family: var(--uh-font);
+  color: var(--uh-muted);
+  box-shadow: var(--uh-shadow);
   cursor: pointer;
+  transition: all 0.18s var(--uh-ease);
 }
 
 .users-header-filter-btn:hover {
-  background: var(--blue-pale);
-  color: var(--blue);
-  border-color: var(--blue-border);
+  background: var(--uh-surface);
+  color: var(--uh-text);
+  border-color: #d4cfc6;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
-/* Add User Button */
+/* ── Add User button ── */
 .users-header-add-btn {
   display: inline-flex;
   align-items: center;
   gap: 7px;
   padding: 9px 18px;
   border-radius: 9px;
-  background: var(--blue);
-  color: #fff;
+  background: var(--uh-yellow);
+  color: #1A1A2E;
   font-size: 0.82rem;
-  font-weight: 600;
-  font-family: var(--font-b);
+  font-weight: 700;
+  font-family: var(--uh-font);
   border: none;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
-  transition: all 0.2s var(--ease);
+  box-shadow: 0 2px 10px rgba(245,183,0,0.35);
+  transition: all 0.18s var(--uh-ease);
+  letter-spacing: -0.01em;
 }
 
 .users-header-add-btn:hover {
-  background: var(--blue-hover);
+  background: var(--uh-yellow-dark);
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.38);
+  box-shadow: 0 5px 18px rgba(245,183,0,0.45);
 }
 
 .users-header-add-btn:active {
   transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(245,183,0,0.28);
 }
 
 .users-header-add-icon {
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
   border-radius: 5px;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(26,26,46,0.12);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   line-height: 1;
 }

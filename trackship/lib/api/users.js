@@ -1,6 +1,8 @@
+// services/users.js
 import { ENDPOINTS, REQUEST_TIMEOUT, buildQueryString } from '@/lib/config';
 import { getAccessToken } from './auth';
 
+// Safely parse JSON
 function parseJsonSafe(text) {
   try {
     return JSON.parse(text);
@@ -9,6 +11,7 @@ function parseJsonSafe(text) {
   }
 }
 
+// Fetch wrapper with authorization & timeout
 async function requestWithAuth(url) {
   const token = getAccessToken();
   if (!token) {
@@ -47,6 +50,7 @@ async function requestWithAuth(url) {
   }
 }
 
+// Normalize users from backend
 function normalizeUsers(raw) {
   const payload = Array.isArray(raw?.userData) ? raw.userData : [];
 
@@ -55,10 +59,11 @@ function normalizeUsers(raw) {
     phone: u.phone,
     email: u.email,
     role: u.role,
-    created_at: u.date_created || u.created_at,
+    created_at: u.date_created || u.created_at, // match backend key
   }));
 }
 
+// Normalize counts from backend
 function normalizeCounts(raw) {
   const payload = Array.isArray(raw?.userCount) ? raw.userCount : [];
 
@@ -68,8 +73,12 @@ function normalizeCounts(raw) {
   }));
 }
 
-// ✅ MAIN API
+// ✅ MAIN API FUNCTION
 export async function getUsers(params = {}) {
+  // Ensure offset/limit are numbers
+  if (params.offset !== undefined) params.offset = Number(params.offset);
+  if (params.limit !== undefined) params.limit = Number(params.limit);
+
   const url = ENDPOINTS.user.list + buildQueryString(params);
 
   const data = await requestWithAuth(url);
