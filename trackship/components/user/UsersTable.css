@@ -1,0 +1,129 @@
+/* ════════════════════════════════════════════
+   USERS TABLE
+════════════════════════════════════════════ */
+.users-table-wrap {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+  animation: fadeUp 0.35s var(--ease) both;
+}
+
+/* Header Row */
+.users-table-head {
+  display: grid;
+  grid-template-columns: 44px 1fr 110px 1fr 130px 130px 90px 80px;
+  align-items: center;
+  padding: 10px 16px;
+  gap: 4px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.users-table-th {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Loading State */
+.users-table-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  gap: 14px;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.users-table-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: spinLoader 0.75s linear infinite;
+}
+
+@keyframes spinLoader {
+  to { transform: rotate(360deg); }
+}
+
+/* Error State */
+.users-table-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 24px;
+  margin: 16px;
+  border-radius: 10px;
+  background: var(--danger-bg);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: var(--danger);
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+/* Empty State */
+.users-table-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  gap: 10px;
+  color: var(--muted);
+}
+
+.users-table-empty-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  margin-bottom: 4px;
+}
+
+.users-table-empty-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+  font-family: var(--font-h);
+}
+
+.users-table-empty-sub {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+/* Footer */
+.users-table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.users-table-footer-info {
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+.users-table-footer-info strong {
+  color: var(--text);
+  font-weight: 600;
+}

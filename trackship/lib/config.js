@@ -18,6 +18,12 @@ export const ENDPOINTS = {
   transporters: {
     pending: `${API_BASE}/admin/transporters/pending`,           // GET → pending driver requests
   },
+  user: {
+    list: `${API_BASE}/admin/users`,                            // GET → list all users
+    create: `${API_BASE}/admin/users`,                          // POST → create a new user
+    update: `${API_BASE}/admin/users/:id`,                      // PUT → update a user
+    delete: `${API_BASE}/admin/users/:id`,                      // DELETE → delete a user
+  }
 };
 
 // Converts { date: '2024-01-01' } → '?date=2024-01-01' (skips null/undefined/'')

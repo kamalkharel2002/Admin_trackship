@@ -1,21 +1,86 @@
-import React from 'react';
+'use client';
+
+import { useEffect, useState } from 'react';
+import UsersHeader from '@/components/user/UsersHeader';
+import UsersTable from '@/components/user/UsersTable';
+import { getUsers } from '@/lib/api';
 
 export default function UsersPage() {
+  const [selected, setSelected] = useState([]);
+  const [counts, setCounts] = useState([]);
+  const [loadingCounts, setLoadingCounts] = useState(true);
+
+  useEffect(() => {
+    fetchCounts();
+  }, []);
+
+  async function fetchCounts() {
+    try {
+      setLoadingCounts(true);
+      const data = await getUsers({ offset: 0, limit: 10 });
+      setCounts(data.counts || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingCounts(false);
+    }
+  }
+
   return (
     <div className="page-body">
-      <div>
-        <div className="font-h font-700" style={{ fontSize: '1.2rem', marginBottom: 6 }}>
-          Users
+      {/* Top Header */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          marginBottom: 16,
+          alignItems: 'center',
+        }}
+      >
+        {/* Left Title */}
+        <div>
+          <h2 style={{ fontWeight: 600 }}>Team List</h2>
+          <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+            Admin Dashboard &gt; Team List
+          </span>
         </div>
-        <div className="text-muted" style={{ fontSize: '0.85rem' }}>
-          Coming soon: manage admin users, roles, and access.
-        </div>
+
+        {/* Right Controls */}
+        <UsersHeader selected={selected} />
       </div>
 
-      <div className="card card-pad card-hover">
-        <div className="text-sm text-muted">This section will be connected to the Users API later.</div>
+      {/* Role Counts */}
+      <div
+        className="card"
+        style={{
+          display: 'flex',
+          gap: 20,
+          padding: 16,
+          marginBottom: 16,
+        }}
+      >
+        {loadingCounts ? (
+          <span style={{ fontSize: 13 }}>Loading counts...</span>
+        ) : counts.length > 0 ? (
+          counts.map((c, i) => (
+            <div key={i}>
+              <div style={{ fontSize: 13, color: 'var(--muted)' }}>
+                {c.role}
+              </div>
+              <div style={{ fontSize: 18, fontWeight: 600 }}>
+                {c.user_count}
+              </div>
+            </div>
+          ))
+        ) : (
+          <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+            No user data
+          </span>
+        )}
       </div>
+
+      {/* Users Table */}
+      <UsersTable selected={selected} setSelected={setSelected} />
     </div>
   );
 }
-
