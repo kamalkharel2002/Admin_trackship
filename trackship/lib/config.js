@@ -26,11 +26,17 @@ export const ENDPOINTS = {
   }
 };
 
-// Converts { date: '2024-01-01' } → '?date=2024-01-01' (skips null/undefined/'')
+// Converts params object to query string based on filter type
 export function buildQueryString(params = {}) {
-  const filtered = Object.entries(params).filter(
+  // Handle date range or single date pattern
+  const queryParams = {};
+  if (params.startDate) queryParams.startDate = params.startDate;
+  if (params.endDate) queryParams.endDate = params.endDate;
+  
+  const filtered = Object.entries(queryParams).filter(
     ([, v]) => v !== undefined && v !== null && v !== ''
   );
+  
   if (!filtered.length) return '';
   return '?' + new URLSearchParams(Object.fromEntries(filtered)).toString();
 }

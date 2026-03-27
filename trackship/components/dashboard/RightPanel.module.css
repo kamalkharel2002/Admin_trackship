@@ -20,7 +20,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .calMonth {
@@ -49,10 +49,25 @@
 
 .calNavBtn:hover { background: var(--text-primary); color: #fff; }
 
+/* Range display */
+.rangeDisplay {
+  background: var(--cream);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 12px;
+  font-family: var(--font-body);
+  border: 1px solid var(--border-light);
+}
+
 .calGrid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 2px;
+  user-select: none;
 }
 
 .calDayName {
@@ -71,28 +86,78 @@
   font-weight: 500;
   color: var(--text-secondary);
   padding: 6px 2px;
-  border-radius: 8px;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.15s;
   font-family: var(--font-body);
+  position: relative;
 }
 
-.calDay:hover:not(.empty):not(.selected) {
+.calDay:hover:not(.empty) {
   background: var(--cream);
   color: var(--text-primary);
 }
 
-.calDay.empty { cursor: default; color: transparent; }
+.calDay.empty { 
+  cursor: default; 
+  background: transparent;
+}
+
+/* Range selection styles */
+.calDay.inRange {
+  background: rgba(245, 183, 0, 0.15);
+  border-radius: 0;
+}
+
+.calDay.rangeStart {
+  background: linear-gradient(135deg, #1A1A2E, #2D2D50);
+  color: #fff;
+  font-weight: 700;
+  border-radius: 8px 0 0 8px;
+  position: relative;
+}
+
+.calDay.rangeEnd {
+  background: linear-gradient(135deg, #1A1A2E, #2D2D50);
+  color: #fff;
+  font-weight: 700;
+  border-radius: 0 8px 8px 0;
+  position: relative;
+}
+
+.calDay.singleDate {
+  background: linear-gradient(135deg, #1A1A2E, #2D2D50);
+  color: #fff;
+  font-weight: 700;
+  border-radius: 8px;
+}
+
+.calDay.rangeStart.rangeEnd {
+  border-radius: 8px;
+}
 
 .calDay.today {
   color: var(--accent-blue);
   font-weight: 700;
+  position: relative;
 }
 
-.calDay.selected {
-  background: linear-gradient(135deg, #1A1A2E, #2D2D50);
-  color: #fff;
-  font-weight: 700;
+.calDay.today::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background: var(--accent-blue);
+  border-radius: 50%;
+}
+
+.calDay.rangeStart.today::after,
+.calDay.rangeEnd.today::after,
+.calDay.singleDate.today::after {
+  background: #fff;
 }
 
 /* Clear date button */
