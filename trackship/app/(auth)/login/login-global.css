@@ -1,0 +1,15 @@
+/* ════════════════════════════════════════════
+   login-global.css
+   Import this ONCE in your layout or page.js:
+     import './login-global.css';
+   Contains only global resets & the font —
+   nothing that conflicts with CSS Modules.
+════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
