@@ -1,153 +1,195 @@
 'use client';
+// app/dashboard/page.jsx
+// Dashboard orchestrator:
+//   1. Fetches summary, hub shipments, pending transporters on mount
+//   2. Refetches summary + hubs when selectedDate changes
+//   3. Passes data down to StatCard, HubChart, RightPanel, TopBar, Sidebar
 
-import { useMemo, useState } from 'react';
-import DashboardStats from '@/components/dashboard/DashboardStats';
-import HubChart from '@/components/dashboard/HubChart';
-import DateFilterPanel from '@/components/dashboard/DateFilterPanel';
-import DriverRequests from '@/components/dashboard/DriverRequests';
-import DashboardHeaderControls from '@/components/dashboard/DashboardHeaderControls';
-import { getDashboardSummary, getHubShipments } from '@/lib/api';
-import { useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import {
+  Package, Truck, CheckCircle, TrendingUp, AlertCircle,
+} from 'lucide-react';
+
+import Sidebar       from '@/components/Sidebar/Sidebar';
+import TopBar        from '@/components/dashboard/TopBar';
+import StatCard      from '@/components/dashboard/StatCard';
+import HubChart      from '@/components/dashboard/HubChart';
+import RightPanel    from '@/components/dashboard/RightPanel';
+
+import {
+  getDashboardSummary,
+  getHubShipments,
+  getPendingTransporters,
+  getSessionUser,
+  logoutUser,
+} from '@/lib/api';
+
+import s from './dashboard.module.css';
 
 export default function DashboardPage() {
-  const [draft, setDraft] = useState({
-    mode: 'single',
-    date: '',
-    startDate: '',
-    endDate: '',
-  });
+  const user = getSessionUser();                  // read cached user from localStorage
 
-  // Applied filter parameters sent to the dashboard endpoints.
-  const [appliedFilter, setAppliedFilter] = useState(null);
-  const [summary, setSummary] = useState(null);
-  const [hubs, setHubs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  // ── State ────────────────────────────────────────────────────────────────
+  const [selectedDate, setSelectedDate]       = useState(null);  // 'YYYY-MM-DD' | null
+  const [summary,      setSummary]            = useState(null);
+  const [hubs,         setHubs]               = useState([]);
+  const [transporters, setTransporters]       = useState([]);
+  const [loadingMain,  setLoadingMain]        = useState(true);
+  const [loadingT,     setLoadingT]           = useState(true);
+  const [error,        setError]              = useState(null);
 
-  useEffect(() => {
-    let alive = true;
-    async function run() {
-      setLoading(true);
-      setError('');
-      try {
-        const [s, h] = await Promise.all([
-          getDashboardSummary(appliedFilter || {}),
-          getHubShipments(appliedFilter || {}),
-        ]);
-        if (!alive) return;
-        setSummary(s);
-        setHubs(h);
-      } catch (err) {
-        if (!alive) return;
-        setError(err?.message || 'Failed to load dashboard');
-      } finally {
-        if (alive) setLoading(false);
-      }
+  // ── Fetch summary + hubs (re-runs when date changes) ──────────────────────
+  const fetchMain = useCallback(async (date) => {
+    setLoadingMain(true);
+    setError(null);
+    try {
+      const params = date ? { date } : {};
+      const [sum, hubData] = await Promise.all([
+        getDashboardSummary(params),
+        getHubShipments(params),
+      ]);
+      setSummary(sum);
+      setHubs(hubData);
+    } catch (err) {
+      setError(err.message ?? 'Failed to load dashboard data');
+    } finally {
+      setLoadingMain(false);
     }
-    run();
-    return () => {
-      alive = false;
-    };
-  }, [appliedFilter]);
+  }, []);
 
-  const filtered = !!appliedFilter;
-
-  const filteredLabel = useMemo(() => {
-    if (!appliedFilter) return undefined;
-    if (appliedFilter.mode === 'single') return `Filtered · ${appliedFilter.date}`;
-    if (appliedFilter.mode === 'range')
-      return `Filtered · ${appliedFilter.startDate} - ${appliedFilter.endDate}`;
-    return 'Filtered';
-  }, [appliedFilter]);
-
-  const handleApply = () => {
-    if (draft.mode === 'single') {
-      if (!draft.date) return;
-      setAppliedFilter({ mode: 'single', date: draft.date });
-      return;
+  // ── Fetch pending transporters once on mount ───────────────────────────────
+  const fetchTransporters = useCallback(async () => {
+    setLoadingT(true);
+    try {
+      setTransporters(await getPendingTransporters());
+    } catch {
+      setTransporters([]);
+    } finally {
+      setLoadingT(false);
     }
+  }, []);
 
-    if (!draft.startDate || !draft.endDate) return;
-    setAppliedFilter({
-      mode: 'range',
-      // Keys used by the backend endpoints wrapper.
-      dateFrom: draft.startDate,
-      dateTo: draft.endDate,
-      // Keys used by the UI label.
-      startDate: draft.startDate,
-      endDate: draft.endDate,
-    });
+  // Initial load
+  useEffect(() => { fetchMain(null); fetchTransporters(); }, [fetchMain, fetchTransporters]);
+
+  // Re-fetch when date changes
+  useEffect(() => { fetchMain(selectedDate); }, [selectedDate, fetchMain]);
+
+  // ── Date handler ──────────────────────────────────────────────────────────
+  const handleDateChange = d => {
+    // Toggle: clicking same date clears it
+    setSelectedDate(prev => prev === d ? null : d);
   };
 
-  const handleClear = () => {
-    setAppliedFilter(null);
-    setDraft({ mode: 'single', date: '', startDate: '', endDate: '' });
+  // ── Derived values ────────────────────────────────────────────────────────
+  const successPct = summary
+    ? isNaN(Number(summary.success_rate)) ? '0%' : `${Number(summary.success_rate).toFixed(1)}%`
+    : '—';
+
+  // Badge counts passed to Sidebar
+  const badgeCounts = { transporters: transporters.length };
+
+  // ── Logout ────────────────────────────────────────────────────────────────
+  const handleLogout = async () => {
+    await logoutUser();
+    window.location.href = '/login';
   };
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="page-body">
-      {/* Top-right controls inside the main content (no global top bar). */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <DashboardHeaderControls />
-      </div>
+    <div className={s.shell}>
 
-      <div style={{ display: 'flex', gap: 20, minWidth: 0, flex: 1 }}>
-        {/* Main Content */}
-        <div className="flex-1" style={{ minWidth: 0 }}>
-          <DashboardStats summary={summary} loading={loading} />
+      {/* Fixed left sidebar */}
+      <Sidebar user={user} badgeCounts={badgeCounts} onLogout={handleLogout} />
 
-          {error && (
-            <div className="card card-pad-sm" style={{ marginBottom: 16, color: '#b91c1c' }}>
-              {error}
-            </div>
-          )}
+      {/* Scrollable main content */}
+      <main className={s.main}>
 
-          <HubChart
-            data={hubs}
-            loading={loading}
-            filtered={filtered}
-            date={filteredLabel}
-          />
+        {/* Inline top bar: title + bell + profile */}
+        <TopBar
+          user={user}
+          title="Shipment Statistics"
+          subtitle={selectedDate ? `Showing data for ${selectedDate}` : 'All-time overview'}
+          hasNotifs={transporters.length > 0}
+        />
 
-          {/* Intentionally blank placeholder below the graph for a future table */}
-          <div
-            style={{
-              marginTop: 18,
-              height: 140,
-              borderRadius: 14,
-              border: '2px dashed var(--border)',
-              background: 'transparent',
-            }}
-          />
-        </div>
-
-        {/* Right Panel */}
-        <div
-          style={{
-            width: 320,
-            flexShrink: 0,
-            background: 'var(--card)',
-            border: '1px solid var(--border)',
-            borderRadius: 14,
-            overflow: 'hidden',
-            alignSelf: 'flex-start',
-          }}
-        >
-          <DateFilterPanel
-            draft={draft}
-            appliedFilter={appliedFilter}
-            summary={summary}
-            onDraftChange={setDraft}
-            onApply={handleApply}
-            onClear={handleClear}
-          />
-
-          <div style={{ padding: 0 }}>
-            <DriverRequests />
+        {/* Error banner */}
+        {error && (
+          <div className={s.error}>
+            <AlertCircle size={15} /> {error}
           </div>
+        )}
+
+        {/* Two-column layout */}
+        <div className={s.content}>
+
+          {/* ── Left column ── */}
+          <div className={s.left}>
+
+            {/* Stat cards row */}
+            <div className={s.statsRow}>
+              {/* Hero card: total shipments */}
+              <StatCard
+                hero
+                icon={<Package size={20} color="#F5B700" />}
+                iconBg="rgba(245,183,0,0.15)"
+                label="Total Shipments"
+                value={loadingMain ? '…' : summary?.total_shipments ?? 0}
+                sub="All registered shipments"
+                blobColor="#F5B700"
+              />
+
+              {/* Delivered */}
+              <StatCard
+                icon={<CheckCircle size={20} color="#22C55E" />}
+                iconBg="#DCFCE7"
+                label="Delivered"
+                value={loadingMain ? '…' : summary?.delivered_shipments ?? 0}
+                sub="Successfully completed"
+                blobColor="#22C55E"
+              />
+
+              {/* Active Drivers */}
+              <StatCard
+                icon={<Truck size={20} color="#0EA5E9" />}
+                iconBg="#E0F2FE"
+                label="Active Drivers"
+                value={loadingMain ? '…' : summary?.active_drivers ?? 0}
+                sub="Currently on routes"
+                blobColor="#0EA5E9"
+              />
+
+              {/* Success Rate */}
+              <StatCard
+                icon={<TrendingUp size={20} color="#818CF8" />}
+                iconBg="#EDE9FE"
+                label="Success Rate"
+                value={loadingMain ? '…' : successPct}
+                sub="Delivery success %"
+                blobColor="#818CF8"
+              />
+            </div>
+
+            {/* Hub deliveries bar chart */}
+            <HubChart data={hubs} loading={loadingMain} />
+
+            {/* Placeholder — future table goes here */}
+            <div className={s.spacer}>Shipment table — coming soon</div>
+
+          </div>
+
+          {/* ── Right column: calendar + pending transporters ── */}
+          <div className={s.right}>
+            <RightPanel
+              selectedDate={selectedDate}
+              onDateChange={handleDateChange}
+              transporters={transporters}
+              loadingT={loadingT}
+            />
+          </div>
+
         </div>
-      </div>
+      </main>
     </div>
   );
 }
-

@@ -1,80 +1,91 @@
+// lib/api/dashboard.js
+// Fetches: summary stats, hub shipments, pending transporter requests
+
 import { ENDPOINTS, REQUEST_TIMEOUT, buildQueryString } from '@/lib/config';
 import { getAccessToken } from './auth';
 
+// ── Safe JSON parse ──────────────────────────────────────────────────────────
 function parseJsonSafe(text) {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(text); } catch { return null; }
 }
 
+// ── Authenticated GET — aborts after REQUEST_TIMEOUT ms ──────────────────────
 async function requestWithAuth(url) {
   const token = getAccessToken();
   if (!token) {
-    const error = new Error('Not authenticated');
-    error.status = 401;
-    throw error;
+    const e = new Error('Not authenticated'); e.status = 401; throw e;
   }
-
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
-
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT);
   try {
     const res = await fetch(url, {
       method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      signal: controller.signal,
+      headers: { Authorization: `Bearer ${token}` },
+      signal: ctrl.signal,
       cache: 'no-store',
     });
-
-    const text = await res.text();
-    const data = parseJsonSafe(text);
-
+    const data = parseJsonSafe(await res.text());
     if (!res.ok) {
-      const message = data?.message || `Request failed (${res.status})`;
-      const error = new Error(message);
-      error.status = res.status;
-      error.payload = data;
-      throw error;
+      const e = new Error(data?.message || `Request failed (${res.status})`);
+      e.status = res.status; e.payload = data; throw e;
     }
-
     return data;
   } finally {
     clearTimeout(timer);
   }
 }
 
+// ── Normalizers: handles both { data: {...} } and flat shapes ─────────────────
+
 function normalizeSummary(raw) {
-  const payload = raw?.data && typeof raw.data === 'object' ? raw.data : raw;
+  const p = raw?.data && typeof raw.data === 'object' ? raw.data : raw;
+  const rate = parseFloat(p?.success_rate);
   return {
-    total_shipments: Number(payload?.total_shipments ?? 0),
-    delivered_shipments: Number(payload?.delivered_shipments ?? 0),
-    active_drivers: Number(payload?.active_drivers ?? 0),
-    success_rate: payload?.success_rate ?? 0,
+    total_shipments:     Number(p?.total_shipments     ?? 0),
+    delivered_shipments: Number(p?.delivered_shipments ?? 0),
+    active_drivers:      Number(p?.active_drivers      ?? 0),
+    success_rate:        isNaN(rate) ? 0 : rate,   // 'NaN' string → 0
   };
 }
 
 function normalizeHubs(raw) {
-  const payload = Array.isArray(raw?.data) ? raw.data : Array.isArray(raw) ? raw : [];
-  return payload.map((hub) => ({
-    hub_id: hub.hub_id,
-    name: hub.name,
-    shipment_count: Number(hub.shipment_count ?? 0),
+  const arr = Array.isArray(raw?.data) ? raw.data : Array.isArray(raw) ? raw : [];
+  return arr.map(h => ({
+    hub_id:         h.hub_id,
+    name:           h.name,
+    shipment_count: Number(h.shipment_count ?? 0),
   }));
 }
 
+function normalizePendingTransporters(raw) {
+  const arr = Array.isArray(raw?.data) ? raw.data : Array.isArray(raw) ? raw : [];
+  return arr.map(t => ({
+    id:        t.id ?? t.transporter_id ?? '',
+    name:      t.name ?? t.user_name ?? 'Unknown',
+    email:     t.email ?? '',
+    phone:     t.phone ?? t.mobile ?? '',
+    vehicle:   t.vehicle_type ?? t.vehicle ?? '—',
+    submitted: t.created_at ?? t.submitted_at ?? '',
+  }));
+}
+
+// ── Public exports ────────────────────────────────────────────────────────────
+
+// params: { date: 'YYYY-MM-DD' } or {} for all-time
 export async function getDashboardSummary(params = {}) {
   const url = ENDPOINTS.dashboard.summary + buildQueryString(params);
-  const data = await requestWithAuth(url);
-  return normalizeSummary(data);
+  return normalizeSummary(await requestWithAuth(url));
 }
 
+// params: { date: 'YYYY-MM-DD' } — filters hub shipment counts by date
 export async function getHubShipments(params = {}) {
   const url = ENDPOINTS.dashboard.hubShipments + buildQueryString(params);
-  const data = await requestWithAuth(url);
-  return normalizeHubs(data);
+  return normalizeHubs(await requestWithAuth(url));
 }
 
+// Always returns all pending transporter registration requests
+export async function getPendingTransporters() {
+  return normalizePendingTransporters(
+    await requestWithAuth(ENDPOINTS.transporters.pending)
+  );
+}

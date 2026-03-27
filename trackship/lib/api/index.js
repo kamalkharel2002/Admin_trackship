@@ -1,3 +1,5 @@
+// lib/api/index.js — single import point for all API helpers
+
 export {
   loginUser,
   logoutUser,
@@ -9,4 +11,8 @@ export {
   isAuthenticated,
 } from './auth';
 
-export { getDashboardSummary, getHubShipments } from './dashboard';
+export {
+  getDashboardSummary,
+  getHubShipments,
+  getPendingTransporters,       // ← new: pending transporter requests
+} from './dashboard';

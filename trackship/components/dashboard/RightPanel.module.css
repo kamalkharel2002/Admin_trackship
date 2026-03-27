@@ -1,0 +1,245 @@
+/* components/RightPanel/RightPanel.module.css */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+}
+
+/* ── Calendar card ── */
+.calCard {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+}
+
+.calHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.calMonth {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-head);
+}
+
+.calNav {
+  display: flex;
+  gap: 4px;
+}
+
+.calNavBtn {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-page);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light);
+  transition: all 0.15s;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.calNavBtn:hover { background: var(--text-primary); color: #fff; }
+
+.calGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.calDayName {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 4px 0;
+  font-family: var(--font-head);
+  letter-spacing: 0.04em;
+}
+
+.calDay {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: 6px 2px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-body);
+}
+
+.calDay:hover:not(.empty):not(.selected) {
+  background: var(--cream);
+  color: var(--text-primary);
+}
+
+.calDay.empty { cursor: default; color: transparent; }
+
+.calDay.today {
+  color: var(--accent-blue);
+  font-weight: 700;
+}
+
+.calDay.selected {
+  background: linear-gradient(135deg, #1A1A2E, #2D2D50);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Clear date button */
+.clearBtn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  background: var(--cream);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  border: 1px solid var(--border);
+  transition: all 0.15s;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.clearBtn:hover { background: #FEE2E2; color: #DC2626; border-color: #FCA5A5; }
+
+.clearBtn.active {
+  background: var(--accent-yellow);
+  color: var(--text-primary);
+  border-color: var(--accent-yellow);
+}
+
+/* ── Pending transporters ── */
+.pendingCard {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
+}
+
+.pendingHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pendingTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-head);
+}
+
+.pendingCount {
+  background: var(--accent-orange);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-family: var(--font-head);
+}
+
+.pendingList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  max-height: 280px;
+}
+
+.pendingItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg-page);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  transition: box-shadow 0.15s;
+}
+
+.pendingItem:hover { box-shadow: var(--shadow-sm); }
+
+.pendingAvatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-head);
+  flex-shrink: 0;
+}
+
+.pendingInfo { flex: 1; min-width: 0; }
+
+.pendingName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: var(--font-head);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pendingMeta {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pendingBadge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: #FEF9C3;
+  color: #92400E;
+  white-space: nowrap;
+  font-family: var(--font-head);
+}
+
+.emptyPending {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 24px 0;
+}
+
+.skeleton {
+  height: 52px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, var(--border-light) 25%, var(--cream) 50%, var(--border-light) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
