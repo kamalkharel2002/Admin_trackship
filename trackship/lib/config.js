@@ -9,11 +9,11 @@ export const ENDPOINTS = {
   auth: {
     login:  `${API_BASE}/admin/auth/login`,
     logout: `${API_BASE}/admin/auth/logout`,
-    me:     `${API_BASE}/auth/me`,
   },
   dashboard: {
     summary:      `${API_BASE}/admin/dashboard/summary`,         // GET → summary stats
     hubShipments: `${API_BASE}/admin/dashboard/hub-shipments`,  // GET → per-hub bar chart
+    adminProfile: `${API_BASE}/admin/dashboard/admin-profile`, // GET → admin profile info
   },
   transporters: {
     pending: `${API_BASE}/admin/transporters/pending`,           // GET → pending driver requests

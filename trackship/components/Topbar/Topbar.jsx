@@ -3,29 +3,36 @@
 // Inline top bar — not fixed, sits inside the main content area
 // Shows: page title, subtitle, notification bell, profile chip
 
-import { Bell, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
+import { Bell, ChevronDown, User, Mail, Phone, Calendar, LogOut } from 'lucide-react';
 import s from './Topbar.module.css';
 
-export default function TopBar({ user, title = 'Dashboard', subtitle, hasNotifs = false }) {
-  const getInitials = (name) => {
-  if (!name || name === 'Admin') return 'AD';
-  
-  const words = name.trim().split(/\s+/);
-  
-  if (words.length === 1) {
-    // For single word names, take first two characters
-    return words[0].slice(0, 2).toUpperCase();
-  }
-  
-  // For multiple words, take first character of first two words
-  return words
-    .slice(0, 2)
-    .map(word => word[0])
-    .join('')
-    .toUpperCase();
-};
+export default function TopBar({ user, title = 'Dashboard', subtitle, hasNotifs = false, onLogout }) {
+  const [showProfile, setShowProfile] = useState(false);
 
-const initials = getInitials(user?.name);
+  const getInitials = (name) => {
+    if (!name || name === 'Admin') return 'AD';
+    
+    const words = name.trim().split(/\s+/);
+    
+    if (words.length === 1) {
+      return words[0].slice(0, 2).toUpperCase();
+    }
+    
+    return words
+      .slice(0, 2)
+      .map(word => word[0])
+      .join('')
+      .toUpperCase();
+  };
+
+  const initials = getInitials(user?.name);
+  
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  };
 
   return (
     <div className={s.topbar}>
@@ -43,11 +50,60 @@ const initials = getInitials(user?.name);
           {hasNotifs && <span className={s.notifDot} />}
         </button>
 
-        {/* Profile chip */}
-        <div className={s.profileChip}>
-          <div className={s.profileAvatar}>{initials}</div>
-          <span className={s.profileName}>{user?.name ?? 'Admin'}</span>
-          <ChevronDown size={14} className={s.chevron} />
+        {/* Profile chip with dropdown */}
+        <div className={s.profileWrapper}>
+          <div 
+            className={s.profileChip} 
+            onClick={() => setShowProfile(!showProfile)}
+          >
+            <div className={s.profileAvatar}>{initials}</div>
+            <span className={s.profileName}>{user?.name ?? 'Admin'}</span>
+            <ChevronDown size={14} className={`${s.chevron} ${showProfile ? s.chevronRotated : ''}`} />
+          </div>
+
+          {/* Dropdown Menu */}
+          {showProfile && (
+            <>
+              <div className={s.dropdownOverlay} onClick={() => setShowProfile(false)} />
+              <div className={s.dropdown}>
+                <div className={s.dropdownHeader}>
+                  <div className={s.dropdownAvatar}>{initials}</div>
+                  <div className={s.dropdownUserInfo}>
+                    <div className={s.dropdownName}>{user?.name || 'Admin'}</div>
+                    <div className={s.dropdownRole}>{user?.role || 'Administrator'}</div>
+                  </div>
+                </div>
+                
+                <div className={s.dropdownDivider} />
+                
+                <div className={s.dropdownSection}>
+                  <div className={s.dropdownItem}>
+                    <Mail size={16} />
+                    <span>{user?.email || 'admin@example.com'}</span>
+                  </div>
+                  {user?.phone && (
+                    <div className={s.dropdownItem}>
+                      <Phone size={16} />
+                      <span>{user.phone}</span>
+                    </div>
+                  )}
+                  {user?.joined_date && (
+                    <div className={s.dropdownItem}>
+                      <Calendar size={16} />
+                      <span>Joined {formatDate(user.joined_date)}</span>
+                    </div>
+                  )}
+                </div>
+                
+                <div className={s.dropdownDivider} />
+                
+                <div className={s.dropdownItem} onClick={onLogout}>
+                  <LogOut size={16} />
+                  <span>Logout</span>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

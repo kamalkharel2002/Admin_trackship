@@ -1,13 +1,14 @@
-/* ════════════════════════════════════════════
-   LoginPage.module.css
-   Pure CSS Module — every selector is a local
-   class. No *, html, body, or @import here.
-════════════════════════════════════════════ */
+/* /app/(auth)/login/LoginPage.module.css */
 
-/* ── Design tokens (scoped via .shell) ── */
+/* Remove these lines - they're already in your global CSS:
+@import url(...);
+*, *::before, *::after { ... }
+*/
+
+/* Keep only the component-specific styles starting from .shell */
 .shell {
-  /* fonts */
-  --lp-font:           'Plus Jakarta Sans', sans-serif;
+  /* fonts - override if needed, but inherits from global */
+  --lp-font: 'Plus Jakarta Sans', sans-serif;
 
   /* brand */
   --lp-yellow:         #F5B700;
@@ -44,9 +45,7 @@
   background: var(--lp-dark);
 }
 
-/* ════════════════════════════════════════════
-   LEFT — dark brand panel
-════════════════════════════════════════════ */
+/* Keep all the rest of your styles exactly as they are */
 .left {
   position: relative;
   width: 46%;

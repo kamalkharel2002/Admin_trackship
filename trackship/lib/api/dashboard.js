@@ -1,4 +1,5 @@
-﻿import { ENDPOINTS, buildQueryString } from '@/lib/config';
+﻿// /lib/api/dashboard.js
+import { ENDPOINTS, buildQueryString } from '@/lib/config';
 import { request } from '@/lib/api/client';
 
 function normalizeSummary(raw) {
@@ -37,6 +38,18 @@ function normalizePendingTransporters(raw) {
   }));
 }
 
+function normalizeAdminProfile(raw) {
+  const p = raw?.data && typeof raw.data === 'object' ? raw.data : raw;
+  return {
+    id:          p.user_id,
+    name:        p.name || p.user_name || 'Admin',
+    email:       p.email,
+    phone:       p.phone || '',
+    role:        p.role || 'admin',
+    joined_date: p.joined_date,
+  };
+}
+
 export async function getDashboardSummary(params = {}) {
   const url = ENDPOINTS.dashboard.summary + buildQueryString(params);
   return normalizeSummary(await request(url));
@@ -50,5 +63,11 @@ export async function getHubShipments(params = {}) {
 export async function getPendingTransporters() {
   return normalizePendingTransporters(
     await request(ENDPOINTS.transporters.pending)
+  );
+}
+
+export async function getAdminProfile() {
+  return normalizeAdminProfile(
+    await request(ENDPOINTS.dashboard.adminProfile)
   );
 }

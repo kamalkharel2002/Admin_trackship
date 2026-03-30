@@ -1,4 +1,4 @@
-/* components/TopBar/TopBar.module.css */
+/* components/TopBar/Topbar.module.css */
 
 .topbar {
   display: flex;
@@ -56,6 +56,11 @@
   border: 2px solid var(--bg-card);
 }
 
+/* Profile wrapper for dropdown positioning */
+.profileWrapper {
+  position: relative;
+}
+
 /* Profile chip */
 .profileChip {
   display: flex;
@@ -94,9 +99,128 @@
   text-overflow: ellipsis;
 }
 
-.chevron { color: var(--text-muted); }
+.chevron {
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.chevronRotated {
+  transform: rotate(180deg);
+}
+
+/* Dropdown menu */
+.dropdownOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 280px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  overflow: hidden;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdownHeader {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dropdownAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-yellow), var(--accent-blue));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: var(--font-head);
+}
+
+.dropdownUserInfo {
+  flex: 1;
+}
+
+.dropdownName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-head);
+  margin-bottom: 4px;
+}
+
+.dropdownRole {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.dropdownDivider {
+  height: 1px;
+  background: var(--border-light);
+  margin: 8px 0;
+}
+
+.dropdownSection {
+  padding: 8px 0;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.dropdownItem:hover {
+  background: var(--cream);
+  color: var(--text-primary);
+}
+
+.dropdownItem:last-child {
+  color: var(--accent-orange);
+}
+
+.dropdownItem:last-child:hover {
+  background: rgba(245, 183, 0, 0.1);
+}
 
 @media (max-width: 640px) {
   .pageSubtitle { display: none; }
   .profileName  { display: none; }
+  .dropdown {
+    width: 260px;
+    right: -10px;
+  }
 }

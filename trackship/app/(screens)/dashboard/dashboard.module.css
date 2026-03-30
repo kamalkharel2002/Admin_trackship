@@ -1,52 +1,46 @@
 /* app/dashboard/dashboard.module.css */
 
-/* ── Layout shell: sidebar + main ── */
+/* ── Shell: sidebar handled by layout, main fills rest ── */
 .shell {
   display: flex;
   min-height: 100vh;
 }
 
-/* Main scrollable area — offset by sidebar width */
 .main {
-  margin-left: calc(var(--sidebar-w) - 174px); 
+  margin-left: calc(var(--sidebar-w) - 174px);
   flex: 1;
-  padding: 32px 20px 32px 8px; 
+  padding: 32px 20px 32px 8px;
   min-height: 100vh;
   background: var(--bg-page);
   transition: margin-left 0.3s ease;
 }
 
-/* ── Two-column content layout ── */
+/* ── Two-column grid: left content + sticky right panel ── */
 .content {
   display: grid;
-  grid-template-columns: 1fr 280px;   /* main + right panel */
+  grid-template-columns: 1fr 280px;
   gap: 24px;
   align-items: start;
 }
 
-.left  { display: flex; flex-direction: column; gap: 24px; }
-.right { position: sticky; top: 24px; }  /* sticky right panel */
-
-/* ── Stat cards row ── */
-.statsRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  gap: 16px;
+/* Left column: stats + chart stacked, chart stretches to fill */
+.left {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-/* ── Space reserved below chart ── */
-.spacer {
-  height: 100px;
-  background: var(--bg-card);
-  border-radius: var(--radius-lg);
-  border: 2px dashed var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  font-size: 13px;
-  font-style: italic;
-  font-family: var(--font-body);
+/* Right column: sticks while scrolling */
+.right {
+  position: sticky;
+  top: 24px;
+}
+
+/* ── Stat cards: 4-up row ── */
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
 }
 
 /* ── Error banner ── */
@@ -55,6 +49,7 @@
   border: 1px solid #FECACA;
   border-radius: var(--radius-sm);
   padding: 12px 16px;
+  margin-bottom: 16px;
   color: #DC2626;
   font-size: 13px;
   font-weight: 500;
@@ -63,33 +58,32 @@
   gap: 8px;
 }
 
-/* ── Responsive breakpoints ── */
+/* ── Responsive: 1100px — tighten right panel ── */
 @media (max-width: 1100px) {
-  .content { grid-template-columns: 1fr 240px; }
-  .statsRow { grid-template-columns: 1fr 1fr; }
+  .content     { grid-template-columns: 1fr 240px; }
+  .statsRow    { grid-template-columns: repeat(2, 1fr); }
 }
 
+/* ── Responsive: 768px — single column, mobile sidebar offset ── */
 @media (max-width: 768px) {
   .main {
-    margin-left: 0; /* keep this 0 always */
-    padding: 72px 12px 20px; /* tighter horizontal spacing */
+    margin-left: 0;
+    padding: 72px 12px 24px;
   }
-
   .content {
     grid-template-columns: 1fr;
-    gap: 16px; /* slightly tighter */
+    gap: 16px;
   }
-
   .right {
     position: static;
   }
-
   .statsRow {
-    grid-template-columns: 1fr 1fr;
-    gap: 12px; /* tighter cards */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
 }
 
+/* ── Responsive: 480px — single stat card column ── */
 @media (max-width: 480px) {
   .statsRow { grid-template-columns: 1fr; }
 }

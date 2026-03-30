@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { loginUser } from '@/lib/api';
 import styles from './LoginPage.module.css';
-import './login-global.css'; // resets + font import (not a module)
 
 export default function LoginPage() {
+  const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [email, setEmail]           = useState('');
   const [password, setPassword]     = useState('');
@@ -16,8 +17,9 @@ export default function LoginPage() {
     setFormError('');
     setSubmitting(true);
     try {
-      await loginUser({ email, password });
-      window.location.href = '/dashboard';
+      await loginUser({ email, password });  // ← No more storing user data
+      console.log('Login successful, redirecting to dashboard');
+      router.push('/dashboard');
     } catch (err) {
       setFormError(err?.message || 'Login failed. Please try again.');
     } finally {

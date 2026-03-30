@@ -1,33 +1,32 @@
 'use client';
 // app/(screens)/layout.js
 // Wraps all admin screens with the fixed Sidebar
-// Sidebar needs: user (from localStorage), badgeCounts, onLogout
 
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Sidebar from '@/components/Sidebar/Sidebar';
-import { getSessionUser, logoutUser } from '@/lib/api';
+import { logoutUser } from '@/lib/api';
 
 export default function ScreensLayout({ children }) {
   const router = useRouter();
-  const user = getSessionUser();           // reads cached user from localStorage
+  const pathname = usePathname();
 
   const handleLogout = async () => {
-    await logoutUser();                    // clears session + calls logout endpoint
+    await logoutUser();
     router.push('/login');
   };
 
+  // Don't render sidebar on login page
+  if (pathname === '/login') {
+    return children;
+  }
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
-      {/* Fixed sidebar — badgeCounts defaults to {} here;
-          dashboard page passes real counts directly to its own Sidebar instance
-          OR lift state here if you want badges globally */}
       <Sidebar
-        user={user}
+        user={null}  // Will be populated by individual pages
         badgeCounts={{}}
         onLogout={handleLogout}
       />
-
-      {/* Main content offset by sidebar width */}
       <main style={{ marginLeft: 'var(--sidebar-w)', flex: 1 }}>
         {children}
       </main>

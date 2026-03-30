@@ -8,10 +8,11 @@
   border: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  min-height: 300px;
+  gap: 16px;
+  /* No fixed min-height — chart height is controlled by getSizing() in JSX */
 }
 
+/* ── Header ── */
 .header {
   display: flex;
   align-items: center;
@@ -29,50 +30,103 @@
 
 .legend {
   display: flex;
-  gap: 16px;
+  gap: 14px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .legendDot {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  gap: 5px;
+  font-size: 11px;
   color: var(--text-secondary);
   font-weight: 500;
+  font-family: var(--font-body);
 }
 
 .dot {
-  width: 8px; height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
+  flex-shrink: 0;
 }
 
+/* ── Chart area — overflow controlled via inline style in JSX ── */
 .chartArea {
-  flex: 1;
-  min-height: 220px;
   width: 100%;
+  /* overflowX set inline; smooth momentum scroll on touch */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
 }
 
+.chartArea::-webkit-scrollbar {
+  height: 4px;
+}
+.chartArea::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+/* ── Empty & skeleton states ── */
 .empty {
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
   font-size: 14px;
   font-style: italic;
+  font-family: var(--font-body);
+  min-height: 200px;
 }
 
 .skeleton {
-  flex: 1;
-  background: linear-gradient(90deg, var(--border-light) 25%, var(--cream) 50%, var(--border-light) 75%);
+  height: 240px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--border-light) 25%,
+    var(--cream) 50%,
+    var(--border-light) 75%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-  border-radius: var(--radius-sm);
-  min-height: 200px;
 }
 
 @keyframes shimmer {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+/* ── Footer: hub count pill + scroll hint ── */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hubPill {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-page);
+  border: 1px solid var(--border-light);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: var(--font-head);
+}
+
+.scrollHint {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+  font-family: var(--font-body);
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(6px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
