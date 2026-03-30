@@ -1,8 +1,6 @@
-// services/users.js
+﻿// services/users.js
 import { ENDPOINTS, REQUEST_TIMEOUT, buildQueryString } from '@/lib/config';
-import { getAccessToken } from './auth';
 
-// Safely parse JSON
 function parseJsonSafe(text) {
   try {
     return JSON.parse(text);
@@ -11,24 +9,14 @@ function parseJsonSafe(text) {
   }
 }
 
-// Fetch wrapper with authorization & timeout
 async function requestWithAuth(url) {
-  const token = getAccessToken();
-  if (!token) {
-    const error = new Error('Not authenticated');
-    error.status = 401;
-    throw error;
-  }
-
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
 
   try {
     const res = await fetch(url, {
       method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      credentials: 'include',
       signal: controller.signal,
       cache: 'no-store',
     });
@@ -50,7 +38,6 @@ async function requestWithAuth(url) {
   }
 }
 
-// Normalize users from backend
 function normalizeUsers(raw) {
   const payload = Array.isArray(raw?.userData) ? raw.userData : [];
 
@@ -59,11 +46,10 @@ function normalizeUsers(raw) {
     phone: u.phone,
     email: u.email,
     role: u.role,
-    created_at: u.date_created || u.created_at, // match backend key
+    created_at: u.date_created || u.created_at,
   }));
 }
 
-// Normalize counts from backend
 function normalizeCounts(raw) {
   const payload = Array.isArray(raw?.userCount) ? raw.userCount : [];
 
@@ -73,9 +59,7 @@ function normalizeCounts(raw) {
   }));
 }
 
-// ✅ MAIN API FUNCTION
 export async function getUsers(params = {}) {
-  // Ensure offset/limit are numbers
   if (params.offset !== undefined) params.offset = Number(params.offset);
   if (params.limit !== undefined) params.limit = Number(params.limit);
 

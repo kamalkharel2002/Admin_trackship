@@ -1,14 +1,14 @@
 // lib/config.js — API base, all endpoints, timeout, query builder
 
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.244:3000/api';
+  process.env.NEXT_PUBLIC_API_URL || 'http://192.168.56.1:3000/api';
 
 export const REQUEST_TIMEOUT = 15000;
 
 export const ENDPOINTS = {
   auth: {
-    login:  `${API_BASE}/login`,
-    logout: `${API_BASE}/auth/logout`,
+    login:  `${API_BASE}/admin/auth/login`,
+    logout: `${API_BASE}/admin/auth/logout`,
     me:     `${API_BASE}/auth/me`,
   },
   dashboard: {

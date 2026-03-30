@@ -1,81 +1,25 @@
-import { ENDPOINTS, REQUEST_TIMEOUT } from '@/lib/config';
+﻿import { ENDPOINTS } from '@/lib/config';
+import { request, parseJsonSafe } from '@/lib/api/client';
 
-const ACCESS_TOKEN_KEY = 'access_token';
 const USER_KEY = 'auth_user';
 
 function hasWindow() {
+  // Prevents localStorage access during Next.js SSR
   return typeof window !== 'undefined';
-}
-
-function writeCookie(name, value, maxAgeSeconds = 86400) {
-  if (!hasWindow()) return;
-  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-  document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAgeSeconds}${secure}; SameSite=Lax`;
-}
-
-function clearCookie(name) {
-  if (!hasWindow()) return;
-  document.cookie = `${name}=; Path=/; Max-Age=0; SameSite=Lax`;
-}
-
-function parseJsonSafe(text) {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
 }
 
 function normalizeUser(rawUser, fallbackEmail = '') {
   if (!rawUser || typeof rawUser !== 'object') return null;
+
+  // Whitelist explicit fields — never spread rawUser to avoid
+  // accidentally storing sensitive fields (e.g. password_hash) in localStorage
   return {
-    id: rawUser.user_id ?? rawUser.id ?? '',
-    name: rawUser.user_name ?? rawUser.name ?? 'Admin',
-    role: rawUser.role ?? 'admin',
-    email: rawUser.email ?? fallbackEmail,
-    ...rawUser,
+    id:    rawUser.user_id   ?? rawUser.id   ?? '',
+    name:  rawUser.user_name ?? rawUser.name ?? 'Admin',
+    role:  rawUser.role      ?? 'admin',
+    email: rawUser.email     ?? fallbackEmail,
+    phone: rawUser.phone     ?? '',
   };
-}
-
-async function request(url, { method = 'GET', body, token } = {}) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
-
-  try {
-    const res = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: body ? JSON.stringify(body) : undefined,
-      signal: controller.signal,
-      cache: 'no-store',
-    });
-
-    const text = await res.text();
-    const data = parseJsonSafe(text);
-
-    if (!res.ok) {
-      const message = data?.message || `Request failed (${res.status})`;
-      const error = new Error(message);
-      error.status = res.status;
-      error.payload = data;
-      throw error;
-    }
-
-    return data;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-export function getAccessToken() {
-  if (!hasWindow()) return null;
-  const cookies = document.cookie ? document.cookie.split('; ') : [];
-  const tokenCookie = cookies.find((c) => c.startsWith(`${ACCESS_TOKEN_KEY}=`));
-  if (tokenCookie) return decodeURIComponent(tokenCookie.split('=').slice(1).join('='));
-  return localStorage.getItem(ACCESS_TOKEN_KEY);
 }
 
 export function getSessionUser() {
@@ -85,70 +29,50 @@ export function getSessionUser() {
   return parseJsonSafe(raw);
 }
 
-export function setSession(accessToken, user) {
-  if (!hasWindow() || !accessToken) return;
-  localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-  writeCookie(ACCESS_TOKEN_KEY, accessToken);
-  if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
+export function setSession(user) {
+  if (!hasWindow() || !user) return;
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
 export function clearSession() {
   if (!hasWindow()) return;
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
-  clearCookie(ACCESS_TOKEN_KEY);
 }
 
 export async function loginUser({ email, password }) {
   const raw = await request(ENDPOINTS.auth.login, {
     method: 'POST',
-    body: { email, password },
+    body:   { email, password },
   });
 
-  // Supports both:
-  // { access_token, user } and { success: true, data: { access_token, user } }
   const payload = raw?.data && typeof raw.data === 'object' ? raw.data : raw;
-  const accessToken = payload?.access_token;
-  const user = normalizeUser(payload?.user, email);
+  const user    = normalizeUser(payload?.user, email);
 
-  if (!accessToken) {
-    const error = new Error('Login response does not contain access_token');
-    error.payload = raw;
-    throw error;
-  }
+  if (!user) throw new Error('Invalid user payload received from server');
 
-  setSession(accessToken, user);
-  return { access_token: accessToken, user };
+  setSession(user);
+  return { user };
 }
 
 export async function fetchMe() {
-  const token = getAccessToken();
-  if (!token) throw new Error('Not authenticated');
-
   try {
-    const raw = await request(ENDPOINTS.auth.me, { method: 'GET', token });
+    const raw     = await request(ENDPOINTS.auth.me);
     const payload = raw?.data && typeof raw.data === 'object' ? raw.data : raw;
-    const user = normalizeUser(payload?.user || payload);
-    if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
+    const user    = normalizeUser(payload?.user || payload);
+    // Route through setSession so the SSR guard is always respected
+    if (user) setSession(user);
     return user;
   } catch {
-    // Keep UI usable even if /auth/me route does not exist.
+    // Network error or 401 — fall back to whatever is cached locally
     return getSessionUser();
   }
 }
 
 export async function logoutUser() {
-  const token = getAccessToken();
   try {
-    if (token) {
-      await request(ENDPOINTS.auth.logout, { method: 'POST', token, body: {} });
-    }
+    await request(ENDPOINTS.auth.logout, { method: 'POST', body: {} });
   } finally {
+    // Always clear local session even if the server call fails
     clearSession();
   }
 }
-
-export function isAuthenticated() {
-  return !!getAccessToken();
-}
-
