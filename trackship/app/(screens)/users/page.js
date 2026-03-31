@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import UsersHeader from '@/components/user/UsersHeader';
 import UsersTable  from '@/components/user/UsersTable';
-import { getUsers } from '@/lib/api/users';
+import { getUsers } from '@/lib/api';
 import './UsersPage.css';
 
 /* Accent palette cycling per card */
@@ -48,7 +48,6 @@ export default function UsersPage() {
             <span className="users-page-breadcrumb-current">Users List</span>
           </div>
         </div>
-        <UsersHeader selected={selected} />
       </div>
 
       {/* ── Stat cards ──────────────────────────── */}

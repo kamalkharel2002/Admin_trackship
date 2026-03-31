@@ -1,31 +1,31 @@
-/* ════════════════════════════════════════════
-   USERS HEADER  —  fully standalone
-   No global CSS dependencies
-════════════════════════════════════════════ */
-
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-/* ── Scoped design tokens ── */
 .users-header {
-  --uh-font:         'Plus Jakarta Sans', sans-serif;
-  --uh-yellow:       #F5B700;
-  --uh-yellow-dark:  #e5a900;
-  --uh-yellow-ring:  rgba(245, 183, 0, 0.15);
-  --uh-yellow-bg:    rgba(245, 183, 0, 0.08);
-  --uh-yellow-border:rgba(245, 183, 0, 0.30);
-  --uh-text:         #1A1A2E;
-  --uh-muted:        #94A3B8;
-  --uh-border:       #E8E4DC;
-  --uh-card:         #FFFFFF;
-  --uh-surface:      #F8F7F3;
-  --uh-shadow:       0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-  --uh-ease:         cubic-bezier(0.16, 1, 0.3, 1);
+  --uh-font:          'Plus Jakarta Sans', sans-serif;
+  --uh-yellow:        #F5B700;
+  --uh-yellow-dark:   #e5a900;
+  --uh-yellow-ring:   rgba(245, 183, 0, 0.15);
+  --uh-yellow-bg:     rgba(245, 183, 0, 0.08);
+  --uh-yellow-border: rgba(245, 183, 0, 0.30);
+  --uh-text:          #1A1A2E;
+  --uh-muted:         #94A3B8;
+  --uh-border:        #E8E4DC;
+  --uh-card:          #FFFFFF;
+  --uh-surface:       #F8F7F3;
+  --uh-shadow:        0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --uh-ease:          cubic-bezier(0.16, 1, 0.3, 1);
 
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
   font-family: var(--uh-font);
+  padding: 14px 18px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #E8E4DC;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  margin-bottom: 16px;
 }
 
 /* ── Search ── */
@@ -33,6 +33,8 @@
   position: relative;
   display: flex;
   align-items: center;
+  flex: 1;
+  min-width: 200px;
 }
 
 .users-header-search-icon {
@@ -49,7 +51,7 @@
   border-radius: 10px;
   border: 1.5px solid var(--uh-border);
   background: var(--uh-card);
-  width: 250px;
+  width: 100%;
   outline: none;
   font-size: 0.82rem;
   font-family: var(--uh-font);
@@ -59,7 +61,6 @@
   transition:
     border-color 0.2s var(--uh-ease),
     box-shadow   0.2s var(--uh-ease),
-    width        0.3s var(--uh-ease),
     background   0.2s var(--uh-ease);
 }
 
@@ -71,7 +72,6 @@
   border-color: var(--uh-yellow);
   background: #fff;
   box-shadow: 0 0 0 3px var(--uh-yellow-ring);
-  width: 290px;
 }
 
 /* ── Selected pill ── */
@@ -88,6 +88,7 @@
   color: #9a7400;
   font-family: var(--uh-font);
   animation: uh-fade-up 0.22s var(--uh-ease) both;
+  white-space: nowrap;
 }
 
 @keyframes uh-fade-up {
@@ -109,6 +110,7 @@
   align-items: center;
   gap: 8px;
   margin-left: auto;
+  flex-wrap: wrap;
 }
 
 /* ── Filter button ── */
@@ -127,6 +129,7 @@
   box-shadow: var(--uh-shadow);
   cursor: pointer;
   transition: all 0.18s var(--uh-ease);
+  white-space: nowrap;
 }
 
 .users-header-filter-btn:hover {
@@ -153,6 +156,7 @@
   box-shadow: 0 2px 10px rgba(245,183,0,0.35);
   transition: all 0.18s var(--uh-ease);
   letter-spacing: -0.01em;
+  white-space: nowrap;
 }
 
 .users-header-add-btn:hover {
@@ -167,13 +171,12 @@
 }
 
 .users-header-add-icon {
-  width: 17px;
-  height: 17px;
+  width: 18px;
+  height: 18px;
   border-radius: 5px;
   background: rgba(26,26,46,0.12);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.95rem;
-  line-height: 1;
+  flex-shrink: 0;
 }

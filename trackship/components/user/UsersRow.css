@@ -1,30 +1,22 @@
-/* ════════════════════════════════════════════
-   USERS ROW  —  fully standalone
-   No global CSS dependencies
-════════════════════════════════════════════ */
-
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-/* ── Scoped design tokens ── */
 .users-row {
-  --ur-font:          'Plus Jakarta Sans', sans-serif;
-  --ur-yellow:        #F5B700;
-  --ur-yellow-bg:     rgba(245, 183, 0, 0.04);
-  --ur-yellow-hover:  rgba(245, 183, 0, 0.07);
-  --ur-green:         #22C55E;
-  --ur-green-bg:      rgba(34, 197, 94, 0.10);
-  --ur-green-text:    #16a34a;
-  --ur-red:           #EF4444;
-  --ur-red-bg:        rgba(239, 68, 68, 0.08);
-  --ur-blue-edit-bg:  rgba(14, 165, 233, 0.08);
-  --ur-blue-edit:     #0EA5E9;
-  --ur-text:          #1A1A2E;
-  --ur-muted:         #94A3B8;
-  --ur-secondary:     #64748B;
-  --ur-border:        #EEE9DF;
-  --ur-avatar-a:      #F5B700;
-  --ur-avatar-b:      #F97316;
-  --ur-ease:          cubic-bezier(0.16, 1, 0.3, 1);
+  --ur-font:         'Plus Jakarta Sans', sans-serif;
+  --ur-yellow:       #F5B700;
+  --ur-yellow-bg:    rgba(245, 183, 0, 0.04);
+  --ur-yellow-hover: rgba(245, 183, 0, 0.07);
+  --ur-green:        #22C55E;
+  --ur-green-bg:     rgba(34, 197, 94, 0.10);
+  --ur-green-text:   #16a34a;
+  --ur-red:          #EF4444;
+  --ur-red-bg:       rgba(239, 68, 68, 0.08);
+  --ur-blue-edit-bg: rgba(14, 165, 233, 0.08);
+  --ur-blue-edit:    #0EA5E9;
+  --ur-text:         #1A1A2E;
+  --ur-muted:        #94A3B8;
+  --ur-secondary:    #64748B;
+  --ur-border:       #EEE9DF;
+  --ur-ease:         cubic-bezier(0.16, 1, 0.3, 1);
 
   display: grid;
   grid-template-columns: 44px 1fr 120px 1fr 140px 130px 96px 76px;
@@ -34,6 +26,12 @@
   transition: background 0.14s ease;
   gap: 4px;
   font-family: var(--ur-font);
+  animation: ur-fade-in 0.28s ease both;
+}
+
+@keyframes ur-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0);   }
 }
 
 .users-row:last-child {
@@ -104,7 +102,7 @@
   width: 34px;
   height: 34px;
   border-radius: 9px;
-  background: linear-gradient(135deg, var(--ur-avatar-a), var(--ur-avatar-b));
+  background: linear-gradient(135deg, #F5B700, #F97316);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -114,7 +112,7 @@
   color: #fff;
   flex-shrink: 0;
   letter-spacing: 0.02em;
-  box-shadow: 0 2px 6px rgba(245,183,0,0.3);
+  box-shadow: 0 2px 6px rgba(245,183,0,0.28);
 }
 
 .users-row-name-info {
@@ -182,6 +180,7 @@
   font-weight: 700;
   font-family: var(--ur-font);
   letter-spacing: 0.01em;
+  white-space: nowrap;
 }
 
 .users-row-badge.active {
@@ -210,9 +209,9 @@
 }
 
 .users-row-action-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
