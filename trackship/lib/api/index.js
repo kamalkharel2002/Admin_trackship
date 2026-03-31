@@ -1,13 +1,18 @@
-// /lib/api/index.js — single import point for all API helpers
+// lib/api/index.js
 
-export {
-  loginUser,
-  logoutUser,
-} from './auth';
+export { loginUser, logoutUser } from './auth';
 
 export {
   getDashboardSummary,
   getHubShipments,
   getPendingTransporters,
-  getAdminProfile,  
+  getAdminProfile,
 } from './dashboard';
+
+export {
+  getHubs,
+  createHub,
+  updateHub,
+  deleteHub,
+  getCoordinators,
+} from './hub';

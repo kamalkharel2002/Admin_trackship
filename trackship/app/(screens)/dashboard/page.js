@@ -117,13 +117,11 @@ export default function DashboardPage() {
 
   if (loadingProfile) {
     return (
-      <div className={s.shell}>
-        <main className={s.main}>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-            Loading profile...
-          </div>
-        </main>
-      </div>
+      <main className={s.main}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          Loading profile...
+        </div>
+      </main>
     );
   }
 

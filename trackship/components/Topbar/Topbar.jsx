@@ -4,10 +4,10 @@
 // Shows: page title, subtitle, notification bell, profile chip
 
 import { useState } from 'react';
-import { Bell, ChevronDown, User, Mail, Phone, Calendar, LogOut } from 'lucide-react';
+import { Bell, ChevronDown, User, Mail, Phone, Calendar} from 'lucide-react';
 import s from './Topbar.module.css';
 
-export default function TopBar({ user, title = 'Dashboard', subtitle, hasNotifs = false, onLogout }) {
+export default function TopBar({ user, title = 'Dashboard', subtitle, hasNotifs = false }) {
   const [showProfile, setShowProfile] = useState(false);
 
   const getInitials = (name) => {
@@ -93,13 +93,6 @@ export default function TopBar({ user, title = 'Dashboard', subtitle, hasNotifs 
                       <span>Joined {formatDate(user.joined_date)}</span>
                     </div>
                   )}
-                </div>
-                
-                <div className={s.dropdownDivider} />
-                
-                <div className={s.dropdownItem} onClick={onLogout}>
-                  <LogOut size={16} />
-                  <span>Logout</span>
                 </div>
               </div>
             </>

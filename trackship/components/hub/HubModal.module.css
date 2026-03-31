@@ -1,0 +1,263 @@
+/* components/hub/HubModal.module.css */
+
+/* ── Backdrop ── */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 15, 30, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Modal panel ── */
+.modal {
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 580px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255,255,255,0.1);
+  animation: slideUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+/* ── Modal header ── */
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 0;
+  flex-shrink: 0;
+}
+
+.modalTitle {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: var(--font-head);
+}
+
+.modalSub {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+.closeBtn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--bg-page);
+  border: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.closeBtn:hover { background: #FEF2F2; color: #DC2626; }
+
+/* ── Modal body ── */
+.body {
+  padding: 20px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ── Form fields ── */
+.fieldGroup {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field.full { grid-column: 1 / -1; }
+
+.label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-family: var(--font-head);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.input, .select {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  background: var(--bg-page);
+  font-size: 14px;
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+  width: 100%;
+}
+
+.input:focus, .select:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(14,165,233,0.12);
+  background: var(--bg-card);
+}
+
+.input::placeholder { color: var(--text-muted); }
+
+/* Coords row — read-only display */
+.coordsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.coordBox {
+  background: var(--bg-page);
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.coordLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: var(--font-head);
+}
+
+.coordValue {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-blue);
+  font-family: var(--font-head);
+}
+
+/* ── Map picker ── */
+.mapSection { display: flex; flex-direction: column; gap: 8px; }
+
+.mapLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-family: var(--font-head);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mapHint {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+  font-family: var(--font-body);
+  font-style: italic;
+}
+
+.mapPickerWrap {
+  height: 220px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 2px solid var(--border);
+  transition: border-color 0.15s;
+  position: relative;
+}
+
+.mapPickerWrap.active { border-color: var(--accent-blue); }
+
+.mapPickerWrap :global(.leaflet-container) {
+  height: 100%;
+  width: 100%;
+  cursor: crosshair !important;
+}
+
+/* ── Footer buttons ── */
+.footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+.btnSecondary {
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  background: var(--bg-page);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  transition: all 0.15s;
+  cursor: pointer;
+}
+
+.btnSecondary:hover { background: var(--cream); color: var(--text-primary); }
+
+.btnPrimary {
+  padding: 10px 24px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: linear-gradient(135deg, #1A1A2E, #2D2D50);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-head);
+  transition: all 0.15s;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.btnPrimary:hover   { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btnPrimary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+/* ── Error ── */
+.formError {
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  color: #DC2626;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 480px) {
+  .fieldGroup  { grid-template-columns: 1fr; }
+  .coordsRow   { grid-template-columns: 1fr; }
+  .modal       { border-radius: var(--radius-lg); }
+}

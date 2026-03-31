@@ -1,4 +1,4 @@
-// lib/config.js — API base, all endpoints, timeout, query builder
+// lib/config.js
 
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.64:3000/api';
@@ -11,32 +11,32 @@ export const ENDPOINTS = {
     logout: `${API_BASE}/admin/auth/logout`,
   },
   dashboard: {
-    summary:      `${API_BASE}/admin/dashboard/summary`,         // GET → summary stats
-    hubShipments: `${API_BASE}/admin/dashboard/hub-shipments`,  // GET → per-hub bar chart
-    adminProfile: `${API_BASE}/admin/dashboard/admin-profile`, // GET → admin profile info
+    summary:      `${API_BASE}/admin/dashboard/summary`,
+    hubShipments: `${API_BASE}/admin/dashboard/hub-shipments`,
+    adminProfile: `${API_BASE}/admin/dashboard/admin-profile`,
   },
   transporters: {
-    pending: `${API_BASE}/admin/transporters/pending`,           // GET → pending driver requests
+    pending: `${API_BASE}/admin/transporters/pending`,
+  },
+  hubs: {
+    list:        `${API_BASE}/admin/hub`,            // GET list / POST create
+    byId: (id) => `${API_BASE}/admin/hub/${id}`,    // PUT update / DELETE
   },
   user: {
-    list: `${API_BASE}/admin/users`,                            // GET → list all users
-    create: `${API_BASE}/admin/users`,                          // POST → create a new user
-    update: `${API_BASE}/admin/users/:id`,                      // PUT → update a user
-    delete: `${API_BASE}/admin/users/:id`,                      // DELETE → delete a user
-  }
+    list:   `${API_BASE}/admin/users`,
+    create: `${API_BASE}/admin/users`,
+    update: (id) => `${API_BASE}/admin/users/${id}`,
+    delete: (id) => `${API_BASE}/admin/users/${id}`,
+  },
 };
 
-// Converts params object to query string based on filter type
 export function buildQueryString(params = {}) {
-  // Handle date range or single date pattern
   const queryParams = {};
   if (params.startDate) queryParams.startDate = params.startDate;
-  if (params.endDate) queryParams.endDate = params.endDate;
-  
+  if (params.endDate)   queryParams.endDate   = params.endDate;
   const filtered = Object.entries(queryParams).filter(
     ([, v]) => v !== undefined && v !== null && v !== ''
   );
-  
   if (!filtered.length) return '';
   return '?' + new URLSearchParams(Object.fromEntries(filtered)).toString();
 }
