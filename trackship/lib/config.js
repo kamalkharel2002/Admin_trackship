@@ -28,6 +28,9 @@ export const ENDPOINTS = {
     update: (id) => `${API_BASE}/admin/users/${id}`,
     delete: (id) => `${API_BASE}/admin/users/${id}`,
   },
+  shipments: {
+    list: `${API_BASE}/admin/shipments`,
+  },
 };
 
 export function buildQueryString(params = {}) {
