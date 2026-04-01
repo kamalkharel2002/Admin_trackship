@@ -32,10 +32,23 @@ export async function getHubs() {
 }
 
 // POST /admin/hub  — body: { name, latitude, longitude, region }
+// Some APIs return only { success, hub_id } on create — we refetch list to get full data
 export async function createHub(body) {
   const raw = await request(ENDPOINTS.hubs.list, { method: 'POST', body });
   const p   = raw?.data ?? raw;
-  return normalizeHub(p);
+
+  // If response has enough fields, normalize directly
+  if (p?.name && (p?.latitude || p?.hub_id || p?.id)) {
+    return normalizeHub(p);
+  }
+
+  // Otherwise refetch the full list and find the newest hub by name
+  const list = await getHubs();
+  const match = list.find(h => h.name === body.name);
+  if (match) return match;
+
+  // Last resort: build from what we sent (shows data immediately, syncs on next load)
+  return normalizeHub({ ...body, hub_id: p?.hub_id ?? p?.id ?? Date.now() });
 }
 
 // PUT /admin/hub/:id — body: { name, latitude, longitude, region }
@@ -43,7 +56,19 @@ export async function updateHub(id, body) {
   const url = ENDPOINTS.hubs.byId(id);
   const raw = await request(url, { method: 'PUT', body });
   const p   = raw?.data ?? raw;
-  return normalizeHub(p);
+
+  // If response has full data, normalize directly
+  if (p?.name && (p?.latitude || p?.hub_id || p?.id)) {
+    return normalizeHub(p);
+  }
+
+  // Otherwise refetch the specific hub from the list
+  const list = await getHubs();
+  const match = list.find(h => h.id === id || h.id === String(id));
+  if (match) return match;
+
+  // Last resort: merge sent body with known id
+  return normalizeHub({ ...body, hub_id: id });
 }
 
 // DELETE /admin/hub/:id
