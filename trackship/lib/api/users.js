@@ -1,4 +1,4 @@
-﻿// services/users.js
+﻿// api/users.js
 import { ENDPOINTS, REQUEST_TIMEOUT, buildQueryString } from '@/lib/config';
 
 /* ───────────── HELPERS ───────────── */
@@ -59,7 +59,7 @@ function normalizeUsers(raw) {
     phone: u.phone,
     email: u.email,
     role: u.role,
-    created_at: u.Date_Created, // IMPORTANT FIX
+    created_at: u.date_created, // MUST match the lowercase alias from Step 1
   }));
 }
 
@@ -122,6 +122,6 @@ export async function getUserById(user_id) {
     phone: data.phone,
     email: data.email,
     role: data.role,
-    created_at: data.Date_Created || data.created_at,
+    created_at: data.date_created || data.created_at,
   };
 }

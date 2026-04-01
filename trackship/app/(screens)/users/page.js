@@ -5,7 +5,6 @@ import UsersTable  from '@/components/user/UsersTable';
 import { getUsers } from '@/lib/api';
 import './UsersPage.css';
 
-/* Accent palette cycling per card */
 const ACCENTS = [
   { accent: '#F5B700', glow: 'rgba(245,183,0,0.09)'   },
   { accent: '#0EA5E9', glow: 'rgba(14,165,233,0.09)'  },
@@ -15,9 +14,11 @@ const ACCENTS = [
 ];
 
 export default function UsersPage() {
-  const [selected, setSelected]             = useState([]);
-  const [counts, setCounts]                 = useState([]);
-  const [loadingCounts, setLoadingCounts]   = useState(true);
+  const [selected, setSelected]           = useState([]);
+  const [counts, setCounts]               = useState([]);
+  const [loadingCounts, setLoadingCounts] = useState(true);
+  const [searchQuery, setSearchQuery]     = useState('');
+  const [activeRoles, setActiveRoles]     = useState([]);   // ← new
 
   useEffect(() => { fetchCounts(); }, []);
 
@@ -33,12 +34,25 @@ export default function UsersPage() {
     }
   }
 
+  // Toggle a single role on/off; null = clear all
+  function handleRoleToggle(roleId) {
+    if (roleId === null) {
+      setActiveRoles([]);
+      return;
+    }
+    setActiveRoles(prev =>
+      prev.includes(roleId)
+        ? prev.filter(r => r !== roleId)
+        : [...prev, roleId]
+    );
+  }
+
   const totalUsers = counts.reduce((sum, c) => sum + (Number(c.user_count) || 0), 0);
 
   return (
     <div className="users-page">
 
-      {/* ── Top bar ─────────────────────────────── */}
+      {/* ── Top bar ── */}
       <div className="users-page-topbar">
         <div className="users-page-title-block">
           <h2 className="users-page-title">Users List</h2>
@@ -50,26 +64,18 @@ export default function UsersPage() {
         </div>
       </div>
 
-      {/* ── Stat cards ──────────────────────────── */}
+      {/* ── Stat cards ── */}
       {loadingCounts ? (
         <div className="users-page-counts-loading">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="users-page-count-skeleton" />
-          ))}
+          {[...Array(4)].map((_, i) => <div key={i} className="users-page-count-skeleton" />)}
         </div>
       ) : counts.length > 0 ? (
         <div className="users-page-counts">
           {counts.map((c, i) => {
             const { accent, glow } = ACCENTS[i % ACCENTS.length];
             return (
-              <div
-                key={i}
-                className="users-page-count-card"
-                style={{
-                  '--up-card-accent': accent,
-                  '--up-card-glow':   glow,
-                }}
-              >
+              <div key={i} className="users-page-count-card"
+                style={{ '--up-card-accent': accent, '--up-card-glow': glow }}>
                 <div className="users-page-count-role">{c.role}</div>
                 <div className="users-page-count-number">{c.user_count}</div>
                 <div className="users-page-count-sub">
@@ -88,22 +94,27 @@ export default function UsersPage() {
         <div className="users-page-counts-empty">No role data available</div>
       )}
 
-      {/* ── Table section ───────────────────────── */}
+      {/* ── Table section ── */}
       <div className="users-page-table-section">
         <div className="users-page-section-label">
           <span className="users-page-section-title">All Members</span>
           <div className="users-page-section-right">
             {totalUsers > 0 && (
-              <span className="users-page-total-pill">
-                {totalUsers} total
-              </span>
+              <span className="users-page-total-pill">{totalUsers} total</span>
             )}
             <span className="users-page-section-count">
               {selected.length > 0 ? `${selected.length} selected` : ''}
             </span>
           </div>
         </div>
-        <UsersTable selected={selected} setSelected={setSelected} />
+
+        <UsersTable
+          selected={selected}
+          setSelected={setSelected}
+          onUpdate={fetchCounts}
+          searchQuery={searchQuery}
+          roleFilter={activeRoles}   // ← pass to table
+        />
       </div>
 
     </div>

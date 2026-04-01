@@ -180,3 +180,181 @@
   justify-content: center;
   flex-shrink: 0;
 }
+
+/* ── Filter wrap (anchor for dropdown) ── */
+.users-header-filter-wrap {
+  position: relative;
+}
+
+/* ── Filter button active states ── */
+.users-header-filter-btn.open {
+  background: var(--uh-surface);
+  color: var(--uh-text);
+  border-color: #d4cfc6;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.users-header-filter-btn.active-filter {
+  border-color: var(--uh-yellow);
+  color: #9a7400;
+  background: var(--uh-yellow-bg);
+}
+
+/* ── Count badge on filter button ── */
+.users-header-filter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--uh-yellow);
+  color: #1A1A2E;
+  font-size: 0.6rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+/* ── Chevron rotation ── */
+.users-header-chevron {
+  transition: transform 0.2s var(--uh-ease);
+}
+.users-header-chevron.flipped {
+  transform: rotate(180deg);
+}
+
+/* ── Dropdown panel ── */
+.users-header-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--uh-card);
+  border: 1.5px solid var(--uh-border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
+  min-width: 210px;
+  z-index: 200;
+  overflow: hidden;
+  animation: uh-dd-in 0.17s var(--uh-ease) both;
+}
+
+@keyframes uh-dd-in {
+  from { opacity: 0; transform: scale(0.95) translateY(-6px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);    }
+}
+
+.users-header-dropdown-header {
+  padding: 11px 14px 8px;
+  font-size: 0.67rem;
+  font-weight: 800;
+  color: var(--uh-muted);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--uh-border);
+}
+
+.users-header-dropdown-list {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ── Role option rows ── */
+.users-header-role-option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--uh-font);
+  transition: background 0.13s;
+  text-align: left;
+}
+
+.users-header-role-option:hover    { background: var(--uh-surface); }
+.users-header-role-option.active   { background: var(--uh-yellow-bg); }
+
+.users-header-role-check {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid var(--uh-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #fff;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.users-header-role-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.users-header-role-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--uh-text);
+}
+
+/* ── Dropdown footer ── */
+.users-header-dropdown-footer {
+  padding: 8px 14px 10px;
+  border-top: 1px solid var(--uh-border);
+}
+
+.users-header-clear-btn {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--uh-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--uh-font);
+  padding: 0;
+  transition: color 0.14s;
+}
+.users-header-clear-btn:hover { color: var(--uh-text); }
+
+/* ── Active filter tags row (inside header bar) ── */
+.users-header-active-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  width: 100%;
+  padding-top: 4px;
+  animation: uh-fade-up 0.2s var(--uh-ease) both;
+}
+
+.users-header-active-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 20px;
+  background: var(--uh-yellow-bg);
+  border: 1px solid var(--uh-yellow-border);
+  font-size: 0.71rem;
+  font-weight: 700;
+  color: #9a7400;
+  font-family: var(--uh-font);
+}
+
+.users-header-tag-remove {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin-left: 2px;
+  color: #b88a00;
+  transition: color 0.12s;
+}
+.users-header-tag-remove:hover { color: #7a5800; }

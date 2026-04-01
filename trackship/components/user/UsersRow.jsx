@@ -7,10 +7,18 @@ function getInitials(name = '') {
 
 function formatDate(dateStr) {
   if (!dateStr) return '—';
-  const d = new Date(dateStr);
-  return isNaN(d) ? dateStr : d.toLocaleDateString('en-GB', {
-    day: '2-digit', month: 'short', year: 'numeric'
-  });
+  
+  // If dateStr is "DD-MM-YYYY", split it manually
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    // Reconstruct as YYYY-MM-DD which is globally supported
+    const d = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+    return isNaN(d) ? dateStr : d.toLocaleDateString('en-GB', {
+      day: '2-digit', month: 'short', year: 'numeric'
+    });
+  }
+  
+  return dateStr;
 }
 
 const EditIcon = () => (

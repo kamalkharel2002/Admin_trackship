@@ -7,6 +7,12 @@ import './UsersTable.css';
 
 const ROWS_PER_PAGE = 10;
 
+const ROLES = [
+  { id: 'customer',         label: 'Customer',        color: '#F5B700' },
+  { id: 'transporter',      label: 'Transporter',     color: '#0EA5E9' },
+  { id: 'hub_coordinator',  label: 'Hub Coordinator', color: '#22C55E' },
+];
+
 const CloseIcon = () => (
   <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5"
     strokeLinecap="round" viewBox="0 0 24 24">
@@ -23,11 +29,12 @@ const UserIcon = () => (
   </svg>
 );
 
-const EMPTY_FORM = { user_name: '', email: '', phone: '', password: '', role: 'Customer' };
+const EMPTY_FORM = { user_name: '', email: '', phone: '', password: '', role: 'customer' };
 
-export default function UsersTable({ selected, setSelected }) {
+export default function UsersTable({ selected, setSelected, onUpdate }) {
   const [users, setUsers]           = useState([]);
   const [search, setSearch]         = useState('');
+  const [activeRoles, setActiveRoles] = useState([]);   // ← role filter state
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState(null);
   const [page, setPage]             = useState(1);
@@ -47,24 +54,41 @@ export default function UsersTable({ selected, setSelected }) {
       setLoading(true); setError(null);
       const data = await getUsers({ offset: 0, limit: 200 });
       setUsers(data.users || []);
-    } catch { setError('Failed to load users. Please try again.'); }
-    finally { setLoading(false); }
+    } catch {
+      setError('Failed to load users. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   }
 
-  /* ── Filter ── */
+  /* ── Role toggle: null = clear all ── */
+  function handleRoleToggle(roleId) {
+    if (roleId === null) { setActiveRoles([]); return; }
+    setActiveRoles(prev =>
+      prev.includes(roleId)
+        ? prev.filter(r => r !== roleId)
+        : [...prev, roleId]
+    );
+    setPage(1);
+  }
+
+  /* ── Filter: search + roles ── */
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    if (!q) return users;
-    return users.filter(u =>
-      [u.user_name, u.email, u.phone, u.role].some(v => v?.toLowerCase().includes(q))
-    );
-  }, [users, search]);
+    return users.filter(u => {
+      const matchesSearch = !q ||
+        [u.user_name, u.email, u.phone, u.role].some(v => v?.toLowerCase().includes(q));
+      const matchesRole = activeRoles.length === 0 ||
+        activeRoles.includes(u.role?.toLowerCase().replace(/\s+/g, '_'));
+      return matchesSearch && matchesRole;
+    });
+  }, [users, search, activeRoles]);
 
   /* ── Pagination ── */
   const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
   const safePage   = Math.min(page, totalPages);
   const slice      = filtered.slice((safePage - 1) * ROWS_PER_PAGE, safePage * ROWS_PER_PAGE);
-  useEffect(() => { setPage(1); }, [search]);
+  useEffect(() => { setPage(1); }, [search, activeRoles]);
 
   /* ── Select ── */
   const allChecked  = slice.length > 0 && slice.every(u => selected.includes(u.user_id));
@@ -85,17 +109,27 @@ export default function UsersTable({ selected, setSelected }) {
     if (!form.user_name.trim() || !form.email.trim()) return;
     try {
       setSubmitting(true);
-      if (editUser) await updateUser(editUser.user_id, form);
-      else await createUser(form);
-      closeModal(); fetchUsers();
-    } catch (err) { console.error(err); }
-    finally { setSubmitting(false); }
+      if (editUser) {
+        await updateUser(editUser.user_id, form);
+      } else {
+        await createUser(form);
+      }
+      closeModal();
+      fetchUsers();
+      onUpdate?.();
+    } catch (err) {
+      console.error(err);
+      alert(err.message || 'Something went wrong. Please check your inputs.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function handleDelete(id) {
     if (!confirm('Are you sure you want to delete this user?')) return;
     await deleteUser(id);
     fetchUsers();
+    onUpdate?.();
   }
 
   /* ── Page range ── */
@@ -108,7 +142,14 @@ export default function UsersTable({ selected, setSelected }) {
 
   return (
     <>
-      <UsersHeader selected={selected} onSearch={setSearch} onAdd={openCreate} />
+      <UsersHeader
+        selected={selected}
+        onSearch={v => { setSearch(v); setPage(1); }}
+        onAdd={openCreate}
+        activeRoles={activeRoles}
+        onRoleToggle={handleRoleToggle}
+        roles={ROLES}
+      />
 
       <div className="users-table-wrap">
 
@@ -148,7 +189,9 @@ export default function UsersTable({ selected, setSelected }) {
             <div className="users-table-empty-icon"><UserIcon /></div>
             <p className="users-table-empty-title">No users found</p>
             <p className="users-table-empty-sub">
-              {search ? 'Try a different search term.' : 'Add your first user to get started.'}
+              {search || activeRoles.length > 0
+                ? 'Try a different search term or filter.'
+                : 'Add your first user to get started.'}
             </p>
           </div>
         ) : (
@@ -222,9 +265,9 @@ export default function UsersTable({ selected, setSelected }) {
                     <label className="ut-label">Role</label>
                     <select className="ut-select" value={form.role}
                       onChange={e => setForm({ ...form, role: e.target.value })}>
-                      <option value="Customer">Customer</option>
-                      <option value="Hub-Coordinator">Hub Coordinator</option>
-                      <option value="Admin">Admin</option>
+                      <option value="customer">Customer</option>
+                      <option value="transporter">Transporter</option>
+                      <option value="hub_coordinator">Hub Coordinator</option>
                     </select>
                   </div>
                 </>
