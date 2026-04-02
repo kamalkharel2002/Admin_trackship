@@ -30,6 +30,7 @@ export const ENDPOINTS = {
   },
   shipments: {
     list: `${API_BASE}/admin/shipments`,
+    byId: (id) => `${API_BASE}/admin/shipments/${id}`,
   },
 };
 

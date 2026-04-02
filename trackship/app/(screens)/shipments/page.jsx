@@ -114,12 +114,6 @@ function StatCard({ label, value, colorClass, Icon, description, trend }) {
         <div className="stat-icon-wrap">
           <Icon size={20} strokeWidth={2.5} />
         </div>
-        {trend !== undefined && (
-          <div className={`stat-trend ${getTrendClass()}`}>
-            {getTrendIcon()}
-            <span>{Math.abs(trend)}%</span>
-          </div>
-        )}
       </div>
       
       <div className="stat-content">
@@ -149,19 +143,12 @@ function PageHeader() {
       <div className="shipments-title-group">
         <div className="title-main-row">
           <h1 className="shipments-title">Shipments & Parcels</h1>
-          <div className="live-indicator">
-            <span className="live-dot" />
-            <span className="live-text">Live</span>
-          </div>
         </div>
         <nav className="shipments-breadcrumb">
           <span className="bc-link">Admin Dashboard</span>
           <span className="bc-sep">›</span>
           <span className="bc-active">Shipments</span>
         </nav>
-      </div>
-      <div className="page-meta">
-        <div className="page-date">{currentDate}</div>
       </div>
     </div>
   );
@@ -250,12 +237,6 @@ export default function ShipmentsPage() {
       <div className="shipments-stats-section">
         <div className="stats-section-header">
           <h2 className="stats-section-title">Overview</h2>
-          {!loading && total > 0 && (
-            <div className="stats-summary">
-              <span className="summary-text">Total Active Shipments</span>
-              <span className="summary-count">{total.toLocaleString()}</span>
-            </div>
-          )}
         </div>
 
         {error ? (

@@ -11,15 +11,15 @@ const ROWS_OPTIONS = [5, 10, 25];
 export default function ShipmentsTable() {
   const router = useRouter();
 
-  const [shipments, setShipments]   = useState([]);
-  const [selected, setSelected]     = useState([]);
-  const [search, setSearch]         = useState('');
+  const [shipments, setShipments]           = useState([]);
+  const [selected, setSelected]             = useState([]);
+  const [search, setSearch]                 = useState('');
   const [activeStatuses, setActiveStatuses] = useState([]);
-  const [dateRange, setDateRange]   = useState(null);
-  const [currentPage, setPage]      = useState(1);
-  const [rowsPerPage, setRows]      = useState(5);
-  const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState(null);
+  const [dateRange, setDateRange]           = useState(null);
+  const [currentPage, setPage]              = useState(1);
+  const [rowsPerPage, setRows]              = useState(10);
+  const [loading, setLoading]               = useState(true);
+  const [error, setError]                   = useState(null);
 
   useEffect(() => { fetchShipments(); }, []);
 
@@ -28,21 +28,7 @@ export default function ShipmentsTable() {
       setLoading(true);
       setError(null);
       const result = await getShipments({ offset: 0, limit: 100 });
-      const formatted = (result.shipments || []).map(s => ({
-        shipment_id:   s.shipment_id,
-        shipment_code: s.shipment_code,
-        sender:        s.sender      || 'Unknown',
-        receiver:      s.receiver    || 'Unknown',
-        route:         s.route       || 'N/A',
-        from:          s.from        || '',
-        to:            s.to          || '',
-        status:        s.status      || 'Pending',
-        transporter:   s.transporter || 'Unassigned',
-        delivery_mode: s.delivery_mode || 'Unknown',
-        trip_id:       s.trip_id    || null,
-        created_at:    s.created_at || '',
-      }));
-      setShipments(formatted);
+      setShipments(result.shipments || []);
       setPage(1);
     } catch (err) {
       console.error('Unable to load shipments', err);
@@ -70,18 +56,14 @@ export default function ShipmentsTable() {
           .some(v => v?.toLowerCase().includes(q));
       const matchStatus = activeStatuses.length === 0 || activeStatuses.includes(s.status);
 
-      // Date filtering
       let matchDate = true;
-      if (dateRange && dateRange.startDate && dateRange.endDate) {
-        const shipmentDate = new Date(s.created_at);
-        const startDate = new Date(dateRange.startDate);
-        const endDate = new Date(dateRange.endDate);
-
-        // Set time to start/end of day for inclusive filtering
-        startDate.setHours(0, 0, 0, 0);
-        endDate.setHours(23, 59, 59, 999);
-
-        matchDate = shipmentDate >= startDate && shipmentDate <= endDate;
+      if (dateRange?.startDate && dateRange?.endDate) {
+        const d = new Date(s.created_at);
+        const start = new Date(dateRange.startDate);
+        const end = new Date(dateRange.endDate);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        matchDate = d >= start && d <= end;
       }
 
       return matchSearch && matchStatus && matchDate;
@@ -96,7 +78,7 @@ export default function ShipmentsTable() {
   const allChecked  = slice.length > 0 && slice.every(s => selected.includes(s.shipment_code));
   const someChecked = slice.some(s => selected.includes(s.shipment_code));
 
-  const toggleOne = (code) =>
+  const toggleOne = code =>
     setSelected(prev => prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]);
 
   const toggleAll = () => {
@@ -124,62 +106,74 @@ export default function ShipmentsTable() {
 
       <div className="sh-table-card">
 
-        {/* Head */}
+        {/* ── Column Headers ── */}
         <div className="sh-thead">
-          <div className="sh-th">
-            <input
-              type="checkbox"
-              className="sh-checkbox"
-              checked={allChecked}
-              ref={el => { if (el) el.indeterminate = someChecked && !allChecked; }}
-              onChange={toggleAll}
-            />
+          <div className="sh-th sh-th-check">
+            <label className="sr-check-wrap">
+              <input
+                type="checkbox"
+                ref={el => { if (el) el.indeterminate = someChecked && !allChecked; }}
+                checked={allChecked}
+                onChange={toggleAll}
+              />
+              <span className="sr-check-box" />
+            </label>
           </div>
-          {['Shipment ID', 'Sender', 'Receiver', 'Route', 'Status', 'Transporter'].map(h => (
-            <div key={h} className="sh-th">{h}</div>
+          {[
+            { key: 'Shipment ID', icon: null },
+            { key: 'Sender',      icon: null },
+            { key: 'Receiver',    icon: null },
+            { key: 'Route',       icon: null },
+            { key: 'Status',      icon: null },
+            { key: 'Transporter', icon: null },
+          ].map(({ key }) => (
+            <div key={key} className="sh-th">{key}</div>
           ))}
         </div>
 
-        {/* Body */}
+        {/* ── Body ── */}
         {loading ? (
-          [...Array(5)].map((_, i) => (
-            <div key={i} className="sh-skeleton-row">
-              <div className="sh-skel" style={{ width: 14, height: 14, borderRadius: 4 }} />
-              <div className="sh-skel sh-skel-code" />
-              <div className="sh-skel sh-skel-person" />
-              <div className="sh-skel sh-skel-person" />
-              <div className="sh-skel sh-skel-route" />
-              <div className="sh-skel sh-skel-badge" />
-              <div className="sh-skel sh-skel-text" />
-            </div>
-          ))
+          <div className="sh-skeleton-wrap">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="sh-skeleton-row" style={{ animationDelay: `${i * 60}ms` }}>
+                <div className="sh-skel sh-skel-check" />
+                <div className="sh-skel sh-skel-code" />
+                <div className="sh-skel sh-skel-person" />
+                <div className="sh-skel sh-skel-person" />
+                <div className="sh-skel sh-skel-route" />
+                <div className="sh-skel sh-skel-badge" />
+                <div className="sh-skel sh-skel-text" />
+              </div>
+            ))}
+          </div>
         ) : error ? (
-          <div className="sh-empty">
-            <div className="sh-empty-icon">
-              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8"
+          <div className="sh-state">
+            <div className="sh-state-icon sh-state-icon-error">
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"
                 strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="10"/>
                 <line x1="12" y1="8" x2="12" y2="12"/>
                 <line x1="12" y1="16" x2="12.01" y2="16"/>
               </svg>
             </div>
-            <p className="sh-empty-title">Failed to load</p>
-            <p className="sh-empty-sub">{error}</p>
+            <p className="sh-state-title">Failed to load</p>
+            <p className="sh-state-sub">{error}</p>
+            <button className="sh-retry-btn" onClick={fetchShipments}>Try again</button>
           </div>
         ) : slice.length === 0 ? (
-          <div className="sh-empty">
-            <div className="sh-empty-icon">
-              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8"
+          <div className="sh-state">
+            <div className="sh-state-icon">
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"
                 strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/>
-                <circle cx="12" cy="10" r="3"/>
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
               </svg>
             </div>
-            <p className="sh-empty-title">No shipments found</p>
-            <p className="sh-empty-sub">
+            <p className="sh-state-title">No shipments found</p>
+            <p className="sh-state-sub">
               {search || activeStatuses.length > 0
-                ? 'Try a different search or filter.'
-                : 'No shipments available yet.'}
+                ? 'Try adjusting your search or filters.'
+                : 'No shipments have been created yet.'}
             </p>
           </div>
         ) : (
@@ -194,17 +188,16 @@ export default function ShipmentsTable() {
           ))
         )}
 
-        {/* Footer */}
+        {/* ── Footer ── */}
         {!loading && !error && filtered.length > 0 && (
           <div className="sh-footer">
             <div className="sh-footer-left">
-              <span className="sh-footer-info">
-                Showing&nbsp;
+              <span className="sh-footer-count">
                 <strong>{(safePage - 1) * rowsPerPage + 1}–{Math.min(safePage * rowsPerPage, filtered.length)}</strong>
-                &nbsp;of&nbsp;<strong>{filtered.length}</strong>
+                <span> of {filtered.length} shipments</span>
               </span>
               <div className="sh-rows-wrap">
-                <span className="sh-rows-label">Rows</span>
+                <span className="sh-rows-label">Per page</span>
                 <select
                   className="sh-rows-select"
                   value={rowsPerPage}
@@ -216,17 +209,35 @@ export default function ShipmentsTable() {
             </div>
 
             <div className="sh-pagination">
-              <button className="sh-page-btn" disabled={safePage === 1}
-                onClick={() => setPage(p => p - 1)}>‹</button>
+              <button
+                className="sh-page-btn sh-page-nav"
+                disabled={safePage === 1}
+                onClick={() => setPage(p => p - 1)}
+                aria-label="Previous page"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6"/>
+                </svg>
+              </button>
               {pageRange.map((p, i) =>
                 p === '…'
-                  ? <span key={`d${i}`} className="sh-dots">…</span>
-                  : <button key={p}
+                  ? <span key={`d${i}`} className="sh-dots">···</span>
+                  : <button
+                      key={p}
                       className={`sh-page-btn${p === safePage ? ' active' : ''}`}
-                      onClick={() => setPage(p)}>{p}</button>
+                      onClick={() => setPage(p)}
+                    >{p}</button>
               )}
-              <button className="sh-page-btn" disabled={safePage === totalPages}
-                onClick={() => setPage(p => p + 1)}>›</button>
+              <button
+                className="sh-page-btn sh-page-nav"
+                disabled={safePage === totalPages}
+                onClick={() => setPage(p => p + 1)}
+                aria-label="Next page"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
             </div>
           </div>
         )}

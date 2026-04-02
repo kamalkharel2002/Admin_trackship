@@ -1,225 +1,278 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getShipmentById } from '@/lib/api';
 import './ShipmentRow.css';
 
+/* ───────── HELPERS ───────── */
+
 const STATUS_CONFIG = {
-  'Delivered':  { badge: 'sr-s-delivered',  dot: 'sr-dot-delivered'  },
-  'In Transit': { badge: 'sr-s-transit',    dot: 'sr-dot-transit'    },
-  'Pending':    { badge: 'sr-s-pending',    dot: 'sr-dot-pending'    },
-  'At Hub':     { badge: 'sr-s-hub',        dot: 'sr-dot-hub'        },
-  'Cancelled':  { badge: 'sr-s-cancelled',  dot: 'sr-dot-cancelled'  },
+  Delivered:    { badge: 'sr-s-delivered',  dot: 'sr-dot-delivered',  icon: '✓' },
+  'In Transit': { badge: 'sr-s-transit',    dot: 'sr-dot-transit',    icon: '⟶' },
+  Pending:      { badge: 'sr-s-pending',    dot: 'sr-dot-pending',    icon: '◷' },
+  'At Hub':     { badge: 'sr-s-hub',        dot: 'sr-dot-hub',        icon: '⬡' },
+  Cancelled:    { badge: 'sr-s-cancelled',  dot: 'sr-dot-cancelled',  icon: '✕' },
 };
 
 const AVATAR_COLORS = [
-  { bg: '#E6F1FB', color: '#0C447C' },
-  { bg: '#EAF3DE', color: '#27500A' },
-  { bg: '#FAEEDA', color: '#633806' },
-  { bg: '#EEEDFE', color: '#3C3489' },
-  { bg: '#FAECE7', color: '#712B13' },
-  { bg: '#FBEAF0', color: '#72243E' },
+  { bg: '#E8F4FD', color: '#1565C0', border: '#BBDEFB' },
+  { bg: '#E8F5E9', color: '#1B5E20', border: '#C8E6C9' },
+  { bg: '#FFF8E1', color: '#E65100', border: '#FFECB3' },
+  { bg: '#EDE7F6', color: '#311B92', border: '#D1C4E9' },
+  { bg: '#FCE4EC', color: '#880E4F', border: '#F8BBD9' },
+  { bg: '#E0F2F1', color: '#004D40', border: '#B2DFDB' },
 ];
 
 function getInitials(name = '') {
-  return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  if (!name || typeof name !== 'string') return '?';
+  return name.trim().split(' ').filter(Boolean).slice(0, 2)
+    .map(w => w[0]).join('').toUpperCase() || '?';
 }
+
 function getAvatar(name = '') {
-  return AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
+  if (!name || typeof name !== 'string') return AVATAR_COLORS[0];
+  const firstChar = name.trim().charAt(0);
+  if (!firstChar) return AVATAR_COLORS[0];
+  return AVATAR_COLORS[firstChar.charCodeAt(0) % AVATAR_COLORS.length] || AVATAR_COLORS[0];
 }
 
-function ChevronIcon({ open }) {
+/* ───────── DETAIL FIELD ───────── */
+function Field({ label, value }) {
   return (
-    <svg
-      className={`sr-chevron-icon${open ? ' sr-chevron-open' : ''}`}
-      width="15" height="15" fill="none" stroke="currentColor"
-      strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"
-    >
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  );
-}
-
-function Timeline({ steps = [] }) {
-  return (
-    <div className="sr-timeline">
-      {steps.map((step, i) => (
-        <div className="sr-tl-step" key={i}>
-          <div className="sr-tl-left">
-            <div className={`sr-tl-dot${step.done ? ' sr-tl-dot-done' : ''}`} />
-            {i < steps.length - 1 && <div className="sr-tl-line" />}
-          </div>
-          <div className="sr-tl-content">
-            <div className={`sr-tl-event${step.done ? '' : ' sr-tl-event-pending'}`}>{step.e}</div>
-            <div className="sr-tl-time">{step.t}</div>
-          </div>
-        </div>
-      ))}
+    <div className="sr-field">
+      <span className="sr-field-label">{label}</span>
+      <span className="sr-field-value">{value || '—'}</span>
     </div>
   );
 }
 
-function DetailCard({ title, children }) {
-  return (
-    <div className="sr-detail-card">
-      <div className="sr-detail-card-title">{title}</div>
-      {children}
-    </div>
-  );
-}
-
-function DetailRow({ label, value }) {
-  return (
-    <div className="sr-detail-row">
-      <span className="sr-detail-label">{label}</span>
-      <span className="sr-detail-val">{value}</span>
-    </div>
-  );
-}
+/* ───────── COMPONENT ───────── */
 
 export default function ShipmentRow({ shipment, checked, onToggle, onClick }) {
   const [open, setOpen] = useState(false);
+  const [details, setDetails] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const st = STATUS_CONFIG[shipment.status] || STATUS_CONFIG['Pending'];
-  const sa = getAvatar(shipment.sender);
-  const ra = getAvatar(shipment.receiver);
+  useEffect(() => {
+    if (open && !details) fetchDetails();
+  }, [open]);
 
-  const [from, to] = shipment.route?.includes('→')
-    ? shipment.route.split('→').map(s => s.trim())
-    : [shipment.from || '', shipment.to || ''];
-
-  function handleToggle(e) {
-    e.stopPropagation();
-    setOpen(prev => !prev);
-    onClick?.();
+  async function fetchDetails() {
+    try {
+      setLoading(true);
+      const res = await getShipmentById(shipment.shipment_id);
+      if (!res) throw new Error('No data returned');
+      setDetails(res);
+    } catch (err) {
+      console.error('❌ Failed to fetch shipment details', err);
+      setDetails({});
+    } finally {
+      setLoading(false);
+    }
   }
 
-  return (
-    <div className="sr-row-wrap">
+  const data = details || shipment || {};
 
-      {/* ── Main row ── */}
+  const safeStatus = data.status || 'Pending';
+  const statusKey = safeStatus.charAt(0).toUpperCase() + safeStatus.slice(1);
+  const st = STATUS_CONFIG[statusKey] || STATUS_CONFIG['Pending'];
+
+  const sa = getAvatar(data.sender_name || '');
+  const ra = getAvatar(data.receiver_name || '');
+
+  const route = data.route || '';
+  const [from, to] = route.includes('→')
+    ? route.split('→').map(s => s.trim())
+    : [data.source_hub_name || 'N/A', data.destination_hub_name || 'N/A'];
+
+  return (
+    <div className={`sr-row-wrap${open ? ' sr-wrap-open' : ''}`}>
+
+      {/* ───── MAIN ROW ───── */}
       <div
         className={`sr-row${open ? ' sr-row-expanded' : ''}`}
         onClick={() => setOpen(prev => !prev)}
       >
-
         <div className="sr-cell sr-cell-check" onClick={e => { e.stopPropagation(); onToggle(); }}>
-          <input type="checkbox" className="sr-checkbox" checked={checked} onChange={onToggle} />
+          <label className="sr-check-wrap" onClick={e => e.stopPropagation()}>
+            <input type="checkbox" className="sr-checkbox" checked={checked} onChange={onToggle} />
+            <span className="sr-check-box" />
+          </label>
         </div>
 
         <div className="sr-cell">
-          <span className="sr-code">{shipment.shipment_code}</span>
+          <span className="sr-code">{data.shipment_code || 'N/A'}</span>
         </div>
 
         <div className="sr-cell">
           <div className="sr-person">
-            <div className="sr-avatar" style={{ background: sa.bg, color: sa.color }}>
-              {getInitials(shipment.sender)}
+            <div className="sr-avatar" style={{ background: sa.bg, color: sa.color, borderColor: sa.border }}>
+              {getInitials(data.sender_name || '')}
             </div>
-            <span className="sr-pname">{shipment.sender}</span>
+            <span className="sr-pname">{data.sender_name || 'Unknown'}</span>
           </div>
         </div>
 
         <div className="sr-cell">
           <div className="sr-person">
-            <div className="sr-avatar" style={{ background: ra.bg, color: ra.color }}>
-              {getInitials(shipment.receiver)}
+            <div className="sr-avatar" style={{ background: ra.bg, color: ra.color, borderColor: ra.border }}>
+              {getInitials(data.receiver_name || '')}
             </div>
-            <span className="sr-pname">{shipment.receiver}</span>
+            <span className="sr-pname">{data.receiver_name || 'Unknown'}</span>
           </div>
         </div>
 
         <div className="sr-cell">
           <div className="sr-route">
-            <span>{from}</span>
-            <span className="sr-route-arrow">
-              <svg width="11" height="11" fill="none" stroke="currentColor"
-                strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
+            <span className="sr-route-city">{from}</span>
+            <span className="sr-route-line">
+              <span className="sr-route-dot" />
+              <span className="sr-route-track" />
+              <span className="sr-route-arrow">›</span>
             </span>
-            <span>{to}</span>
+            <span className="sr-route-city">{to}</span>
           </div>
         </div>
 
         <div className="sr-cell">
           <span className={`sr-badge ${st.badge}`}>
-            <span className={`sr-dot ${st.dot}`} />
-            {shipment.status}
+            <span className="sr-badge-icon">{st.icon}</span>
+            {safeStatus}
           </span>
         </div>
 
-        <div className="sr-cell">
-          <span className="sr-transporter">{shipment.transporter}</span>
+        <div className="sr-cell sr-transporter-cell">
+          <span className="sr-transporter-name">{data.transporter_name || 'Unassigned'}</span>
         </div>
 
-        <div className="sr-chevron" onClick={handleToggle}>
-          <ChevronIcon open={open} />
+        <div className={`sr-chevron${open ? ' sr-chevron-open' : ''}`}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
         </div>
-
       </div>
 
-      {/* ── Expanded detail panel ── */}
+      {/* ───── DETAILS PANEL ───── */}
       <div className={`sr-detail${open ? ' sr-detail-open' : ''}`}>
         <div className="sr-detail-inner">
+          {loading ? (
+            <div className="sr-detail-loading">
+              <div className="sr-loading-spinner" />
+              <span>Fetching shipment details…</span>
+            </div>
+          ) : (
+            <div className="sr-detail-grid">
 
-          {/* Timeline */}
-          <DetailCard title="Timeline">
-            <Timeline steps={shipment.timeline || []} />
-          </DetailCard>
-
-          <div className="sr-detail-right">
-
-            {/* Package info */}
-            <DetailCard title="Package info">
-              <DetailRow label="Weight"        value={shipment.weight} />
-              <DetailRow label="Dimensions"    value={shipment.dims} />
-              <DetailRow label="Type"          value={shipment.type} />
-              <DetailRow label="Declared value" value={shipment.declared} />
-            </DetailCard>
-
-            {/* Contacts */}
-            <DetailCard title="Contacts">
-              <div className="sr-contacts-grid">
-                <div className="sr-contact-block">
-                  <span className="sr-contact-lbl">Sender</span>
-                  <div className="sr-contact-person">
-                    <div className="sr-avatar sr-avatar-sm" style={{ background: sa.bg, color: sa.color }}>
-                      {getInitials(shipment.sender)}
-                    </div>
-                    <span className="sr-contact-name">{shipment.sender}</span>
-                  </div>
-                  <span className="sr-contact-info">{shipment.sender_email}</span>
-                  <span className="sr-contact-info">{shipment.sender_phone}</span>
+              {/* Card: Shipment Info */}
+              <div className="sr-detail-card">
+                <div className="sr-card-header">
+                  <span className="sr-card-icon">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                    </svg>
+                  </span>
+                  <h4 className="sr-card-title">Shipment Info</h4>
                 </div>
-                <div className="sr-contact-block">
-                  <span className="sr-contact-lbl">Receiver</span>
-                  <div className="sr-contact-person">
-                    <div className="sr-avatar sr-avatar-sm" style={{ background: ra.bg, color: ra.color }}>
-                      {getInitials(shipment.receiver)}
-                    </div>
-                    <span className="sr-contact-name">{shipment.receiver}</span>
-                  </div>
-                  <span className="sr-contact-info">{shipment.receiver_email}</span>
-                  <span className="sr-contact-info">{shipment.receiver_phone}</span>
+                <div className="sr-fields">
+                  <Field label="Shipment Code" value={data.shipment_code} />
+                  <Field label="Trip ID" value={data.trip_id} />
+                  <Field label="Created" value={data.created_at ? new Date(data.created_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : null} />
+                  <Field label="Total Price" value={data.total_price ? `Nu. ${Number(data.total_price).toLocaleString()}` : null} />
+                  <Field label="Delivery Mode" value={data.delivery_mode} />
+                  <Field label="Source Hub" value={data.source_hub_name} />
+                  <Field label="Destination Hub" value={data.destination_hub_name} />
                 </div>
               </div>
-            </DetailCard>
 
-            {/* Actions */}
-            <DetailCard title="Actions">
-              <div className="sr-actions-grid">
-                <button className="sr-action-btn sr-action-primary">Track shipment</button>
-                <button className="sr-action-btn">Print label</button>
-                <button className="sr-action-btn">Duplicate</button>
-                <button className="sr-action-btn sr-action-danger">Cancel</button>
+              {/* Card: Contacts */}
+              <div className="sr-detail-card">
+                <div className="sr-card-header">
+                  <span className="sr-card-icon">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                      <circle cx="9" cy="7" r="4"/>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                  </span>
+                  <h4 className="sr-card-title">Contacts</h4>
+                </div>
+                <div className="sr-contacts-grid">
+                  <div className="sr-contact-block">
+                    <span className="sr-contact-role">Sender</span>
+                    <div className="sr-contact-person">
+                      <div className="sr-avatar sr-avatar-md" style={{ background: sa.bg, color: sa.color, borderColor: sa.border }}>
+                        {getInitials(data.sender_name || '')}
+                      </div>
+                      <div>
+                        <p className="sr-contact-name">{data.sender_name || 'Unknown'}</p>
+                        <p className="sr-contact-phone">{data.sender_phone || '—'}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="sr-contact-block">
+                    <span className="sr-contact-role">Receiver</span>
+                    <div className="sr-contact-person">
+                      <div className="sr-avatar sr-avatar-md" style={{ background: ra.bg, color: ra.color, borderColor: ra.border }}>
+                        {getInitials(data.receiver_name || '')}
+                      </div>
+                      <div>
+                        <p className="sr-contact-name">{data.receiver_name || 'Unknown'}</p>
+                        <p className="sr-contact-phone">{data.receiver_phone || '—'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </DetailCard>
 
-          </div>
+              {/* Card: Transporter */}
+              <div className="sr-detail-card">
+                <div className="sr-card-header">
+                  <span className="sr-card-icon">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="1" y="3" width="15" height="13" rx="1"/>
+                      <path d="M16 8h4l3 3v5h-7V8z"/>
+                      <circle cx="5.5" cy="18.5" r="2.5"/>
+                      <circle cx="18.5" cy="18.5" r="2.5"/>
+                    </svg>
+                  </span>
+                  <h4 className="sr-card-title">Transporter</h4>
+                </div>
+                <div className="sr-fields">
+                  <Field label="Name" value={data.transporter_name} />
+                  <Field label="Phone" value={data.transporter_phone} />
+                  <Field label="Transporter ID" value={data.transporter_id} />
+                  <Field label="Vehicle Model" value={data.vehicle_model} />
+                  <Field label="Vehicle Type" value={data.vehicle_type} />
+                  <Field label="Vehicle No." value={data.vehicle_no} />
+                  <Field label="Point Name" value={data.point_name} />
+                </div>
+              </div>
+
+              {/* Rejection info if present */}
+              {(data.rejection_reason || data.rejected_at) && (
+                <div className="sr-detail-card sr-detail-card-danger">
+                  <div className="sr-card-header">
+                    <span className="sr-card-icon sr-icon-danger">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="15" y1="9" x2="9" y2="15"/>
+                        <line x1="9" y1="9" x2="15" y2="15"/>
+                      </svg>
+                    </span>
+                    <h4 className="sr-card-title">Rejection Info</h4>
+                  </div>
+                  <div className="sr-fields">
+                    <Field label="Reason" value={data.rejection_reason} />
+                    <Field label="Rejected At" value={data.rejected_at ? new Date(data.rejected_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : null} />
+                  </div>
+                </div>
+              )}
+
+            </div>
+          )}
         </div>
       </div>
-
     </div>
   );
 }

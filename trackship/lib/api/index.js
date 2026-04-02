@@ -27,4 +27,5 @@ export {
 
 export {
   getShipments,
+  getShipmentById,
 } from './shipments';
