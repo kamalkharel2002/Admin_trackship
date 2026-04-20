@@ -1,0 +1,251 @@
+/* DocumentModal.css */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --doc-font:        'Plus Jakarta Sans', sans-serif;
+  --doc-yellow:      #F5B700;
+  --doc-yellow-dark: #e5a900;
+  --doc-yellow-ring: rgba(245, 183, 0, 0.13);
+  --doc-text:        #1A1A2E;
+  --doc-muted:       #94A3B8;
+  --doc-secondary:   #64748B;
+  --doc-border:      #EEE9DF;
+  --doc-card:        #FFFFFF;
+  --doc-surface:     #FAFAF7;
+  --doc-ease:        cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes doc-backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes doc-modal-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.doc-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 15, 25, 0.45);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+  animation: doc-backdrop-in 0.18s ease both;
+}
+
+.doc-modal {
+  background: var(--doc-card);
+  border-radius: 18px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--doc-border);
+  font-family: var(--doc-font);
+  animation: doc-modal-in 0.22s var(--doc-ease) both;
+  overflow: hidden;
+}
+
+.doc-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #F0EBE1;
+  flex-shrink: 0;
+}
+
+.doc-modal-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--doc-text);
+  letter-spacing: -0.02em;
+  margin: 0;
+  font-family: var(--doc-font);
+}
+
+.doc-modal-close {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--doc-border);
+  background: var(--doc-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--doc-muted);
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.doc-modal-close:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #ef4444;
+}
+
+.doc-modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.doc-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 12px;
+  text-align: center;
+  color: var(--doc-muted);
+}
+
+.doc-empty svg {
+  opacity: 0.5;
+}
+
+.doc-empty p {
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.doc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.doc-item {
+  padding: 16px;
+  border: 1px solid var(--doc-border);
+  border-radius: 12px;
+  background: var(--doc-surface);
+  transition: all 0.15s ease;
+}
+
+.doc-item:hover {
+  border-color: var(--doc-yellow);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.doc-item-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.doc-item-info svg {
+  color: var(--doc-yellow);
+  flex-shrink: 0;
+}
+
+.doc-item-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--doc-text);
+  margin-bottom: 6px;
+  font-family: var(--doc-font);
+}
+
+.doc-view-btn {
+  background: none;
+  border: none;
+  color: var(--doc-yellow);
+  font-size: 0.73rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--doc-font);
+  transition: color 0.15s ease;
+}
+
+.doc-view-btn:hover {
+  color: var(--doc-yellow-dark);
+  text-decoration: underline;
+}
+
+.doc-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 16px 24px 20px;
+  border-top: 1px solid #F0EBE1;
+  flex-shrink: 0;
+}
+
+.doc-btn-close {
+  padding: 9px 20px;
+  border-radius: 9px;
+  border: 1.5px solid var(--doc-border);
+  background: var(--doc-card);
+  font-family: var(--doc-font);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--doc-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.doc-btn-close:hover {
+  background: var(--doc-surface);
+  color: var(--doc-text);
+  border-color: #d4cfc6;
+}
+
+@media (max-width: 600px) {
+  .doc-modal {
+    max-width: 100%;
+    margin: 16px;
+    max-height: 90vh;
+  }
+  
+  .doc-modal-header,
+  .doc-modal-body,
+  .doc-modal-footer {
+    padding: 16px;
+  }
+  
+  .doc-item-info {
+    gap: 10px;
+  }
+  
+  .doc-item-info svg {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.doc-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 16px;
+  text-align: center;
+  color: var(--doc-muted);
+}
+
+.doc-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--doc-border);
+  border-top-color: var(--doc-yellow);
+  border-radius: 50%;
+  animation: doc-spin 0.8s linear infinite;
+}
+
+@keyframes doc-spin {
+  to { transform: rotate(360deg); }
+}

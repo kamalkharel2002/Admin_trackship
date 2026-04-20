@@ -17,7 +17,6 @@ export {
   getCoordinators,
 } from './hub';
 
-
 export {
   getUsers,
   createUser,
@@ -29,3 +28,14 @@ export {
   getShipments,
   getShipmentById,
 } from './shipments';
+
+export {
+  getTransporters,
+  getPendingTransporters as getPendingTransportersAdmin,
+  getTransporterById,
+  createTransporter,
+  updateTransporter,
+  deleteTransporter,
+  getAdminTransporterDocuments,
+  verifyTransporter,
+} from './transporter';
