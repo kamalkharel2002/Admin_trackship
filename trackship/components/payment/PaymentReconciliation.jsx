@@ -1,13 +1,18 @@
 'use client';
+import { useState } from 'react';
 import './PaymentReconciliation.css';
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 function formatCurrency(amount) {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'BTN',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount || 0).replace('BTN', 'Nu.');
+  if (amount === null || amount === undefined) return '—';
+  return (
+    'Nu. ' +
+    new Intl.NumberFormat('en-IN', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount)
+  );
 }
 
 function formatDate(dateStr) {
@@ -19,132 +24,189 @@ function formatDate(dateStr) {
   });
 }
 
-function PaymentStatusBadge({ status }) {
-  const getConfig = () => {
-    if (status === 'Paid to Transporter') return { label: 'Paid to Transporter', cls: 'paid-transporter', icon: '🚚' };
-    if (status === 'Paid to Hub') return { label: 'Paid to Hub', cls: 'paid-hub', icon: '🏢' };
-    return { label: 'Unpaid', cls: 'unpaid', icon: '⚠️' };
-  };
-  const config = getConfig();
+// ─── Status Badge ─────────────────────────────────────────────────────────────
+
+const STATUS_CLASS = {
+  'Paid to Transporter': { cls: 'transporter', label: 'Paid · Transporter' },
+  'Paid to Hub':         { cls: 'hub',          label: 'Paid · Hub' },
+  'Unpaid':              { cls: 'unpaid',        label: 'Unpaid' },
+};
+
+function StatusBadge({ status }) {
+  const { cls, label } = STATUS_CLASS[status] || STATUS_CLASS['Unpaid'];
   return (
-    <span className={`payment-status-badge ${config.cls}`}>
-      <span className="payment-status-icon">{config.icon}</span>
-      {config.label}
+    <span className={`pr-status-badge ${cls}`}>
+      <span className="pr-status-dot" />
+      {label}
     </span>
   );
 }
 
-const MoneyIcon = () => (
-  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7"
-    strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-    <circle cx="12" cy="12" r="10"/>
-    <path d="M12 6v6l4 2"/>
-  </svg>
-);
+// ─── Summary Bar ──────────────────────────────────────────────────────────────
+
+function SummaryBar({ summary }) {
+  const items = [
+    { label: 'Total Shipments',    value: summary?.totalShipments ?? 0,              cls: '' },
+    { label: 'Total Revenue',      value: formatCurrency(summary?.totalRevenue),      cls: '' },
+    { label: 'Collected',          value: formatCurrency(summary?.totalCollected),    cls: 'green' },
+    { label: 'Outstanding',        value: formatCurrency(summary?.outstandingAmount), cls: 'red' },
+    { label: 'Paid · Transporter', value: summary?.paidToTransporterCount ?? 0,       cls: '' },
+    { label: 'Paid · Hub',         value: summary?.paidToHubCount ?? 0,               cls: '' },
+    { label: 'Unpaid',             value: summary?.unpaidCount ?? 0,                  cls: 'red' },
+  ];
+
+  return (
+    <div className="pr-summary-bar">
+      {items.map((item, i) => (
+        <div key={i} className="pr-summary-item">
+          <span className="pr-summary-label">{item.label}</span>
+          <span className={`pr-summary-value ${item.cls}`}>{item.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Table Headers ────────────────────────────────────────────────────────────
+
+const HEADERS = [
+  'Shipment Code', 'Date', 'Sender', 'Receiver',
+  'Total', 'Payment Status', 'Paid / Remaining', 'Mode',
+];
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function PaymentReconciliation({ data, page, onPageChange }) {
   if (!data) return null;
 
-  const summary = data.summary;
+  const { summary, shipments = [], pagination } = data;
+  const isRoadside = (mode) => mode === 'Route_Side';
 
   return (
-    <>
-      <div className="pr-summary-bar">
-        <div className="pr-summary-item">
-          <span className="pr-summary-label">Total Shipments</span>
-          <span className="pr-summary-value">{summary?.totalShipments || 0}</span>
-        </div>
-        <div className="pr-summary-item">
-          <span className="pr-summary-label">Total Revenue</span>
-          <span className="pr-summary-value">{formatCurrency(summary?.totalRevenue)}</span>
-        </div>
-        <div className="pr-summary-item">
-          <span className="pr-summary-label">Collected</span>
-          <span className="pr-summary-value green">{formatCurrency(summary?.totalCollected)}</span>
-        </div>
-        <div className="pr-summary-item">
-          <span className="pr-summary-label">Outstanding</span>
-          <span className="pr-summary-value red">{formatCurrency(summary?.outstandingAmount)}</span>
-        </div>
-        <div className="pr-summary-item">
-          <span className="pr-summary-label">Paid to Transporter</span>
-          <span className="pr-summary-value">{summary?.paidToTransporterCount || 0}</span>
-        </div>
-        <div className="pr-summary-item">
-          <span className="pr-summary-label">Paid to Hub</span>
-          <span className="pr-summary-value">{summary?.paidToHubCount || 0}</span>
-        </div>
-        <div className="pr-summary-item">
-          <span className="pr-summary-label">Unpaid</span>
-          <span className="pr-summary-value red">{summary?.unpaidCount || 0}</span>
-        </div>
-      </div>
+    <div className="pr-root">
+      <SummaryBar summary={summary} />
 
       <div className="pr-table-wrap">
-        <div className="pr-table-head reconciliation-head">
-          <div className="pr-table-th">Shipment Code</div>
-          <div className="pr-table-th">Date</div>
-          <div className="pr-table-th">Sender</div>
-          <div className="pr-table-th">Receiver</div>
-          <div className="pr-table-th">Total</div>
-          <div className="pr-table-th">Payment Status</div>
-          <div className="pr-table-th">Paid / Remaining</div>
-          <div className="pr-table-th">Delivery Mode</div>
+        {/* Head */}
+        <div className="pr-table-head">
+          {HEADERS.map((h) => (
+            <div key={h} className="pr-table-th">{h}</div>
+          ))}
         </div>
 
-        {data.shipments?.length === 0 ? (
+        {/* Body */}
+        {shipments.length === 0 ? (
           <div className="pr-empty-state">
-            <div className="pr-empty-icon"><MoneyIcon /></div>
+            <div className="pr-empty-icon">
+              <svg width="20" height="20" fill="none" stroke="#9CA3AF" strokeWidth="1.8"
+                strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 8v4l3 3" />
+              </svg>
+            </div>
             <p className="pr-empty-title">No shipments found</p>
             <p className="pr-empty-sub">Try adjusting your filters</p>
           </div>
         ) : (
-          data.shipments.map(shipment => (
-            <div key={shipment.shipmentId} className="pr-table-row reconciliation-row">
-              <div className="pr-table-cell pr-code">{shipment.shipmentCode}</div>
-              <div className="pr-table-cell">{formatDate(shipment.createdAt)}</div>
-              <div className="pr-table-cell">{shipment.senderName}</div>
-              <div className="pr-table-cell">{shipment.receiverName}</div>
-              <div className="pr-table-cell pr-amount">{formatCurrency(shipment.totalPrice)}</div>
+          shipments.map((s) => (
+            <div key={s.shipmentId} className="pr-table-row">
+              {/* Shipment Code */}
               <div className="pr-table-cell">
-                <PaymentStatusBadge status={shipment.overallPaymentStatus} />
+                <span className="pr-code-chip">{s.shipmentCode}</span>
               </div>
+
+              {/* Date */}
+              <div className="pr-table-cell date">
+                {formatDate(s.createdAt)}
+              </div>
+
+              {/* Sender */}
+              <div className="pr-table-cell name" title={s.senderName}>
+                {s.senderName}
+              </div>
+
+              {/* Receiver */}
+              <div className="pr-table-cell name" title={s.receiverName}>
+                {s.receiverName}
+              </div>
+
+              {/* Total */}
+              <div className="pr-table-cell pr-amount">
+                {formatCurrency(s.totalPrice)}
+              </div>
+
+              {/* Status */}
               <div className="pr-table-cell">
-                <div className="pr-payment-breakdown">
-                  <span className="pr-paid">{formatCurrency(shipment.totalAmountPaid)}</span>
-                  <span className="pr-sep">/</span>
-                  <span className="pr-remaining">{formatCurrency(shipment.remainingAmount)}</span>
+                <StatusBadge status={s.overallPaymentStatus} />
+              </div>
+
+              {/* Paid / Remaining */}
+              <div className="pr-table-cell">
+                <div className="pr-breakdown">
+                  <span className="pr-breakdown-paid">
+                    {formatCurrency(s.totalAmountPaid)}
+                  </span>
+                  {s.remainingAmount > 0 && (
+                    <span className="pr-breakdown-remain">
+                      <span className="pr-breakdown-remain-label">rem. </span>
+                      {formatCurrency(s.remainingAmount)}
+                    </span>
+                  )}
                 </div>
               </div>
+
+              {/* Delivery Mode */}
               <div className="pr-table-cell">
-                <span className="pr-delivery-badge">{shipment.deliveryMode === 'Route_Side' ? 'Roadside' : 'Hub'}</span>
+                <span className={`pr-delivery-badge ${isRoadside(s.deliveryMode) ? 'roadside' : ''}`}>
+                  {isRoadside(s.deliveryMode) ? 'Roadside' : 'Hub'}
+                </span>
               </div>
             </div>
           ))
         )}
 
-        {data.pagination && data.shipments?.length > 0 && (
-          <div className="pr-table-footer">
+        {/* Footer */}
+        {pagination && shipments.length > 0 && (
+          <div className="pr-footer">
             <span className="pr-footer-info">
-              Showing {(data.pagination.currentPage - 1) * data.pagination.itemsPerPage + 1}–
-              {Math.min(data.pagination.currentPage * data.pagination.itemsPerPage, data.pagination.totalItems)} of {data.pagination.totalItems}
+              Showing{' '}
+              <strong>
+                {(pagination.currentPage - 1) * pagination.itemsPerPage + 1}
+                –{Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)}
+              </strong>{' '}
+              of <strong>{pagination.totalItems}</strong> shipments
             </span>
+
             <div className="pr-pagination">
               <button
                 className="pr-page-btn"
                 disabled={page === 1}
-                onClick={() => onPageChange(p => p - 1)}
+                onClick={() => onPageChange((p) => p - 1)}
+                aria-label="Previous page"
               >‹</button>
-              <button className="pr-page-btn active">{page}</button>
+
+              {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                .filter((p) => Math.abs(p - page) <= 2)
+                .map((p) => (
+                  <button
+                    key={p}
+                    className={`pr-page-btn ${p === page ? 'active' : ''}`}
+                    onClick={() => onPageChange(() => p)}
+                  >
+                    {p}
+                  </button>
+                ))}
+
               <button
                 className="pr-page-btn"
-                disabled={page === data.pagination.totalPages}
-                onClick={() => onPageChange(p => p + 1)}
+                disabled={page === pagination.totalPages}
+                onClick={() => onPageChange((p) => p + 1)}
+                aria-label="Next page"
               >›</button>
             </div>
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 }

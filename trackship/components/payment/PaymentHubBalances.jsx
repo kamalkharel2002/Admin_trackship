@@ -1,77 +1,128 @@
 'use client';
 import './PaymentHubBalances.css';
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 function formatCurrency(amount) {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'BTN',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount || 0).replace('BTN', 'Nu.');
+  if (amount === null || amount === undefined) return '—';
+  return (
+    'Nu. ' +
+    new Intl.NumberFormat('en-IN', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount)
+  );
 }
 
-const WalletIcon = () => (
-  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7"
-    strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-    <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/>
-    <path d="M4 6v12a2 2 0 0 0 2 2h14v-6"/>
-    <path d="M18 12a2 2 0 0 1 0 4"/>
-  </svg>
-);
+function getInitials(name = '') {
+  return name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? '')
+    .join('');
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function SummaryBar({ summary }) {
+  const items = [
+    { label: 'Total Hubs',        value: summary?.totalHubs ?? 0 },
+    { label: 'Total Cash Balance', value: formatCurrency(summary?.totalCashBalance) },
+    { label: 'Avg Balance / Hub',  value: formatCurrency(summary?.averageBalancePerHub) },
+    { label: 'Total Inflow',       value: formatCurrency(summary?.totalCashInflow) },
+  ];
+
+  return (
+    <div className="phb-summary-bar">
+      {items.map((item, i) => (
+        <div key={i} className="phb-summary-item">
+          <span className="phb-summary-label">{item.label}</span>
+          <span className="phb-summary-value">{item.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const HEADERS = [
+  'Hub Name',
+  'Region',
+  'Current Balance',
+  'Customer Payments',
+  'Transporter Settlements',
+  'Shipments',
+];
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function PaymentHubBalances({ data }) {
   if (!data) return null;
 
+  const hubs = data.hubs ?? [];
+
   return (
-    <>
-      <div className="pr-summary-bar">
-        <div className="pr-summary-item">
-          <span className="pr-summary-label">Total Hubs</span>
-          <span className="pr-summary-value">{data.summary?.totalHubs || 0}</span>
-        </div>
-        <div className="pr-summary-item">
-          <span className="pr-summary-label">Total Cash Balance</span>
-          <span className="pr-summary-value">{formatCurrency(data.summary?.totalCashBalance)}</span>
-        </div>
-        <div className="pr-summary-item">
-          <span className="pr-summary-label">Avg Balance/Hub</span>
-          <span className="pr-summary-value">{formatCurrency(data.summary?.averageBalancePerHub)}</span>
-        </div>
-        <div className="pr-summary-item">
-          <span className="pr-summary-label">Total Inflow</span>
-          <span className="pr-summary-value">{formatCurrency(data.summary?.totalCashInflow)}</span>
-        </div>
-      </div>
+    <div className="phb-root">
+      <SummaryBar summary={data.summary} />
 
-      <div className="pr-table-wrap">
-        <div className="pr-table-head hub-balances-head">
-          <div className="pr-table-th">Hub Name</div>
-          <div className="pr-table-th">Region</div>
-          <div className="pr-table-th">Current Balance</div>
-          <div className="pr-table-th">Customer Payments</div>
-          <div className="pr-table-th">Transporter Settlements</div>
-          <div className="pr-table-th">Shipments</div>
+      <div className="phb-table-wrap">
+        {/* Head */}
+        <div className="phb-table-head">
+          {HEADERS.map((h) => (
+            <div key={h} className="phb-table-th">{h}</div>
+          ))}
         </div>
 
-        {data.hubs?.length === 0 ? (
-          <div className="pr-empty-state">
-            <div className="pr-empty-icon"><WalletIcon /></div>
-            <p className="pr-empty-title">No hubs found</p>
-            <p className="pr-empty-sub">Try adjusting your region filter</p>
+        {/* Body */}
+        {hubs.length === 0 ? (
+          <div className="phb-empty-state">
+            <div className="phb-empty-icon">
+              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8"
+                strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/>
+                <path d="M4 6v12a2 2 0 0 0 2 2h14v-6"/>
+                <path d="M18 12a2 2 0 0 1 0 4"/>
+              </svg>
+            </div>
+            <p className="phb-empty-title">No hubs found</p>
+            <p className="phb-empty-sub">Try adjusting your region filter</p>
           </div>
         ) : (
-          data.hubs.map(hub => (
-            <div key={hub.hubId} className="pr-table-row hub-balances-row">
-              <div className="pr-table-cell pr-hub-name">{hub.name}</div>
-              <div className="pr-table-cell">{hub.region}</div>
-              <div className="pr-table-cell pr-amount pr-balance">{formatCurrency(hub.currentCashBalance)}</div>
-              <div className="pr-table-cell">{formatCurrency(hub.totalCustomerPayments)}</div>
-              <div className="pr-table-cell">{formatCurrency(hub.totalTransporterSettlements)}</div>
-              <div className="pr-table-cell">{hub.shipmentsProcessed}</div>
+          hubs.map((hub) => (
+            <div key={hub.hubId} className="phb-table-row">
+              {/* Hub Name */}
+              <div className="phb-table-cell phb-hub-name">
+                <div className="phb-hub-avatar">{getInitials(hub.name)}</div>
+                {hub.name}
+              </div>
+
+              {/* Region */}
+              <div className="phb-table-cell">
+                <span className="phb-region-badge">{hub.region}</span>
+              </div>
+
+              {/* Current Balance */}
+              <div className="phb-table-cell phb-balance">
+                {formatCurrency(hub.currentCashBalance)}
+              </div>
+
+              {/* Customer Payments */}
+              <div className="phb-table-cell phb-amount">
+                {formatCurrency(hub.totalCustomerPayments)}
+              </div>
+
+              {/* Transporter Settlements */}
+              <div className="phb-table-cell phb-amount">
+                {formatCurrency(hub.totalTransporterSettlements)}
+              </div>
+
+              {/* Shipments */}
+              <div className="phb-table-cell phb-shipments">
+                {hub.shipmentsProcessed ?? '—'}
+              </div>
             </div>
           ))
         )}
       </div>
-    </>
+    </div>
   );
 }
