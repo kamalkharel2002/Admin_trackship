@@ -19,18 +19,16 @@ export const ENDPOINTS = {
     pending: `${API_BASE}/admin/transporters/pending`,
   },
   hubs: {
-    list:        `${API_BASE}/admin/hub`,            // GET list / POST create
-    byId: (id) => `${API_BASE}/admin/hub/${id}`,    // PUT update / DELETE
+    list:           `${API_BASE}/admin/hub`,
+    byId:   (id) => `${API_BASE}/admin/hub/${id}`,
+    coordinators:       `${API_BASE}/admin/hub-coordinator/list`,      
+    coordinatorsByHub: (id) => `${API_BASE}/admin/hub/${id}/coordinators`, 
   },
   user: {
-    list:   `${API_BASE}/admin/users`,
-    create: `${API_BASE}/admin/users`,
+    list:           `${API_BASE}/admin/users`,
+    create:         `${API_BASE}/admin/users`,
     update: (id) => `${API_BASE}/admin/users/${id}`,
     delete: (id) => `${API_BASE}/admin/users/${id}`,
-  },
-  shipments: {
-    list: `${API_BASE}/admin/shipments`,
-    byId: (id) => `${API_BASE}/admin/shipments/${id}`,
   },
 };
 

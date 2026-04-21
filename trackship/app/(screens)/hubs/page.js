@@ -12,8 +12,8 @@ import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { Plus, Warehouse, AlertCircle } from 'lucide-react';
 
-import HubStats   from '@/components/hub/HubStats';
-import HubCard    from '@/components/hub/HubCard';
+import HubStats from '@/components/hub/HubStats';
+import HubCard from '@/components/hub/HubCard';
 import { SuccessDialog, DeleteConfirm } from '@/components/hub/HubDialogs';
 
 import {
@@ -22,28 +22,30 @@ import {
   updateHub,
   deleteHub,
   getCoordinators,
+  getHubCoordinatorsForEdits,
 } from '@/lib/api';
 
 import s from './hubs.module.css';
 
 // Dynamic import — Leaflet requires browser APIs, can't run on server
-const HubMap   = dynamic(() => import('@/components/hub/HubMap'),   { ssr: false, loading: () => null });
+const HubMap = dynamic(() => import('@/components/hub/HubMap'), { ssr: false, loading: () => null });
 const HubModal = dynamic(() => import('@/components/hub/HubModal'), { ssr: false });
 
 export default function HubsPage() {
-  const [hubs,         setHubs]         = useState([]);
+  const [hubs, setHubs] = useState([]);
   const [coordinators, setCoordinators] = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [error,        setError]        = useState(null);
+  const [editCoordinators, setEditCoordinators] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Modal states
-  const [modal,   setModal]   = useState(null);  // null | 'add' | 'edit'
+  const [modal, setModal] = useState(null);  // null | 'add' | 'edit'
   const [editing, setEditing] = useState(null);  // hub being edited
 
   // Dialog states
-  const [success,  setSuccess]  = useState(null);  // success message string
+  const [success, setSuccess] = useState(null);  // success message string
   const [deleting, setDeleting] = useState(null);  // hub to delete
-  const [delLoad,  setDelLoad]  = useState(false);
+  const [delLoad, setDelLoad] = useState(false);
 
   // ── Fetch hubs + coordinators on mount ──────────────────────────────────
   const load = useCallback(async () => {
@@ -64,6 +66,16 @@ export default function HubsPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // function to refresh coordinators list after adding/editing a hub, since coordinators can be assigned to hubs
+  const refreshCoordinators = useCallback(async () => {
+    try {
+      const coordList = await getCoordinators();
+      setCoordinators(coordList);
+    } catch (err) {
+      console.error('Failed to refresh coordinators', err);
+    }
+  }, []);
 
   // ── Add / Edit submit ────────────────────────────────────────────────────
   const handleSubmit = async (formData, hubId) => {
@@ -97,7 +109,19 @@ export default function HubsPage() {
     }
   };
 
-  const openEdit = (hub) => { setEditing(hub); setModal('edit'); };
+  const openEdit = async (hub) => {
+    setEditing(hub);
+    try {
+      // Fetch coordinators with assignment status for this hub
+      const hubCoords = await getHubCoordinatorsForEdits(hub.id);
+      setEditCoordinators(hubCoords);
+    } catch (err) {
+      console.error('Failed to fetch hub coordinators', err);
+      // Fallback to all coordinators if endpoint fails
+      setEditCoordinators(coordinators.map(c => ({ ...c, is_assigned: false })));
+    }
+    setModal('edit');
+  };
   const closeModal = () => { setModal(null); setEditing(null); };
 
   return (
@@ -161,9 +185,10 @@ export default function HubsPage() {
       {modal && (
         <HubModal
           hub={modal === 'edit' ? editing : null}
-          coordinators={coordinators}
+          coordinators={modal === 'edit' ? editCoordinators : coordinators}
           onClose={closeModal}
           onSubmit={handleSubmit}
+          onRefreshCoordinators={refreshCoordinators}
         />
       )}
 
