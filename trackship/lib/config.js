@@ -1,7 +1,7 @@
 // lib/config.js
 
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || 'http://192.168.56.1:3000/api';
+  process.env.NEXT_PUBLIC_API_URL || 'http://192.168.208.1:3000/api';
 
 export const REQUEST_TIMEOUT = 15000;
 
@@ -49,19 +49,43 @@ export const ENDPOINTS = {
     earningsBreakdown: `${API_BASE}/transporter/earnings/breakdown`,
     updateProfile: `${API_BASE}/transporter/profile/update`,
   },
+  paymentReports: {
+    // Remove '/admin' from these paths to match your backend
+    dashboardSummary:        `${API_BASE}/payment-reports/dashboard-summary`,
+    cashLedger:              `${API_BASE}/payment-reports/cash-ledger`,
+    paymentReconciliation:   `${API_BASE}/payment-reports/payment-reconciliation`,
+    hubCashBalance:          `${API_BASE}/payment-reports/hub-cash-balance`,
+    filterOptions:           `${API_BASE}/payment-reports/filter-options`,
+    exportCashLedger:        `${API_BASE}/payment-reports/cash-ledger/export`,
+    exportPaymentReconciliation: `${API_BASE}/payment-reports/payment-reconciliation/export`,
+  },
 };
 
 export function buildQueryString(params = {}) {
   const queryParams = {};
+  
+  // Common params
   if (params.startDate) queryParams.startDate = params.startDate;
   if (params.endDate)   queryParams.endDate   = params.endDate;
   if (params.status)    queryParams.status    = params.status;
   if (params.page)      queryParams.page      = params.page;
   if (params.limit)     queryParams.limit     = params.limit;
   
+  // Payment report specific params
+  if (params.hubId)                queryParams.hubId = params.hubId;
+  if (params.sourceHubId)          queryParams.sourceHubId = params.sourceHubId;
+  if (params.destinationHubId)     queryParams.destinationHubId = params.destinationHubId;
+  if (params.transactionType)      queryParams.transactionType = params.transactionType;
+  if (params.transporterId)        queryParams.transporterId = params.transporterId;
+  if (params.paymentStatus)        queryParams.paymentStatus = params.paymentStatus;
+  if (params.deliveryMode)         queryParams.deliveryMode = params.deliveryMode;
+  if (params.region)               queryParams.region = params.region;
+  
+  // Filter out undefined, null, or empty values
   const filtered = Object.entries(queryParams).filter(
-    ([, v]) => v !== undefined && v !== null && v !== ''
+    ([, v]) => v !== undefined && v !== null && v !== '' && v !== 'all'
   );
+  
   if (!filtered.length) return '';
   return '?' + new URLSearchParams(Object.fromEntries(filtered)).toString();
 }

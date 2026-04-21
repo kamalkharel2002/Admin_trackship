@@ -1,0 +1,72 @@
+.reconciliation-head {
+  grid-template-columns: 140px 90px 1fr 1fr 90px 150px 110px 100px;
+}
+
+.reconciliation-row {
+  grid-template-columns: 140px 90px 1fr 1fr 90px 150px 110px 100px;
+}
+
+.payment-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.payment-status-badge.paid-transporter {
+  background: var(--pr-blue-dim);
+  color: var(--pr-blue);
+  border: 1px solid rgba(29, 111, 164, 0.2);
+}
+
+.payment-status-badge.paid-hub {
+  background: var(--pr-green-dim);
+  color: var(--pr-green);
+  border: 1px solid var(--pr-green-border);
+}
+
+.payment-status-badge.unpaid {
+  background: var(--pr-red-dim);
+  color: var(--pr-red);
+  border: 1px solid var(--pr-red-border);
+}
+
+.payment-status-icon {
+  font-size: 0.65rem;
+}
+
+.pr-delivery-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  background: var(--pr-surface);
+  color: var(--pr-ink-40);
+  border: 1px solid var(--pr-border);
+}
+
+.pr-payment-breakdown {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+}
+
+.pr-payment-breakdown .pr-paid {
+  color: var(--pr-green);
+  font-weight: 600;
+}
+
+.pr-payment-breakdown .pr-remaining {
+  color: var(--pr-red);
+  font-weight: 600;
+}
+
+.pr-payment-breakdown .pr-sep {
+  color: var(--pr-ink-20);
+}

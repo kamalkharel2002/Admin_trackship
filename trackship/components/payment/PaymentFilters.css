@@ -1,0 +1,100 @@
+.pr-filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--pr-card);
+  border: 1px solid var(--pr-border);
+  border-radius: 12px;
+  margin-bottom: 24px;
+  box-shadow: var(--pr-shadow-sm);
+}
+
+.pr-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pr-filter-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--pr-ink-40);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pr-filter-input,
+.pr-filter-select {
+  padding: 7px 10px;
+  border: 1px solid var(--pr-border);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-family: var(--pr-font);
+  color: var(--pr-ink);
+  background: var(--pr-card);
+  outline: none;
+  transition: all 0.13s ease;
+  min-width: 130px;
+}
+
+.pr-filter-input:focus,
+.pr-filter-select:focus {
+  border-color: var(--pr-amber);
+  box-shadow: 0 0 0 3px var(--pr-amber-ring);
+}
+
+.pr-filter-reset {
+  padding: 7px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--pr-border);
+  background: var(--pr-surface);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--pr-ink-40);
+  cursor: pointer;
+  transition: all 0.13s ease;
+}
+
+.pr-filter-reset:hover {
+  border-color: var(--pr-red-border);
+  color: var(--pr-red);
+  background: var(--pr-red-dim);
+}
+
+.pr-export-buttons {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.pr-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--pr-green-border);
+  background: var(--pr-green-dim);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--pr-green);
+  cursor: pointer;
+  transition: all 0.13s ease;
+}
+
+.pr-export-btn:hover:not(:disabled) {
+  background: var(--pr-green);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(26, 158, 92, 0.3);
+}
+
+.pr-export-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

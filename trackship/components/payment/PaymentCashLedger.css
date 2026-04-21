@@ -1,0 +1,17 @@
+.cash-ledger-head {
+  grid-template-columns: 160px 140px 100px 120px 1fr 140px 120px;
+}
+
+.cash-ledger-row {
+  grid-template-columns: 160px 140px 100px 120px 1fr 140px 120px;
+}
+
+.pr-tx-type-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  background: var(--pr-amber-dim);
+  color: var(--pr-amber);
+}

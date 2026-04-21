@@ -1,0 +1,17 @@
+.hub-balances-head {
+  grid-template-columns: 1.2fr 0.8fr 140px 140px 140px 100px;
+}
+
+.hub-balances-row {
+  grid-template-columns: 1.2fr 0.8fr 140px 140px 140px 100px;
+}
+
+.pr-table-cell.pr-hub-name {
+  font-weight: 600;
+  color: var(--pr-ink);
+}
+
+.pr-table-cell.pr-balance {
+  color: var(--pr-green);
+  font-weight: 700;
+}
