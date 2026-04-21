@@ -1,0 +1,42 @@
+.pr-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pr-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--pr-ink);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.pr-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--pr-border);
+  background: var(--pr-card);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--pr-ink-40);
+  cursor: pointer;
+  transition: all 0.13s ease;
+}
+
+.pr-refresh-btn:hover:not(:disabled) {
+  border-color: var(--pr-amber-border);
+  color: var(--pr-amber);
+  background: var(--pr-amber-dim);
+}
+
+.pr-refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
