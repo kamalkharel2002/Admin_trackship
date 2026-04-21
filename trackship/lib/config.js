@@ -22,12 +22,14 @@ export const ENDPOINTS = {
     verify:    (id) => `${API_BASE}/admin/transporters/${id}/verify`,
   },
   hubs: {
-    list:        `${API_BASE}/admin/hub`,
-    byId: (id) => `${API_BASE}/admin/hub/${id}`,
+    list:           `${API_BASE}/admin/hub`,
+    byId:   (id) => `${API_BASE}/admin/hub/${id}`,
+    coordinators:       `${API_BASE}/admin/hub-coordinator/list`,      
+    coordinatorsByHub: (id) => `${API_BASE}/admin/hub/${id}/coordinators`, 
   },
   user: {
-    list:   `${API_BASE}/admin/users`,
-    create: `${API_BASE}/admin/users`,
+    list:           `${API_BASE}/admin/users`,
+    create:         `${API_BASE}/admin/users`,
     update: (id) => `${API_BASE}/admin/users/${id}`,
     delete: (id) => `${API_BASE}/admin/users/${id}`,
   },

@@ -10,7 +10,7 @@ const ROWS_PER_PAGE = 10;
 const ROLES = [
   { id: 'customer',         label: 'Customer',        color: '#F5B700' },
   { id: 'transporter',      label: 'Transporter',     color: '#0EA5E9' },
-  { id: 'hub_coordinator',  label: 'Hub Coordinator', color: '#22C55E' },
+  { id: 'hub-coordinator',  label: 'Hub Coordinator', color: '#22C55E' },
 ];
 
 const CloseIcon = () => (
@@ -266,8 +266,7 @@ export default function UsersTable({ selected, setSelected, onUpdate }) {
                     <select className="ut-select" value={form.role}
                       onChange={e => setForm({ ...form, role: e.target.value })}>
                       <option value="customer">Customer</option>
-                      <option value="transporter">Transporter</option>
-                      <option value="hub_coordinator">Hub Coordinator</option>
+                      <option value="hub-coordinator">Hub Coordinator</option>
                     </select>
                   </div>
                 </>

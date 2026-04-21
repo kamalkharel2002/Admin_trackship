@@ -15,6 +15,7 @@ export {
   updateHub,
   deleteHub,
   getCoordinators,
+  getHubCoordinatorsForEdits,
 } from './hub';
 
 export {
