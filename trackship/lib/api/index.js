@@ -1,14 +1,11 @@
 // lib/api/index.js
-
 export { loginUser, logoutUser } from './auth';
-
 export {
   getDashboardSummary,
   getHubShipments,
   getPendingTransporters,
   getAdminProfile,
 } from './dashboard';
-
 export {
   getHubs,
   createHub,
@@ -17,19 +14,16 @@ export {
   getCoordinators,
   getHubCoordinatorsForEdits,
 } from './hub';
-
 export {
   getUsers,
   createUser,
   updateUser,
   deleteUser,
 } from './users';
-
 export {
   getShipments,
   getShipmentById,
 } from './shipments';
-
 export {
   getTransporters,
   getPendingTransporters as getPendingTransportersAdmin,
@@ -40,7 +34,6 @@ export {
   getAdminTransporterDocuments,
   verifyTransporter,
 } from './transporter';
-
 export {
   getPaymentDashboardSummary,
   getCashLedgerReport,
@@ -50,3 +43,12 @@ export {
   exportCashLedgerCSV,
   exportPaymentReconciliationCSV,
 } from './payment';
+export {
+  getTotalRevenue,
+  getTotalDeliveredShipments,
+  getMonthlyRevenueGraph,
+  getShipmentStatusDistribution,
+  getReportDashboardSummary,
+  exportRevenueCSV,
+  exportShipmentCSV,
+} from './report';

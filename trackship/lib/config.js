@@ -1,7 +1,7 @@
 // lib/config.js
 
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || 'http://192.168.208.1:3000/api';
+  process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.64:3000/api';
 
 export const REQUEST_TIMEOUT = 15000;
 
@@ -52,7 +52,6 @@ export const ENDPOINTS = {
     updateProfile: `${API_BASE}/transporter/profile/update`,
   },
   paymentReports: {
-    // Remove '/admin' from these paths to match your backend
     dashboardSummary:        `${API_BASE}/payment-reports/dashboard-summary`,
     cashLedger:              `${API_BASE}/payment-reports/cash-ledger`,
     paymentReconciliation:   `${API_BASE}/payment-reports/payment-reconciliation`,
@@ -61,17 +60,28 @@ export const ENDPOINTS = {
     exportCashLedger:        `${API_BASE}/payment-reports/cash-ledger/export`,
     exportPaymentReconciliation: `${API_BASE}/payment-reports/payment-reconciliation/export`,
   },
+  // ── Reports ──────────────────────────────────────────────────────────────
+  reports: {
+    totalRevenue:         `${API_BASE}/admin/reports/revenue/total`,
+    totalDelivered:       `${API_BASE}/admin/reports/shipments/delivered/total`,
+    monthlyRevenueGraph:  `${API_BASE}/admin/reports/revenue/monthly-graph`,
+    statusDistribution:   `${API_BASE}/admin/reports/shipments/status-distribution`,
+    exportRevenueCSV:     `${API_BASE}/admin/reports/export/revenue-csv`,
+    exportShipmentCSV:    `${API_BASE}/admin/reports/export/shipment-csv`,
+    dashboardSummary:     `${API_BASE}/admin/reports/dashboard/summary`,
+  },
 };
 
 export function buildQueryString(params = {}) {
   const queryParams = {};
   
-  // Common params
   if (params.startDate) queryParams.startDate = params.startDate;
   if (params.endDate)   queryParams.endDate   = params.endDate;
   if (params.status)    queryParams.status    = params.status;
   if (params.page)      queryParams.page      = params.page;
   if (params.limit)     queryParams.limit     = params.limit;
+  if (params.month)     queryParams.month     = params.month;
+  if (params.year)      queryParams.year      = params.year;
   
   // Payment report specific params
   if (params.hubId)                queryParams.hubId = params.hubId;
@@ -83,7 +93,6 @@ export function buildQueryString(params = {}) {
   if (params.deliveryMode)         queryParams.deliveryMode = params.deliveryMode;
   if (params.region)               queryParams.region = params.region;
   
-  // Filter out undefined, null, or empty values
   const filtered = Object.entries(queryParams).filter(
     ([, v]) => v !== undefined && v !== null && v !== '' && v !== 'all'
   );
