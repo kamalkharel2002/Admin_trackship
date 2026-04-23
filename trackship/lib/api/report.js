@@ -21,6 +21,13 @@ export async function getTotalDeliveredShipments(params = {}) {
 }
 
 /**
+ * GET /admin/reports/transporter/count
+ */
+export async function getTransporterCount() {
+  return request(ENDPOINTS.reports.transporterCount, { method: 'GET' });
+}
+
+/**
  * GET /admin/reports/revenue/monthly-graph
  * @param {{ year?: number }} params
  */
@@ -39,15 +46,8 @@ export async function getShipmentStatusDistribution(params = {}) {
 }
 
 /**
- * GET /admin/reports/dashboard/summary
- */
-export async function getReportDashboardSummary() {
-  return request(ENDPOINTS.reports.dashboardSummary, { method: 'GET' });
-}
-
-/**
  * Download Revenue CSV
- * @param {{ startDate?: string, endDate?: string }} params
+ * @param {{ start_date?: string, end_date?: string }} params
  */
 export async function exportRevenueCSV(params = {}) {
   const qs = buildQueryString(params);
@@ -59,17 +59,12 @@ export async function exportRevenueCSV(params = {}) {
   });
   if (!res.ok) throw new Error('Failed to export revenue CSV');
   const blob = await res.blob();
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `revenue-report-${params.startDate ?? 'all'}-${params.endDate ?? 'all'}.csv`;
-  a.click();
-  window.URL.revokeObjectURL(url);
+  triggerDownload(blob, `revenue-report-${params.start_date ?? 'all'}-to-${params.end_date ?? 'all'}.csv`);
 }
 
 /**
  * Download Shipment CSV
- * @param {{ startDate?: string, endDate?: string, status?: string }} params
+ * @param {{ start_date?: string, end_date?: string }} params
  */
 export async function exportShipmentCSV(params = {}) {
   const qs = buildQueryString(params);
@@ -81,10 +76,16 @@ export async function exportShipmentCSV(params = {}) {
   });
   if (!res.ok) throw new Error('Failed to export shipment CSV');
   const blob = await res.blob();
+  triggerDownload(blob, `shipment-report-${params.start_date ?? 'all'}-to-${params.end_date ?? 'all'}.csv`);
+}
+
+function triggerDownload(blob, filename) {
   const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `shipment-report-${params.startDate ?? 'all'}-${params.endDate ?? 'all'}.csv`;
+  const a   = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  document.body.appendChild(a);
   a.click();
+  a.remove();
   window.URL.revokeObjectURL(url);
 }

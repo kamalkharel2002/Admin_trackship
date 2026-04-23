@@ -46,9 +46,9 @@ export {
 export {
   getTotalRevenue,
   getTotalDeliveredShipments,
+  getTransporterCount,
   getMonthlyRevenueGraph,
   getShipmentStatusDistribution,
-  getReportDashboardSummary,
   exportRevenueCSV,
   exportShipmentCSV,
 } from './report';

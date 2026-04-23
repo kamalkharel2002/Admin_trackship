@@ -22,10 +22,10 @@ export const ENDPOINTS = {
     verify:    (id) => `${API_BASE}/admin/transporters/${id}/verify`,
   },
   hubs: {
-    list:           `${API_BASE}/admin/hub`,
-    byId:   (id) => `${API_BASE}/admin/hub/${id}`,
-    coordinators:       `${API_BASE}/admin/hub-coordinator/list`,      
-    coordinatorsByHub: (id) => `${API_BASE}/admin/hub/${id}/coordinators`, 
+    list:                      `${API_BASE}/admin/hub`,
+    byId:              (id) => `${API_BASE}/admin/hub/${id}`,
+    coordinators:              `${API_BASE}/admin/hub-coordinator/list`,
+    coordinatorsByHub: (id) => `${API_BASE}/admin/hub/${id}/coordinators`,
   },
   user: {
     list:           `${API_BASE}/admin/users`,
@@ -34,69 +34,69 @@ export const ENDPOINTS = {
     delete: (id) => `${API_BASE}/admin/users/${id}`,
   },
   shipments: {
-    list: `${API_BASE}/admin/shipments`,
+    list:         `${API_BASE}/admin/shipments`,
     byId: (id) => `${API_BASE}/admin/shipments/${id}`,
   },
   transporter: {
-    profile: `${API_BASE}/transporter/profile`,
-    documents: (id) => `${API_BASE}/transporter/${id}/documents`,
-    uploadDocument: (id) => `${API_BASE}/transporter/${id}/documents/upload`,
-    vehicles: (id) => `${API_BASE}/transporter/${id}/vehicles`,
-    vehicleDocuments: (id) => `${API_BASE}/transporter/vehicles/${id}/documents`,
+    profile:                       `${API_BASE}/transporter/profile`,
+    documents:             (id) => `${API_BASE}/transporter/${id}/documents`,
+    uploadDocument:        (id) => `${API_BASE}/transporter/${id}/documents/upload`,
+    vehicles:              (id) => `${API_BASE}/transporter/${id}/vehicles`,
+    vehicleDocuments:      (id) => `${API_BASE}/transporter/vehicles/${id}/documents`,
     uploadVehicleDocument: (id) => `${API_BASE}/transporter/vehicles/${id}/documents/upload`,
-    shipments: `${API_BASE}/transporter/shipments`,
-    shipmentDetails: (id) => `${API_BASE}/transporter/shipments/${id}`,
-    updateShipmentStatus: (id) => `${API_BASE}/transporter/shipments/${id}/status`,
-    earnings: `${API_BASE}/transporter/earnings`,
-    earningsBreakdown: `${API_BASE}/transporter/earnings/breakdown`,
-    updateProfile: `${API_BASE}/transporter/profile/update`,
+    shipments:                     `${API_BASE}/transporter/shipments`,
+    shipmentDetails:       (id) => `${API_BASE}/transporter/shipments/${id}`,
+    updateShipmentStatus:  (id) => `${API_BASE}/transporter/shipments/${id}/status`,
+    earnings:                      `${API_BASE}/transporter/earnings`,
+    earningsBreakdown:             `${API_BASE}/transporter/earnings/breakdown`,
+    updateProfile:                 `${API_BASE}/transporter/profile/update`,
   },
   paymentReports: {
-    dashboardSummary:        `${API_BASE}/payment-reports/dashboard-summary`,
-    cashLedger:              `${API_BASE}/payment-reports/cash-ledger`,
-    paymentReconciliation:   `${API_BASE}/payment-reports/payment-reconciliation`,
-    hubCashBalance:          `${API_BASE}/payment-reports/hub-cash-balance`,
-    filterOptions:           `${API_BASE}/payment-reports/filter-options`,
-    exportCashLedger:        `${API_BASE}/payment-reports/cash-ledger/export`,
+    dashboardSummary:            `${API_BASE}/payment-reports/dashboard-summary`,
+    cashLedger:                  `${API_BASE}/payment-reports/cash-ledger`,
+    paymentReconciliation:       `${API_BASE}/payment-reports/payment-reconciliation`,
+    hubCashBalance:              `${API_BASE}/payment-reports/hub-cash-balance`,
+    filterOptions:               `${API_BASE}/payment-reports/filter-options`,
+    exportCashLedger:            `${API_BASE}/payment-reports/cash-ledger/export`,
     exportPaymentReconciliation: `${API_BASE}/payment-reports/payment-reconciliation/export`,
   },
-  // ── Reports ──────────────────────────────────────────────────────────────
+  // ─── Reports (all 6 live endpoints) ───────────────────────────────────────
   reports: {
-    totalRevenue:         `${API_BASE}/admin/reports/revenue/total`,
-    totalDelivered:       `${API_BASE}/admin/reports/shipments/delivered/total`,
-    monthlyRevenueGraph:  `${API_BASE}/admin/reports/revenue/monthly-graph`,
-    statusDistribution:   `${API_BASE}/admin/reports/shipments/status-distribution`,
-    exportRevenueCSV:     `${API_BASE}/admin/reports/export/revenue-csv`,
-    exportShipmentCSV:    `${API_BASE}/admin/reports/export/shipment-csv`,
-    dashboardSummary:     `${API_BASE}/admin/reports/dashboard/summary`,
+    totalRevenue:        `${API_BASE}/admin/report/revenue/total`,          // ?month=&year=
+    totalDelivered:      `${API_BASE}/admin/report/shipments/delivered/total`, // ?month=&year=
+    transporterCount:    `${API_BASE}/admin/report/transporter/count`,      // no params
+    monthlyRevenueGraph: `${API_BASE}/admin/report/revenue/monthly-graph`,  // ?year=
+    statusDistribution:  `${API_BASE}/admin/report/shipments/status-distribution`, // ?month=&year=
+    exportRevenueCSV:    `${API_BASE}/admin/report/export/revenue-csv`,     // ?start_date=&end_date=
+    exportShipmentCSV:   `${API_BASE}/admin/report/export/shipment-csv`,    // ?start_date=&end_date=
   },
 };
-
 export function buildQueryString(params = {}) {
-  const queryParams = {};
-  
-  if (params.startDate) queryParams.startDate = params.startDate;
-  if (params.endDate)   queryParams.endDate   = params.endDate;
-  if (params.status)    queryParams.status    = params.status;
-  if (params.page)      queryParams.page      = params.page;
-  if (params.limit)     queryParams.limit     = params.limit;
-  if (params.month)     queryParams.month     = params.month;
-  if (params.year)      queryParams.year      = params.year;
-  
-  // Payment report specific params
-  if (params.hubId)                queryParams.hubId = params.hubId;
-  if (params.sourceHubId)          queryParams.sourceHubId = params.sourceHubId;
-  if (params.destinationHubId)     queryParams.destinationHubId = params.destinationHubId;
-  if (params.transactionType)      queryParams.transactionType = params.transactionType;
-  if (params.transporterId)        queryParams.transporterId = params.transporterId;
-  if (params.paymentStatus)        queryParams.paymentStatus = params.paymentStatus;
-  if (params.deliveryMode)         queryParams.deliveryMode = params.deliveryMode;
-  if (params.region)               queryParams.region = params.region;
-  
-  const filtered = Object.entries(queryParams).filter(
-    ([, v]) => v !== undefined && v !== null && v !== '' && v !== 'all'
-  );
-  
+  const map = {
+    startDate:           'startDate',
+    endDate:             'endDate',
+    start_date:          'start_date',
+    end_date:            'end_date',
+    status:              'status',
+    page:                'page',
+    limit:               'limit',
+    month:               'month',
+    year:                'year',
+    
+    hubId:               'hubId',
+    sourceHubId:         'sourceHubId',
+    destinationHubId:    'destinationHubId',
+    transactionType:     'transactionType',
+    transporterId:       'transporterId',
+    paymentStatus:       'paymentStatus',
+    deliveryMode:        'deliveryMode',
+    region:              'region',
+  };
+
+  const filtered = Object.entries(params)
+    .filter(([k, v]) => k in map && v !== undefined && v !== null && v !== '' && v !== 'all')
+    .map(([k, v]) => [map[k], v]);
+
   if (!filtered.length) return '';
   return '?' + new URLSearchParams(Object.fromEntries(filtered)).toString();
 }
