@@ -40,8 +40,9 @@
   position: relative;
   display: flex;
   align-items: center;
-  flex: 1;
-  min-width: 200px;
+  flex: 2;
+  min-width: 300px;
+  max-width: 600px;
 }
 
 .transporter-header-search-icon {
@@ -152,55 +153,22 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 15px;
+  min-width: 15px;
   height: 15px;
   border-radius: 50%;
   background: var(--th-amber);
   color: #fff;
   font-size: 0.6rem;
   font-weight: 700;
+  padding: 0 2px;
 }
 
 .transporter-header-chevron {
   transition: transform 0.18s var(--th-ease);
 }
+
 .transporter-header-chevron.flipped {
   transform: rotate(180deg);
-}
-
-/* Add button */
-.transporter-header-add-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 16px;
-  border-radius: 7px;
-  background: var(--th-amber);
-  color: #fff;
-  font-size: 0.8rem;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 1px 4px rgba(212,146,10,0.30);
-  transition: all 0.13s ease;
-  white-space: nowrap;
-  letter-spacing: -0.01em;
-}
-
-.transporter-header-add-btn:hover {
-  background: var(--th-amber-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(212,146,10,0.35);
-}
-
-.transporter-header-add-icon {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  background: rgba(255,255,255,0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 /* Dropdown */
@@ -238,6 +206,23 @@
   display: flex;
   flex-direction: column;
   gap: 1px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+/* Custom scrollbar for dropdown */
+.transporter-header-dropdown-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.transporter-header-dropdown-list::-webkit-scrollbar-track {
+  background: var(--th-ink-05);
+  border-radius: 4px;
+}
+
+.transporter-header-dropdown-list::-webkit-scrollbar-thumb {
+  background: var(--th-ink-20);
+  border-radius: 4px;
 }
 
 .transporter-status-option {
@@ -254,8 +239,13 @@
   text-align: left;
 }
 
-.transporter-status-option:hover { background: var(--th-ink-05); }
-.transporter-status-option.active { background: var(--th-amber-dim); }
+.transporter-status-option:hover { 
+  background: var(--th-ink-05); 
+}
+
+.transporter-status-option.active { 
+  background: var(--th-amber-dim); 
+}
 
 .transporter-status-check {
   width: 15px;
@@ -300,7 +290,9 @@
   transition: color 0.12s;
 }
 
-.transporter-clear-btn:hover { color: var(--th-ink); }
+.transporter-clear-btn:hover { 
+  color: var(--th-ink); 
+}
 
 /* Active tags */
 .transporter-header-active-tags {
@@ -336,4 +328,92 @@
   transition: opacity 0.12s;
 }
 
-.transporter-tag-remove:hover { opacity: 1; }
+.transporter-tag-remove:hover { 
+  opacity: 1; 
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .transporter-header {
+    padding: 10px 12px;
+  }
+  
+  .transporter-header-search-wrap {
+    min-width: 150px;
+  }
+  
+  .transporter-header-search {
+    font-size: 0.75rem;
+    padding: 7px 10px 7px 28px;
+  }
+  
+  .transporter-header-filter-btn {
+    padding: 6px 10px;
+    font-size: 0.74rem;
+  }
+  
+  .transporter-header-selected-pill {
+    font-size: 0.68rem;
+    padding: 3px 8px;
+  }
+}
+
+@media (max-width: 640px) {
+  .transporter-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .transporter-header-search-wrap {
+    width: 100%;
+  }
+  
+  .transporter-header-actions {
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+  
+  .transporter-header-active-tags {
+    margin-top: 4px;
+  }
+  
+  .transporter-header-dropdown {
+    right: auto;
+    left: 0;
+    min-width: 180px;
+  }
+}
+
+/* Print styles - hide filter dropdown when printing */
+@media print {
+  .transporter-header-actions,
+  .transporter-header-active-tags,
+  .transporter-header-selected-pill {
+    display: none;
+  }
+  
+  .transporter-header {
+  --th-font: 'DM Sans', sans-serif;
+  --th-amber: #D4920A;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+  font-family: var(--th-font);
+  padding: 12px 16px;
+  background: var(--th-card);
+  border-radius: 10px;
+  border: 1px solid var(--th-border);
+  box-shadow: 0 1px 3px rgba(15,17,23,0.05);
+  margin-bottom: 12px;
+}
+
+.transporter-header-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 400px;
+}
+}

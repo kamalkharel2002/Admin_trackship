@@ -18,14 +18,6 @@ const FilterIcon = () => (
   </svg>
 );
 
-const PlusIcon = () => (
-  <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.8"
-    strokeLinecap="round" viewBox="0 0 24 24">
-    <line x1="12" y1="5" x2="12" y2="19"/>
-    <line x1="5" y1="12" x2="19" y2="12"/>
-  </svg>
-);
-
 const ChevronIcon = ({ className }) => (
   <svg
     className={className}
@@ -50,22 +42,52 @@ const STATUS_OPTIONS = [
 ];
 
 export default function TransporterHeader({
-  selected,
+  selected = [],
   onSearch,
-  onAdd,
   activeStatuses = [],
   onStatusToggle,
 }) {
   const [open, setOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
   const wrapRef = useRef(null);
 
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handler = (e) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) {
+        setOpen(false);
+      }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  // Debounced search to avoid too many updates
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onSearch?.(searchValue);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, [searchValue, onSearch]);
+
+  const handleSearchChange = (e) => {
+    setSearchValue(e.target.value);
+  };
+
+  const handleClearFilter = () => {
+    onStatusToggle?.(null);
+    setOpen(false);
+  };
+
+  const handleStatusClick = (statusId) => {
+    onStatusToggle?.(statusId);
+  };
+
+  const handleRemoveTag = (statusId, e) => {
+    e.stopPropagation();
+    onStatusToggle?.(statusId);
+  };
 
   return (
     <div className="transporter-header">
@@ -76,7 +98,9 @@ export default function TransporterHeader({
         <input
           className="transporter-header-search"
           placeholder="Search by name, email, license…"
-          onChange={e => onSearch?.(e.target.value)}
+          value={searchValue}
+          onChange={handleSearchChange}
+          aria-label="Search transporters"
         />
       </div>
 
@@ -100,6 +124,8 @@ export default function TransporterHeader({
               activeStatuses.length > 0 ? 'active-filter' : '',
             ].filter(Boolean).join(' ')}
             onClick={() => setOpen(o => !o)}
+            aria-label="Open filter menu"
+            aria-expanded={open}
           >
             <FilterIcon />
             Filter
@@ -110,7 +136,7 @@ export default function TransporterHeader({
           </button>
 
           {open && (
-            <div className="transporter-header-dropdown">
+            <div className="transporter-header-dropdown" role="menu">
               <div className="transporter-header-dropdown-header">Filter by status</div>
               <div className="transporter-header-dropdown-list">
                 {STATUS_OPTIONS.map(status => {
@@ -119,11 +145,13 @@ export default function TransporterHeader({
                     <button
                       key={status.id}
                       className={`transporter-status-option${isActive ? ' active' : ''}`}
-                      onClick={() => onStatusToggle?.(status.id)}
+                      onClick={() => handleStatusClick(status.id)}
+                      role="menuitem"
+                      aria-label={`Filter by ${status.label}`}
                     >
                       <span
                         className="transporter-status-check"
-                        style={isActive ? { background: status.color, borderColor: status.color } : {}}
+                        style={isActive ? { backgroundColor: status.color, borderColor: status.color } : {}}
                       >
                         {isActive && (
                           <svg width="8" height="8" viewBox="0 0 12 12" fill="none"
@@ -132,7 +160,7 @@ export default function TransporterHeader({
                           </svg>
                         )}
                       </span>
-                      <span className="transporter-status-dot" style={{ background: status.color }} />
+                      <span className="transporter-status-dot" style={{ backgroundColor: status.color }} />
                       <span className="transporter-status-label">{status.label}</span>
                     </button>
                   );
@@ -140,7 +168,11 @@ export default function TransporterHeader({
               </div>
               {activeStatuses.length > 0 && (
                 <div className="transporter-header-dropdown-footer">
-                  <button className="transporter-clear-btn" onClick={() => onStatusToggle?.(null)}>
+                  <button 
+                    className="transporter-clear-btn" 
+                    onClick={handleClearFilter}
+                    aria-label="Clear all filters"
+                  >
                     Clear all filters
                   </button>
                 </div>
@@ -149,25 +181,20 @@ export default function TransporterHeader({
           )}
         </div>
 
-        {/* Add button */}
-        <button className="transporter-header-add-btn" onClick={onAdd}>
-          <span className="transporter-header-add-icon"><PlusIcon /></span>
-          Add Transporter
-        </button>
       </div>
 
       {/* Active filter tags */}
       {activeStatuses.length > 0 && (
-        <div className="transporter-header-active-tags">
+        <div className="transporter-header-active-tags" role="list" aria-label="Active filters">
           {STATUS_OPTIONS
             .filter(s => activeStatuses.includes(s.id))
             .map(status => (
-              <span key={status.id} className="transporter-header-active-tag">
-                <span className="transporter-status-dot" style={{ background: status.color }} />
+              <span key={status.id} className="transporter-header-active-tag" role="listitem">
+                <span className="transporter-status-dot" style={{ backgroundColor: status.color }} />
                 {status.label}
                 <span
                   className="transporter-tag-remove"
-                  onClick={() => onStatusToggle?.(status.id)}
+                  onClick={(e) => handleRemoveTag(status.id, e)}
                   role="button"
                   aria-label={`Remove ${status.label} filter`}
                 >
