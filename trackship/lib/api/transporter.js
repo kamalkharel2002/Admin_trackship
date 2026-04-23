@@ -42,6 +42,8 @@ function normalizeTransporters(raw) {
     rejection_reason: t.rejection_reason || null,
     created_at: t.created_at,
     updated_at: t.updated_at,
+    total_shipments: t.total_shipments || 0,
+    total_success_shipments: t.total_success_shipments || 0,
   }));
 }
 
@@ -79,62 +81,23 @@ function normalizeTransporterDocuments(raw) {
 
 // ============= ADMIN TRANSPORTER API FUNCTIONS =============
 
-// Get all transporters - Combine pending + approved/declined from users endpoint
+// Get all transporters - FIXED: Use dedicated backend endpoint
 export async function getTransporters(params = {}) {
   try {
-    // First try to get all users and filter transporters
-    const usersUrl = `${ENDPOINTS.user.list}${buildQueryString(params)}`;
-    console.log('Fetching all users from:', usersUrl);
+    // Use your dedicated transporters/all endpoint
+    const url = ENDPOINTS.transporters.all + buildQueryString(params);
+    console.log('Fetching all transporters from:', url);
 
-    const response = await request(usersUrl);
-    console.log('Response from users endpoint:', response);
+    const response = await request(url);
+    console.log('Response from transporters endpoint:', response);
 
-    // Handle different response structures
-    let users = [];
-    if (Array.isArray(response)) {
-      users = response;
-    } else if (response?.users && Array.isArray(response.users)) {
-      users = response.users;
-    } else if (response?.data && Array.isArray(response.data)) {
-      users = response.data;
-    } else if (response?.rows && Array.isArray(response.rows)) {
-      users = response.rows;
-    } else {
-      console.log('Response structure:', Object.keys(response));
-      users = [];
-    }
-
-    console.log('Extracted users array:', users);
-
-    // Filter only transporters by role
-    const transporters = users.filter(user => user.role === 'transporter');
-    console.log('Filtered transporters:', transporters);
-
-    // Transform user data to transporter format
-    const transformed = transporters.map(user => ({
-      transporter_id: user.user_id,
-      user_name: user.user_name,
-      email: user.email,
-      phone: user.phone,
-      license_no: user.license_no || '—',
-      verification_status: user.verification_status || 'PENDING_VERIFICATION',
-      rejection_reason: user.rejection_reason || null,
-      created_at: user.created_at,
-      updated_at: user.updated_at,
-    }));
-
-    console.log('Transformed transporters:', transformed);
-    return transformed;
+    const normalized = normalizeTransporters(response);
+    console.log('Normalized transporters:', normalized);
+    
+    return normalized;
   } catch (error) {
-    console.error('Failed to fetch transporters from users endpoint:', error);
-    // Fallback: try to get pending transporters only
-    console.log('Falling back to pending transporters...');
-    try {
-      return await getPendingTransporters(params);
-    } catch (fallbackError) {
-      console.error('Fallback also failed:', fallbackError);
-      return [];
-    }
+    console.error('Failed to fetch transporters:', error);
+    return [];
   }
 }
 

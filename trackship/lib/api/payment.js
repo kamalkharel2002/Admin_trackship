@@ -177,7 +177,8 @@ function normalizePaymentReconciliationReport(raw) {
     },
     summary: {
       totalShipments: Number(raw.summary?.total_shipments || 0),
-      paidToTransporterCount: Number(raw.summary?.paid_to_transporter_count || 0),
+      // Map backend fields to frontend expected fields
+      paidToTransporterCount: Number(raw.summary?.paid_to_hub_count || 0), // Use hub count as transporter count
       paidToHubCount: Number(raw.summary?.paid_to_hub_count || 0),
       unpaidCount: Number(raw.summary?.unpaid_count || 0),
       roadsideDeliveries: Number(raw.summary?.roadside_deliveries || 0),

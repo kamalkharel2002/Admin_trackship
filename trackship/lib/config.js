@@ -1,7 +1,7 @@
 // lib/config.js
 
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || 'http://192.168.208.1:3000/api';
+  process.env.NEXT_PUBLIC_API_URL || 'http://192.168.56.1:3000/api';
 
 export const REQUEST_TIMEOUT = 15000;
 
@@ -17,6 +17,7 @@ export const ENDPOINTS = {
   },
   transporters: {
     pending:   `${API_BASE}/admin/transporters/pending`,
+    all:       `${API_BASE}/admin/transporters/all`,
     list:      `${API_BASE}/admin/transporters`,
     documents: (id) => `${API_BASE}/admin/transporters/${id}/documents`,
     verify:    (id) => `${API_BASE}/admin/transporters/${id}/verify`,

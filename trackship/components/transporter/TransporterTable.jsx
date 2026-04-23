@@ -13,7 +13,7 @@ import {
   deleteTransporter,
   getAdminTransporterDocuments,
   verifyTransporter,
-} from '@/lib/api';
+} from '@/lib/api/transporter';
 
 const ROWS_PER_PAGE = 10;
 const DEFAULT_REFRESH_INTERVAL = 30000;
@@ -46,15 +46,6 @@ const TruckIcon = () => (
   </svg>
 );
 
-const RefreshIcon = () => (
-  <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2"
-    strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-    <path d="M23 4v6h-6"/>
-    <path d="M1 20v-6h6"/>
-    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-  </svg>
-);
-
 export default function TransporterTable({
   selected,
   setSelected,
@@ -68,7 +59,6 @@ export default function TransporterTable({
   const [search, setSearch] = useState('');
   const [activeStatuses, setActiveStatuses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
 
@@ -85,24 +75,21 @@ export default function TransporterTable({
   const [verifying, setVerifying] = useState(false);
   const [verifyingId, setVerifyingId] = useState(null);
 
-  const [lastUpdated, setLastUpdated] = useState(null);
   const firstInputRef = useRef(null);
   const refreshTimerRef = useRef(null);
 
   /* ── Data fetching ── */
-  const fetchTransporters = useCallback(async (showRefreshIndicator = false) => {
-    showRefreshIndicator ? setRefreshing(true) : setLoading(true);
+  const fetchTransporters = useCallback(async () => {
+    setLoading(true);
     try {
       setError(null);
       const data = await getTransporters();
       setTransporters(data || []);
-      setLastUpdated(new Date());
     } catch (err) {
       console.error(err);
       setError('Failed to load transporters. Please try again.');
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   }, []);
 
@@ -111,7 +98,7 @@ export default function TransporterTable({
   /* ── Auto-refresh ── */
   useEffect(() => {
     if (autoRefresh && !showModal && !showDocModal) {
-      refreshTimerRef.current = setInterval(() => fetchTransporters(true), refreshInterval);
+      refreshTimerRef.current = setInterval(() => fetchTransporters(), refreshInterval);
     }
     return () => clearInterval(refreshTimerRef.current);
   }, [autoRefresh, refreshInterval, fetchTransporters, showModal, showDocModal]);
@@ -301,7 +288,7 @@ export default function TransporterTable({
 
   return (
     <>
-      {/* Header row with refresh controls */}
+      {/* Header row */}
       <div className="transporter-table-header-wrapper">
         <TransporterHeader
           selected={selected}
@@ -310,23 +297,6 @@ export default function TransporterTable({
           activeStatuses={statusFilter.length > 0 ? statusFilter : activeStatuses}
           onStatusToggle={handleStatusToggle}
         />
-
-        <div className="transporter-refresh-controls">
-          <button
-            className="transporter-refresh-btn"
-            onClick={() => fetchTransporters(true)}
-            disabled={refreshing}
-            title="Refresh data"
-          >
-            <RefreshIcon />
-            <span>{refreshing ? 'Refreshing…' : 'Refresh'}</span>
-          </button>
-          {lastUpdated && (
-            <span className="transporter-last-updated">
-              {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
-          )}
-        </div>
       </div>
 
       {/* Tables */}
@@ -382,27 +352,19 @@ export default function TransporterTable({
                 </p>
               </div>
             ) : (
-              <>
-                {refreshing && (
-                  <div className="transporter-refresh-overlay">
-                    <div className="transporter-refresh-spinner" />
-                    <span>Updating…</span>
-                  </div>
-                )}
-                {slicePending.map(transporter => (
-                  <TransporterRow
-                    key={transporter.transporter_id}
-                    transporter={transporter}
-                    checked={selected.includes(transporter.transporter_id)}
-                    onToggle={() => togglePending(transporter.transporter_id)}
-                    onView={() => handleViewDocuments(transporter)}
-                    onEdit={() => openEdit(transporter)}
-                    onDelete={() => handleDelete(transporter.transporter_id)}
-                    onApprove={() => handleVerifyAction(transporter, 'APPROVED')}
-                    onDecline={() => handleVerifyAction(transporter, 'DECLINED')}
-                  />
-                ))}
-              </>
+              slicePending.map(transporter => (
+                <TransporterRow
+                  key={transporter.transporter_id}
+                  transporter={transporter}
+                  checked={selected.includes(transporter.transporter_id)}
+                  onToggle={() => togglePending(transporter.transporter_id)}
+                  onView={() => handleViewDocuments(transporter)}
+                  onEdit={() => openEdit(transporter)}
+                  onDelete={() => handleDelete(transporter.transporter_id)}
+                  onApprove={() => handleVerifyAction(transporter, 'APPROVED')}
+                  onDecline={() => handleVerifyAction(transporter, 'DECLINED')}
+                />
+              ))
             )}
 
             {/* Footer */}
@@ -498,27 +460,19 @@ export default function TransporterTable({
                 </p>
               </div>
             ) : (
-              <>
-                {refreshing && (
-                  <div className="transporter-refresh-overlay">
-                    <div className="transporter-refresh-spinner" />
-                    <span>Updating…</span>
-                  </div>
-                )}
-                {sliceApproved.map(transporter => (
-                  <TransporterRow
-                    key={transporter.transporter_id}
-                    transporter={transporter}
-                    checked={selected.includes(transporter.transporter_id)}
-                    onToggle={() => toggleApproved(transporter.transporter_id)}
-                    onView={() => handleViewDocuments(transporter)}
-                    onEdit={() => openEdit(transporter)}
-                    onDelete={() => handleDelete(transporter.transporter_id)}
-                    onApprove={() => handleVerifyAction(transporter, 'APPROVED')}
-                    onDecline={() => handleVerifyAction(transporter, 'DECLINED')}
-                  />
-                ))}
-              </>
+              sliceApproved.map(transporter => (
+                <TransporterRow
+                  key={transporter.transporter_id}
+                  transporter={transporter}
+                  checked={selected.includes(transporter.transporter_id)}
+                  onToggle={() => toggleApproved(transporter.transporter_id)}
+                  onView={() => handleViewDocuments(transporter)}
+                  onEdit={() => openEdit(transporter)}
+                  onDelete={() => handleDelete(transporter.transporter_id)}
+                  onApprove={() => handleVerifyAction(transporter, 'APPROVED')}
+                  onDecline={() => handleVerifyAction(transporter, 'DECLINED')}
+                />
+              ))
             )}
 
             {/* Footer */}
@@ -671,7 +625,7 @@ export default function TransporterTable({
             setShowDocModal(false);
             if (autoRefresh) {
               clearInterval(refreshTimerRef.current);
-              refreshTimerRef.current = setInterval(() => fetchTransporters(true), refreshInterval);
+              refreshTimerRef.current = setInterval(() => fetchTransporters(), refreshInterval);
             }
           }}
         />

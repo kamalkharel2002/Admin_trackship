@@ -76,63 +76,13 @@
   from { opacity: 0; transform: translateY(20px) scale(0.975); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-@keyframes tt-spin {
-  to { transform: rotate(360deg); }
-}
 
 /* ══════════════════════════════════════
    HEADER WRAPPER
 ══════════════════════════════════════ */
 .transporter-table-header-wrapper {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-}
-
-.transporter-refresh-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.transporter-refresh-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 13px;
-  border-radius: 7px;
-  border: 1px solid var(--tt-border);
-  background: var(--tt-card);
-  font-size: 0.775rem;
-  font-weight: 500;
-  font-family: var(--tt-font);
-  color: var(--tt-ink-40);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  letter-spacing: -0.01em;
-  box-shadow: var(--tt-shadow-xs);
-}
-
-.transporter-refresh-btn:hover:not(:disabled) {
-  border-color: var(--tt-amber-border);
-  color: var(--tt-amber);
-  background: var(--tt-amber-dim);
-}
-
-.transporter-refresh-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.transporter-last-updated {
-  font-size: 0.72rem;
-  color: var(--tt-ink-20);
-  font-family: var(--tt-mono);
-  letter-spacing: 0;
+  width: 100%;
 }
 
 /* ══════════════════════════════════════
@@ -308,34 +258,6 @@
   max-width: 240px;
   margin: 0;
   line-height: 1.5;
-}
-
-/* ══════════════════════════════════════
-   REFRESH OVERLAY
-══════════════════════════════════════ */
-.transporter-refresh-overlay {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(255,255,255,0.82);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  z-index: 10;
-  backdrop-filter: blur(2px);
-  font-size: 0.8rem;
-  color: var(--tt-ink-40);
-  font-family: var(--tt-font);
-  font-weight: 500;
-}
-
-.transporter-refresh-spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid var(--tt-border);
-  border-top-color: var(--tt-amber);
-  border-radius: 50%;
-  animation: tt-spin 0.65s linear infinite;
 }
 
 /* ══════════════════════════════════════
