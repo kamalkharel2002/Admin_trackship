@@ -46,6 +46,20 @@ function Field({ label, value }) {
   );
 }
 
+/* ───────── HELPER TO GET ROUTE ───────── */
+function getRouteFromShipment(shipmentData) {
+  // First priority: direct route string if available
+  if (shipmentData.route && shipmentData.route !== 'N/A' && shipmentData.route.includes('→')) {
+    return shipmentData.route.split('→').map(s => s.trim());
+  }
+  
+  // Second: use source and destination hub names
+  const from = shipmentData.source_hub_name || shipmentData.sourceHub || 'N/A';
+  const to = shipmentData.destination_hub_name || shipmentData.destinationHub || 'N/A';
+  
+  return [from, to];
+}
+
 /* ───────── COMPONENT ───────── */
 
 export default function ShipmentRow({ shipment, checked, onToggle, onClick }) {
@@ -53,11 +67,15 @@ export default function ShipmentRow({ shipment, checked, onToggle, onClick }) {
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Pre-fetch details in the background without waiting for user interaction
   useEffect(() => {
-    if (open && !details) fetchDetails();
-  }, [open]);
+    // Fetch details immediately in the background
+    fetchDetails();
+  }, []); // Only fetch once when component mounts
 
   async function fetchDetails() {
+    if (details) return; // Don't fetch if we already have details
+    
     try {
       setLoading(true);
       const res = await getShipmentById(shipment.shipment_id);
@@ -71,7 +89,8 @@ export default function ShipmentRow({ shipment, checked, onToggle, onClick }) {
     }
   }
 
-  const data = details || shipment || {};
+  // Merge shipment data with fetched details
+  const data = { ...shipment, ...details };
 
   const safeStatus = data.status || 'Pending';
   const statusKey = safeStatus.charAt(0).toUpperCase() + safeStatus.slice(1);
@@ -80,10 +99,8 @@ export default function ShipmentRow({ shipment, checked, onToggle, onClick }) {
   const sa = getAvatar(data.sender_name || '');
   const ra = getAvatar(data.receiver_name || '');
 
-  const route = data.route || '';
-  const [from, to] = route.includes('→')
-    ? route.split('→').map(s => s.trim())
-    : [data.source_hub_name || 'N/A', data.destination_hub_name || 'N/A'];
+  // Get route values - this will work immediately with initial shipment data
+  const [from, to] = getRouteFromShipment(data);
 
   return (
     <div className={`sr-row-wrap${open ? ' sr-wrap-open' : ''}`}>
@@ -155,7 +172,7 @@ export default function ShipmentRow({ shipment, checked, onToggle, onClick }) {
       {/* ───── DETAILS PANEL ───── */}
       <div className={`sr-detail${open ? ' sr-detail-open' : ''}`}>
         <div className="sr-detail-inner">
-          {loading ? (
+          {loading && !details ? (
             <div className="sr-detail-loading">
               <div className="sr-loading-spinner" />
               <span>Fetching shipment details…</span>

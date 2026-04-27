@@ -1,14 +1,18 @@
+/* ============================================
+   FILTERS BAR COMPONENT
+   ============================================ */
+
 .pr-filters-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: var(--pr-card);
-  border: 1px solid var(--pr-border);
-  border-radius: 12px;
-  margin-bottom: 24px;
-  box-shadow: var(--pr-shadow-sm);
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
 }
 
 .pr-filter-group {
@@ -21,49 +25,70 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--pr-ink-40);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.07em;
+  white-space: nowrap;
 }
 
 .pr-filter-input,
 .pr-filter-select {
   padding: 7px 10px;
-  border: 1px solid var(--pr-border);
-  border-radius: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   font-size: 0.8rem;
-  font-family: var(--pr-font);
-  color: var(--pr-ink);
-  background: var(--pr-card);
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  background: var(--bg-card);
   outline: none;
-  transition: all 0.13s ease;
+  transition: border-color 0.13s ease, box-shadow 0.13s ease;
   min-width: 130px;
+  height: 34px;
+}
+
+.pr-filter-input::placeholder {
+  color: var(--text-muted);
+}
+
+.pr-filter-input:hover,
+.pr-filter-select:hover {
+  border-color: var(--border);
 }
 
 .pr-filter-input:focus,
 .pr-filter-select:focus {
-  border-color: var(--pr-amber);
-  box-shadow: 0 0 0 3px var(--pr-amber-ring);
+  border-color: var(--accent-yellow);
+  box-shadow: 0 0 0 3px rgba(245, 183, 0, 0.12);
+}
+
+.pr-filter-separator {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  flex-shrink: 0;
 }
 
 .pr-filter-reset {
   padding: 7px 14px;
-  border-radius: 6px;
-  border: 1px solid var(--pr-border);
-  background: var(--pr-surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
   font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--pr-ink-40);
+  font-weight: 600;
+  color: var(--text-muted);
   cursor: pointer;
   transition: all 0.13s ease;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .pr-filter-reset:hover {
-  border-color: var(--pr-red-border);
-  color: var(--pr-red);
-  background: var(--pr-red-dim);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--status-danger);
+  background: rgba(239, 68, 68, 0.06);
 }
 
 .pr-export-buttons {
@@ -77,24 +102,182 @@
   align-items: center;
   gap: 6px;
   padding: 7px 14px;
-  border-radius: 6px;
-  border: 1px solid var(--pr-green-border);
-  background: var(--pr-green-dim);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  background: rgba(34, 197, 94, 0.07);
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--pr-green);
+  color: var(--status-success);
   cursor: pointer;
   transition: all 0.13s ease;
+  height: 34px;
 }
 
 .pr-export-btn:hover:not(:disabled) {
-  background: var(--pr-green);
-  color: white;
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.35);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(26, 158, 92, 0.3);
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.15);
 }
 
 .pr-export-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
+}
+
+/* ── Compact Variant ── */
+.pr-filters-bar.compact {
+  padding: 10px 12px;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.pr-filters-bar.compact .pr-filter-input,
+.pr-filters-bar.compact .pr-filter-select,
+.pr-filters-bar.compact .pr-filter-reset,
+.pr-filters-bar.compact .pr-export-btn {
+  height: 30px;
+  padding: 5px 10px;
+  font-size: 0.7rem;
+}
+
+.pr-filters-bar.compact .pr-filter-label {
+  font-size: 9px;
+}
+
+/* ── Sticky Variant ── */
+.pr-filters-bar.sticky {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.95);
+  animation: pr-filters-slide-down 0.2s var(--pr-ease);
+}
+
+@keyframes pr-filters-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Filter Group with Icon ── */
+.pr-filter-group.with-icon {
+  position: relative;
+}
+
+.pr-filter-group.with-icon .pr-filter-input {
+  padding-left: 28px;
+}
+
+.pr-filter-group.with-icon::before {
+  content: '🔍';
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* ── Date Range Filter ── */
+.pr-filter-date-range {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pr-filter-date-range .pr-filter-input {
+  min-width: 110px;
+}
+
+.pr-filter-date-sep {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* ── Active Filters Badge ── */
+.pr-filters-active {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-yellow);
+  color: var(--text-primary);
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 100px;
+  padding: 2px 6px;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 4px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .pr-filters-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px;
+  }
+  
+  .pr-filter-group {
+    flex-wrap: wrap;
+  }
+  
+  .pr-filter-label {
+    min-width: 70px;
+  }
+  
+  .pr-filter-input,
+  .pr-filter-select {
+    flex: 1;
+    min-width: auto;
+  }
+  
+  .pr-export-buttons {
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+  
+  .pr-filter-separator {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .pr-filters-bar {
+    padding: 12px;
+  }
+  
+  .pr-filter-group {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+  
+  .pr-filter-label {
+    margin-bottom: 4px;
+  }
+  
+  .pr-filter-input,
+  .pr-filter-select {
+    width: 100%;
+  }
+  
+  .pr-export-buttons {
+    width: 100%;
+    justify-content: stretch;
+  }
+  
+  .pr-export-btn {
+    flex: 1;
+    justify-content: center;
+  }
 }

@@ -1,237 +1,419 @@
-/* ── Root ─────────────────────────────────────────────────────────────────── */
-.pcl-root {
-  font-family: 'DM Sans', 'Helvetica Neue', sans-serif;
-  font-size: 13px;
-  color: #111827;
-}
+/* ============================================
+   PCL PAGE COMPONENTS (Payment Control List)
+   ============================================ */
 
-/* ── Summary Bar ──────────────────────────────────────────────────────────── */
+/* ── Summary Bar ── */
 .pcl-summary-bar {
   display: flex;
-  gap: 1px;
-  background: #E5E7EB;
-  border: 1px solid #E5E7EB;
-  border-radius: 12px;
+  gap: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
 }
 
 .pcl-summary-item {
-  background: #FAFAFA;
-  padding: 16px 20px;
+  background: var(--bg-card);
+  padding: 18px 22px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 6px;
   flex: 1;
+  position: relative;
+  transition: background 0.2s var(--pr-ease);
+  cursor: pointer;
+}
+
+.pcl-summary-item:hover {
+  background: var(--bg-panel);
+}
+
+.pcl-summary-item + .pcl-summary-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 16px;
+  bottom: 16px;
+  width: 1px;
+  background: var(--border);
 }
 
 .pcl-summary-item:first-child {
-  flex: 0 0 160px;
+  flex: 0 0 180px;
+}
+
+/* Active filter state */
+.pcl-summary-item.active {
+  background: rgba(245, 183, 0, 0.04);
+  position: relative;
+}
+
+.pcl-summary-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent-yellow);
 }
 
 .pcl-summary-label {
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #9CA3AF;
+  color: var(--text-muted);
 }
 
 .pcl-summary-value {
-  font-size: 17px;
-  font-weight: 700;
-  color: #111827;
-  letter-spacing: -0.02em;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.025em;
+  font-family: var(--font-head);
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.pcl-summary-value.positive {
+  color: var(--status-success);
+}
+
+.pcl-summary-value.negative {
+  color: var(--status-danger);
 }
 
 .pcl-summary-count {
   font-size: 11px;
-  color: #9CA3AF;
+  color: var(--text-muted);
   font-weight: 500;
+  margin-top: 2px;
 }
 
-/* ── Table Wrapper ────────────────────────────────────────────────────────── */
+/* ── Search & Filter Bar ── */
+.pcl-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.pcl-search-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-family: var(--font-body);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  transition: all 0.15s;
+}
+
+.pcl-search-input:focus {
+  outline: none;
+  border-color: var(--accent-yellow);
+  box-shadow: 0 0 0 3px rgba(245, 183, 0, 0.1);
+}
+
+.pcl-date-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pcl-date-input {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-family: var(--font-body);
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.pcl-date-input:focus {
+  outline: none;
+  border-color: var(--accent-yellow);
+}
+
+/* ── Table ── */
 .pcl-table-wrap {
-  border: 1px solid #E5E7EB;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow-x: auto;
+  overflow-y: visible;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
 }
 
-/* ── Table Head ───────────────────────────────────────────────────────────── */
+/* Horizontal scroll for small screens */
+@media (max-width: 1100px) {
+  .pcl-table-wrap {
+    overflow-x: auto;
+  }
+  
+  .pcl-table-head,
+  .pcl-table-row {
+    min-width: 1000px;
+  }
+}
+
 .pcl-table-head {
   display: grid;
   grid-template-columns: 160px 150px 110px 130px 1fr 150px 130px;
-  background: #F9FAFB;
-  border-bottom: 1px solid #E5E7EB;
-  padding: 0 16px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
 }
 
+/* Sortable headers */
 .pcl-table-th {
-  padding: 11px 8px;
-  font-size: 10.5px;
+  padding: 12px 8px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #6B7280;
+  color: var(--text-muted);
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: color 0.15s;
 }
 
-/* ── Table Row ────────────────────────────────────────────────────────────── */
+.pcl-table-th:hover {
+  color: var(--accent-yellow);
+}
+
+.pcl-table-th.sortable::after {
+  content: '↕';
+  font-size: 9px;
+  opacity: 0.4;
+  transition: opacity 0.15s;
+}
+
+.pcl-table-th.sortable:hover::after {
+  opacity: 1;
+}
+
+.pcl-table-th.sort-asc::after {
+  content: '↑';
+  opacity: 1;
+}
+
+.pcl-table-th.sort-desc::after {
+  content: '↓';
+  opacity: 1;
+}
+
 .pcl-table-row {
   display: grid;
   grid-template-columns: 160px 150px 110px 130px 1fr 150px 130px;
-  padding: 0 16px;
-  background: #fff;
-  border-bottom: 1px solid #F3F4F6;
-  transition: background 0.12s;
+  padding: 0 20px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-light);
+  transition: all 0.15s var(--pr-ease);
+}
+
+.pcl-table-row.clickable {
+  cursor: pointer;
 }
 
 .pcl-table-row:nth-child(even) {
-  background: #FAFAFA;
+  background: var(--bg-panel);
 }
 
 .pcl-table-row:hover {
-  background: #FFFBEB;
+  background: rgba(245, 183, 0, 0.04);
+  transform: scale(1.002);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .pcl-table-row:last-child {
   border-bottom: none;
 }
 
-/* ── Table Cell ───────────────────────────────────────────────────────────── */
 .pcl-table-cell {
-  padding: 13px 8px;
+  padding: 14px 8px;
   display: flex;
   align-items: center;
-  font-size: 13px;
-  color: #374151;
+  font-size: 12.5px;
+  color: var(--text-secondary);
 }
 
-/* ── Date / Time ──────────────────────────────────────────────────────────── */
+/* Cell with highlight */
+.pcl-table-cell.highlight {
+  background: rgba(245, 183, 0, 0.08);
+  margin: -2px -4px;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+/* ── Date/Time ── */
 .pcl-datetime {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
 }
 
 .pcl-datetime-date {
   font-size: 12.5px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-primary);
+  font-family: var(--font-body);
 }
 
 .pcl-datetime-time {
-  font-size: 11px;
-  color: #9CA3AF;
+  font-size: 10.5px;
+  color: var(--text-muted);
   font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
-/* ── Transaction Type Badge ───────────────────────────────────────────────── */
+/* ── Transaction Badges ── */
 .pcl-tx-badge {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 4px 9px;
-  border-radius: 6px;
+  padding: 3px 9px 3px 7px;
+  border-radius: 100px;
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
   letter-spacing: 0.01em;
+  transition: all 0.15s;
 }
 
 .pcl-tx-badge.customer {
-  background: rgba(37, 99, 235, 0.08);
-  color: #2563EB;
-  border: 1px solid rgba(37, 99, 235, 0.18);
+  background: rgba(14, 165, 233, 0.08);
+  color: #0369A1;
+  border: 1px solid rgba(14, 165, 233, 0.2);
 }
 
 .pcl-tx-badge.settlement {
-  background: rgba(5, 150, 105, 0.08);
-  color: #059669;
-  border: 1px solid rgba(5, 150, 105, 0.18);
+  background: rgba(34, 197, 94, 0.08);
+  color: #166534;
+  border: 1px solid rgba(34, 197, 94, 0.2);
 }
 
 .pcl-tx-badge.adjustment {
-  background: rgba(245, 158, 11, 0.08);
-  color: #B45309;
-  border: 1px solid rgba(180, 83, 9, 0.15);
+  background: rgba(245, 183, 0, 0.1);
+  color: #92400E;
+  border: 1px solid rgba(245, 183, 0, 0.25);
 }
 
 .pcl-tx-badge.refund {
-  background: rgba(220, 38, 38, 0.08);
-  color: #DC2626;
-  border: 1px solid rgba(220, 38, 38, 0.18);
+  background: rgba(239, 68, 68, 0.08);
+  color: #991B1B;
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .pcl-tx-badge.default {
-  background: #F3F4F6;
-  color: #6B7280;
-  border: 1px solid #E5E7EB;
+  background: var(--bg-panel);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.pcl-tx-badge:hover {
+  transform: translateY(-1px);
+  filter: brightness(0.98);
 }
 
 .pcl-tx-dot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   flex-shrink: 0;
   background: currentColor;
+  opacity: 0.9;
 }
 
-/* ── Amount ───────────────────────────────────────────────────────────────── */
+/* ── Amount ── */
 .pcl-amount {
   font-variant-numeric: tabular-nums;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-primary);
   font-size: 13px;
+  letter-spacing: -0.01em;
+  font-family: var(--font-head);
 }
 
-/* ── Payment Method Badge ─────────────────────────────────────────────────── */
+.pcl-amount.credit {
+  color: var(--status-success);
+}
+
+.pcl-amount.debit {
+  color: var(--status-danger);
+}
+
+/* ── Payment Method Badges ── */
 .pcl-method-badge {
   display: inline-block;
-  padding: 3px 8px;
-  border-radius: 5px;
+  padding: 3px 9px;
+  border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
-  background: #F3F4F6;
-  color: #6B7280;
-  border: 1px solid #E5E7EB;
+  background: var(--bg-panel);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  transition: all 0.15s;
 }
 
 .pcl-method-badge.cash {
-  background: rgba(5, 150, 105, 0.07);
-  color: #065F46;
-  border-color: rgba(5, 150, 105, 0.15);
+  background: rgba(34, 197, 94, 0.07);
+  color: #166534;
+  border-color: rgba(34, 197, 94, 0.18);
 }
 
 .pcl-method-badge.online {
-  background: rgba(37, 99, 235, 0.07);
-  color: #1E40AF;
-  border-color: rgba(37, 99, 235, 0.15);
+  background: rgba(14, 165, 233, 0.07);
+  color: #075985;
+  border-color: rgba(14, 165, 233, 0.18);
 }
 
-/* ── Hub Name ─────────────────────────────────────────────────────────────── */
+.pcl-method-badge:hover {
+  transform: scale(1.02);
+}
+
+/* ── Hub & User ── */
 .pcl-hub {
   font-weight: 500;
-  color: #374151;
+  font-size: 12.5px;
+  color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  max-width: 100%;
 }
 
-/* ── Collected By ─────────────────────────────────────────────────────────── */
+.pcl-hub code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  background: var(--bg-panel);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
 .pcl-user {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   overflow: hidden;
 }
 
 .pcl-user-avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #E0E7FF, #C7D2FE);
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #EEF2FF, #E0E7FF);
+  border: 1px solid rgba(99, 102, 241, 0.18);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -239,6 +421,12 @@
   font-weight: 700;
   color: #4338CA;
   flex-shrink: 0;
+  letter-spacing: 0.02em;
+  transition: transform 0.15s;
+}
+
+.pcl-user:hover .pcl-user-avatar {
+  transform: scale(1.05);
 }
 
 .pcl-user-name {
@@ -246,76 +434,91 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 12.5px;
-  color: #374151;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
-/* ── Shipment Code Chip ───────────────────────────────────────────────────── */
+/* ── Code Chip ── */
 .pcl-code-chip {
   font-family: 'JetBrains Mono', 'Fira Mono', monospace;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
-  color: #1D4ED8;
-  letter-spacing: 0.03em;
-  background: rgba(29, 78, 216, 0.06);
-  border: 1px solid rgba(29, 78, 216, 0.12);
-  padding: 3px 7px;
-  border-radius: 5px;
+  color: #0369A1;
+  letter-spacing: 0.04em;
+  background: rgba(14, 165, 233, 0.07);
+  border: 1px solid rgba(14, 165, 233, 0.15);
+  padding: 3px 8px;
+  border-radius: 6px;
   white-space: nowrap;
+  transition: all 0.15s;
+  cursor: pointer;
 }
 
-/* ── Empty State ──────────────────────────────────────────────────────────── */
+.pcl-code-chip:hover {
+  background: rgba(14, 165, 233, 0.12);
+  transform: translateY(-1px);
+}
+
+/* ── Empty State ── */
 .pcl-empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 64px 24px;
-  gap: 8px;
+  padding: 72px 24px;
+  gap: 12px;
+  text-align: center;
 }
 
 .pcl-empty-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: #F3F4F6;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 4px;
-  color: #9CA3AF;
+  color: var(--text-muted);
 }
 
 .pcl-empty-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  color: #374151;
+  color: var(--text-secondary);
   margin: 0;
+  font-family: var(--font-head);
 }
 
 .pcl-empty-sub {
-  font-size: 12px;
-  color: #9CA3AF;
+  font-size: 12.5px;
+  color: var(--text-muted);
   margin: 0;
+  line-height: 1.5;
 }
 
-/* ── Footer / Pagination ──────────────────────────────────────────────────── */
+/* ── Footer & Pagination ── */
 .pcl-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 20px;
-  border-top: 1px solid #E5E7EB;
-  background: #F9FAFB;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-panel);
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .pcl-footer-info {
   font-size: 11.5px;
-  color: #9CA3AF;
+  color: var(--text-muted);
   font-weight: 500;
 }
 
 .pcl-footer-info strong {
-  color: #374151;
+  color: var(--text-secondary);
+  font-weight: 600;
 }
 
 .pcl-pagination {
@@ -325,36 +528,117 @@
 }
 
 .pcl-page-btn {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 7px;
-  border: 1px solid #E5E7EB;
-  background: #fff;
-  color: #374151;
-  font-size: 13px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 12.5px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.12s;
+  transition: all 0.15s var(--pr-ease);
   font-family: inherit;
 }
 
 .pcl-page-btn:hover:not(:disabled) {
-  background: #F3F4F6;
-  border-color: #D1D5DB;
+  background: var(--bg-panel);
+  border-color: var(--accent-yellow);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.pcl-page-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .pcl-page-btn.active {
-  background: #111827;
-  color: #fff;
-  border-color: #111827;
+  background: var(--text-primary);
+  color: var(--bg-card);
+  border-color: var(--text-primary);
   font-weight: 700;
 }
 
 .pcl-page-btn:disabled {
-  background: #F9FAFB;
-  color: #D1D5DB;
+  background: var(--bg-panel);
+  color: var(--border);
   cursor: not-allowed;
+  transform: none;
+}
+
+/* Pagination ellipsis */
+.pcl-page-ellipsis {
+  padding: 0 4px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* ── Selection Checkbox ── */
+.pcl-checkbox {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pcl-checkbox.selected {
+  background: var(--accent-yellow);
+  border-color: var(--accent-yellow);
+  position: relative;
+}
+
+.pcl-checkbox.selected::after {
+  content: '✓';
+  color: var(--text-primary);
+  font-size: 10px;
+  font-weight: bold;
+}
+
+/* ── Animation for new rows ── */
+.pcl-table-row {
+  animation: pcl-row-enter 0.2s var(--pr-ease) backwards;
+}
+
+@keyframes pcl-row-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .pcl-summary-bar {
+    flex-wrap: wrap;
+  }
+  
+  .pcl-summary-item {
+    flex: 1 1 50%;
+  }
+  
+  .pcl-summary-item:first-child {
+    flex: 1 1 100%;
+  }
+  
+  .pcl-summary-item + .pcl-summary-item::before {
+    display: none;
+  }
+  
+  .pcl-footer {
+    flex-direction: column;
+    align-items: center;
+  }
 }
