@@ -347,9 +347,6 @@ export default function TransporterTable({
               <div className="transporter-table-empty">
                 <div className="transporter-table-empty-icon"><TruckIcon /></div>
                 <p className="transporter-table-empty-title">No pending requests</p>
-                <p className="transporter-table-empty-sub">
-                  All transporter requests have been processed.
-                </p>
               </div>
             ) : (
               slicePending.map(transporter => (
@@ -413,7 +410,7 @@ export default function TransporterTable({
         {/* Approved/Active Transporters Table */}
         <div className="transporter-table-section">
           <div className="transporter-table-section-header">
-            <h3 className="transporter-table-section-title">Approved & Active Transporters</h3>
+            <h3 className="transporter-table-section-title">Active Transporters</h3>
             <span className="transporter-table-section-count">
               {filteredApproved.length} transporter{filteredApproved.length !== 1 ? 's' : ''}
             </span>
@@ -453,10 +450,9 @@ export default function TransporterTable({
               <div className="transporter-table-error">{error}</div>
             ) : filteredApproved.length === 0 ? (
               <div className="transporter-table-empty">
-                <div className="transporter-table-empty-icon"><TruckIcon /></div>
-                <p className="transporter-table-empty-title">No approved transporters</p>
+                <p className="transporter-table-empty-title">No active transporters</p>
                 <p className="transporter-table-empty-sub">
-                  Approved transporters will appear here.
+                  Active transporters will appear here.
                 </p>
               </div>
             ) : (
@@ -627,6 +623,14 @@ export default function TransporterTable({
               clearInterval(refreshTimerRef.current);
               refreshTimerRef.current = setInterval(() => fetchTransporters(), refreshInterval);
             }
+          }}
+          onApprove={() => {
+            handleVerifyAction(selectedTransporter, 'APPROVED');
+            setShowDocModal(false);
+          }}
+          onDecline={() => {
+            handleVerifyAction(selectedTransporter, 'DECLINED');
+            setShowDocModal(false);
           }}
         />
       )}

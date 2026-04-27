@@ -21,10 +21,6 @@
   --tr-orange-dim:   rgba(249, 115, 22, 0.09);
   --tr-orange-border:rgba(249, 115, 22, 0.22);
 
-  --tr-blue:         #1D6FA4;
-  --tr-blue-dim:     rgba(29, 111, 164, 0.08);
-  --tr-blue-border:  rgba(29, 111, 164, 0.22);
-
   --tr-ink:          #0F1117;
   --tr-ink-60:       #3D4251;
   --tr-ink-40:       #6B7385;
@@ -226,6 +222,7 @@
   color: var(--tr-amber);
   border-color: rgba(212, 146, 10, 0.15);
 }
+
 .transporter-row-action-btn.view:hover {
   background: var(--tr-amber);
   color: #fff;
@@ -234,53 +231,43 @@
   box-shadow: 0 2px 8px rgba(212,146,10,0.30);
 }
 
-.transporter-row-action-btn.approve {
-  background: var(--tr-green-dim);
-  color: var(--tr-green);
-  border-color: var(--tr-green-border);
-}
-.transporter-row-action-btn.approve:hover {
-  background: var(--tr-green);
-  color: #fff;
-  border-color: var(--tr-green);
-  transform: scale(1.06);
-  box-shadow: 0 2px 8px rgba(26,158,92,0.28);
-}
-
-.transporter-row-action-btn.decline {
-  background: var(--tr-red-dim);
-  color: var(--tr-red);
-  border-color: var(--tr-red-border);
-}
-.transporter-row-action-btn.decline:hover {
-  background: var(--tr-red);
-  color: #fff;
-  border-color: var(--tr-red);
-  transform: scale(1.06);
-  box-shadow: 0 2px 8px rgba(192,57,43,0.28);
-}
-
-.transporter-row-action-btn.edit {
-  background: var(--tr-blue-dim);
-  color: var(--tr-blue);
-  border-color: var(--tr-blue-border);
-}
-.transporter-row-action-btn.edit:hover {
-  background: var(--tr-blue);
-  color: #fff;
-  border-color: var(--tr-blue);
-  transform: scale(1.06);
-  box-shadow: 0 2px 8px rgba(29,111,164,0.28);
-}
-
 .transporter-row-action-btn.delete {
   background: transparent;
   color: var(--tr-ink-20);
   border-color: transparent;
 }
+
 .transporter-row-action-btn.delete:hover {
   background: var(--tr-red-dim);
   color: var(--tr-red);
   border-color: var(--tr-red-border);
   transform: scale(1.06);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .transporter-row {
+    grid-template-columns: 44px 1fr 1fr 0.85fr 100px 108px;
+  }
+}
+
+@media (max-width: 900px) {
+  .transporter-row {
+    grid-template-columns: 40px 1fr 1fr 82px;
+  }
+  .transporter-row > *:nth-child(4),
+  .transporter-row > *:nth-child(5) {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .transporter-row {
+    grid-template-columns: 36px 1fr 82px;
+  }
+  .transporter-row > *:nth-child(3),
+  .transporter-row > *:nth-child(4),
+  .transporter-row > *:nth-child(5) {
+    display: none;
+  }
 }
