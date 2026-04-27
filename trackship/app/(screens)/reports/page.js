@@ -1,188 +1,243 @@
 // app/(screens)/report/page.js
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import {
-  getTotalRevenue,
-  getTotalDeliveredShipments,
-  getTransporterCount,
-} from '@/lib/api';
-import ReportStatCard  from '@/components/report/ReportStatCard';
-import RevenueChart    from '@/components/report/RevenueChart';
-import StatusPieChart  from '@/components/report/StatusPieChart';
-import CSVExport       from '@/components/report/CSVExport';
+import { getTotalRevenue, getTotalDeliveredShipments } from '@/lib/api';
+import ReportStatCard from '@/components/report/ReportStatCard';
+import RevenueChart   from '@/components/report/RevenueChart';
+import StatusPieChart from '@/components/report/StatusPieChart';
+import CSVExport      from '@/components/report/CSVExport';
 import styles from './report.module.css';
 
-// ─── Format helpers ────────────────────────────────────────────────────────────
+const MONTHS_SHORT  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTHS_FULL   = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const NOW           = new Date();
+const CURRENT_YEAR  = NOW.getFullYear();
+
 function fmtCurrency(n) {
   if (n == null) return '—';
   if (n >= 1_000_000) return `Nu ${(n / 1_000_000).toFixed(2)}M`;
   if (n >= 1_000)     return `Nu ${(n / 1_000).toFixed(1)}k`;
-  return `Nu ${n.toLocaleString()}`;
+  return `Nu ${Number(n).toLocaleString()}`;
 }
-function fmtNum(n) {
-  if (n == null) return '—';
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
-  return String(n);
-}
-
-// ─── Month/Year selectors at page level (shared between stat cards) ───────────
-const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const NOW = new Date();
-const CURRENT_YEAR  = NOW.getFullYear();
-const CURRENT_MONTH = NOW.getMonth() + 1;
 
 export default function ReportPage() {
-  const [month, setMonth] = useState(CURRENT_MONTH);
-  const [year,  setYear]  = useState(CURRENT_YEAR);
+  // pending = what's in the dropdowns
+  const [selMonth, setSelMonth] = useState('');          // '' = all months
+  const [selYear,  setSelYear]  = useState(CURRENT_YEAR);
 
-  // ── Stat card data ──
+  // applied = what was last fetched
+  const [appliedMonth, setAppliedMonth] = useState(null);
+  const [appliedYear,  setAppliedYear]  = useState(CURRENT_YEAR);
+
   const [revenue,       setRevenue]       = useState(null);
   const [delivered,     setDelivered]     = useState(null);
-  const [transporters,  setTransporters]  = useState(null);
-  const [loading,       setLoading]       = useState(true);
-
-  // Previous period (for delta %) — previous month in same year, or Dec of prev year
   const [prevRevenue,   setPrevRevenue]   = useState(null);
   const [prevDelivered, setPrevDelivered] = useState(null);
+  const [loading,       setLoading]       = useState(true);
+  const [isApplying,    setIsApplying]    = useState(false);
 
-  const prevMonth = month === 1 ? 12 : month - 1;
-  const prevYear  = month === 1 ? year - 1 : year;
+  const isFiltered = appliedMonth !== null || appliedYear !== CURRENT_YEAR;
 
-  const loadStats = useCallback(async (m, y) => {
-    setLoading(true);
-    try {
-      const [rev, del, trans, prevRev, prevDel] = await Promise.allSettled([
-        getTotalRevenue({ month: m, year: y }),
-        getTotalDeliveredShipments({ month: m, year: y }),
-        getTransporterCount(),
-        getTotalRevenue({ month: prevMonth, year: prevYear }),
-        getTotalDeliveredShipments({ month: prevMonth, year: prevYear }),
-      ]);
+  const load = useCallback(async (month, year, showLoading = true) => {
+    if (showLoading) setLoading(true);
+    const params     = month ? { month, year } : { year };
+    const prevParams = month
+      ? { month: month === 1 ? 12 : month - 1, year: month === 1 ? year - 1 : year }
+      : { year: year - 1 };
 
-      setRevenue(      rev.status      === 'fulfilled' ? rev.value.data      : null);
-      setDelivered(    del.status      === 'fulfilled' ? del.value.data      : null);
-      setTransporters( trans.status    === 'fulfilled' ? trans.value.data    : null);
-      setPrevRevenue(  prevRev.status  === 'fulfilled' ? prevRev.value.data  : null);
-      setPrevDelivered(prevDel.status  === 'fulfilled' ? prevDel.value.data  : null);
-    } finally {
-      setLoading(false);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    const [rev, del, pRev, pDel] = await Promise.allSettled([
+      getTotalRevenue(params),
+      getTotalDeliveredShipments(params),
+      getTotalRevenue(prevParams),
+      getTotalDeliveredShipments(prevParams),
+    ]);
+
+    setRevenue(      rev.status  === 'fulfilled' ? rev.value?.data?.total_revenue    ?? null : null);
+    setDelivered(    del.status  === 'fulfilled' ? del.value?.data?.total_delivered  ?? null : null);
+    setPrevRevenue(  pRev.status === 'fulfilled' ? pRev.value?.data?.total_revenue   ?? null : null);
+    setPrevDelivered(pDel.status === 'fulfilled' ? pDel.value?.data?.total_delivered ?? null : null);
+    if (showLoading) setLoading(false);
   }, []);
 
-  useEffect(() => { loadStats(month, year); }, [month, year, loadStats]);
+  // Default: full current year
+  useEffect(() => { load(null, CURRENT_YEAR); }, [load]);
 
-  // ── Compute deltas ──
-  function pctDelta(current, previous) {
-    if (!current || !previous || previous === 0) return null;
-    return +((( current - previous) / previous) * 100).toFixed(1);
+  const handleApply = async () => {
+    setIsApplying(true);
+    const month = selMonth ? +selMonth : null;
+    const year  = +selYear;
+    setAppliedMonth(month);
+    setAppliedYear(year);
+    await load(month, year);
+    setIsApplying(false);
+  };
+
+  const handleClear = async () => {
+    setSelMonth('');
+    setSelYear(CURRENT_YEAR);
+    setAppliedMonth(null);
+    setAppliedYear(CURRENT_YEAR);
+    await load(null, CURRENT_YEAR);
+  };
+
+  function calcDelta(curr, prev) {
+    if (curr == null || prev == null || Number(prev) === 0) return null;
+    return +((( Number(curr) - Number(prev)) / Number(prev)) * 100).toFixed(1);
   }
 
-  const revenueDelta   = pctDelta(revenue?.total_revenue,   prevRevenue?.total_revenue);
-  const deliveredDelta = pctDelta(delivered?.total_delivered, prevDelivered?.total_delivered);
+  const revDelta = calcDelta(revenue,   prevRevenue);
+  const delDelta = calcDelta(delivered, prevDelivered);
 
-  // ── Cards config ──
-  const cards = [
-    {
-      icon:    '💰',
-      label:   'Total Revenue',
-      value:   fmtCurrency(revenue?.total_revenue),
-      delta:   revenueDelta,
-      sub:     revenueDelta !== null
-                 ? `${revenueDelta >= 0 ? '+' : ''}${revenueDelta}% vs ${MONTHS_SHORT[prevMonth - 1]}`
-                 : `For ${MONTHS_SHORT[month - 1]} ${year}`,
-      accent: 'var(--accent-yellow)',
-    },
-    {
-      icon:    '📦',
-      label:   'Delivered Shipments',
-      value:   fmtNum(delivered?.total_delivered),
-      delta:   deliveredDelta,
-      sub:     deliveredDelta !== null
-                 ? `${deliveredDelta >= 0 ? '+' : ''}${deliveredDelta}% vs ${MONTHS_SHORT[prevMonth - 1]}`
-                 : `For ${MONTHS_SHORT[month - 1]} ${year}`,
-      accent: 'var(--accent-green)',
-    },
-    {
-      icon:    '🚚',
-      label:   'Active Transporters',
-      value:   transporters?.count != null ? String(transporters.count) : '—',
-      delta:   null,
-      sub:     'Currently registered',
-      accent: 'var(--accent-blue)',
-    },
-    {
-      icon:    '📅',
-      label:   'Report Period',
-      value:   `${MONTHS_SHORT[month - 1]} ${year}`,
-      delta:   null,
-      sub:     'Adjust filters above',
-      accent: 'var(--accent-purple)',
-    },
-  ];
+  const periodLabel = appliedMonth
+    ? `${MONTHS_SHORT[appliedMonth - 1]} ${appliedYear}`
+    : `Full year ${appliedYear}`;
+
+  const vsLabel = appliedMonth
+    ? `vs ${MONTHS_SHORT[(appliedMonth === 1 ? 12 : appliedMonth - 1) - 1]}`
+    : `vs ${appliedYear - 1}`;
+
+  // Filter icon component
+  const FilterIcon = () => (
+    <svg className={styles.filterIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M4 4h16v2l-6 7v7l-4-2v-5l-6-7V4z"/>
+    </svg>
+  );
+
+  // Checkmark icon component
+  const CheckIcon = () => (
+    <svg className={styles.btnIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M20 6L9 17l-5-5"/>
+    </svg>
+  );
+
+  // Close icon component
+  const CloseIcon = () => (
+    <svg className={styles.btnIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M18 6L6 18M6 6l12 12"/>
+    </svg>
+  );
 
   return (
     <div className={styles.page}>
 
-      {/* ── Page header ── */}
+      {/* ── Header ── */}
       <div className={styles.topBar}>
-        <div className={styles.titleBlock}>
+        <div>
           <h1 className={styles.pageTitle}>Reports &amp; Analytics</h1>
           <p className={styles.pageSub}>
-            {new Date().toLocaleDateString('en-US', {
-              weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-            })}
+            {NOW.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
 
-        {/* Global month/year filter — drives the stat cards */}
-        <div className={styles.periodPicker}>
-          <span className={styles.pickerLabel}>Period</span>
-          <select
-            className={styles.sel}
-            value={month}
-            onChange={(e) => setMonth(+e.target.value)}
-          >
-            {MONTHS_SHORT.map((m, i) => (
-              <option key={i} value={i + 1}>{m}</option>
-            ))}
-          </select>
-          <select
-            className={styles.sel}
-            value={year}
-            onChange={(e) => setYear(+e.target.value)}
-          >
-            {[CURRENT_YEAR - 2, CURRENT_YEAR - 1, CURRENT_YEAR].map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-          <span className={styles.liveChip}>
-            <span className={styles.liveDot} /> Live
-          </span>
+        {/* Enhanced Filter Bar */}
+        <div className={`${styles.filterBar} ${isFiltered ? styles.hasFilter : ''}`}>
+          <div className={styles.filterHeader}>
+            <FilterIcon />
+            <span className={styles.filterLabel}>Filter</span>
+          </div>
+
+          <div className={styles.filterControls}>
+            <div className={styles.filterGroup}>
+              <label className={styles.filterGroupLabel}>Month</label>
+              <select 
+                className={styles.sel} 
+                value={selMonth} 
+                onChange={(e) => setSelMonth(e.target.value)}
+                aria-label="Select month"
+              >
+                <option value=''>All months</option>
+                {MONTHS_FULL.map((m, i) => (
+                  <option key={i} value={i + 1}>{m}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.filterGroup}>
+              <label className={styles.filterGroupLabel}>Year</label>
+              <select 
+                className={styles.sel} 
+                value={selYear} 
+                onChange={(e) => setSelYear(+e.target.value)}
+                aria-label="Select year"
+              >
+                {[CURRENT_YEAR - 2, CURRENT_YEAR - 1, CURRENT_YEAR].map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.filterActions}>
+              <button 
+                className={`${styles.applyBtn} ${isApplying ? styles.loading : ''}`} 
+                onClick={handleApply}
+                disabled={isApplying}
+                aria-label="Apply filters"
+              >
+                <CheckIcon />
+                Apply
+              </button>
+
+              {isFiltered && (
+                <button 
+                  className={styles.clearBtn} 
+                  onClick={handleClear}
+                  aria-label="Clear filters"
+                >
+                  <CloseIcon />
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* ── Active Filters Indicator ── */}
+      {isFiltered && (
+        <div className={styles.activeFilters}>
+          <span className={styles.activeFiltersLabel}>Active filters:</span>
+          {appliedMonth && (
+            <span className={styles.filterTag}>
+              {MONTHS_FULL[appliedMonth - 1]}
+            </span>
+          )}
+          <span className={styles.filterTag}>
+            {appliedYear}
+          </span>
+        </div>
+      )}
+
       {/* ── Stat cards ── */}
       <div className={styles.statsGrid}>
-        {cards.map((c) => (
-          <ReportStatCard key={c.label} {...c} loading={loading} />
-        ))}
+        <ReportStatCard
+          icon="💰"
+          label="Total Revenue"
+          value={fmtCurrency(revenue)}
+          delta={revDelta}
+          sub={revDelta != null ? `${revDelta >= 0 ? '+' : ''}${revDelta}% ${vsLabel}` : periodLabel}
+          accent="var(--accent-yellow)"
+          loading={loading}
+        />
+        <ReportStatCard
+          icon="📦"
+          label="Delivered Shipments"
+          value={delivered != null ? Number(delivered).toLocaleString() : '—'}
+          delta={delDelta}
+          sub={delDelta != null ? `${delDelta >= 0 ? '+' : ''}${delDelta}% ${vsLabel}` : periodLabel}
+          accent="var(--accent-green)"
+          loading={loading}
+        />
       </div>
 
       {/* ── Charts ── */}
       <div className={styles.chartsRow}>
-        {/* Revenue area chart — has its own year picker inside */}
-        <div className={styles.chartMain}>
-          <RevenueChart />
-        </div>
-        {/* Pie chart — has its own month/year picker inside */}
-        <div className={styles.chartSide}>
-          <StatusPieChart />
-        </div>
+        <div className={styles.chartMain}><RevenueChart /></div>
+        <div className={styles.chartSide}><StatusPieChart /></div>
       </div>
 
       {/* ── CSV Export ── */}
       <CSVExport />
+
     </div>
   );
 }
