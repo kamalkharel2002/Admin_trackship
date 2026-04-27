@@ -1,13 +1,12 @@
 /* app/(screens)/report/report.module.css */
 
 .page {
-  margin-left: var(--sidebar-w);
   min-height: 100vh;
   background: var(--bg-page);
-  padding: 30px 32px 52px;
+  padding: 28px 32px 56px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 22px;
 }
 
 /* ── Top bar ── */
@@ -18,40 +17,90 @@
   flex-wrap: wrap;
   gap: 14px;
 }
-.titleBlock {}
+
 .pageTitle {
   font-family: var(--font-head);
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 800;
   color: var(--text-primary);
-  letter-spacing: -0.4px;
+  letter-spacing: -0.3px;
 }
+
 .pageSub {
   font-size: 13px;
   color: var(--text-muted);
   margin-top: 3px;
 }
 
-/* Period picker */
-.periodPicker {
+/* ── White Filter Bar ── */
+.filterBar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 20px 8px 16px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+  animation: slideIn 0.3s ease-out;
+}
+
+.filterBar:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-light);
+}
+
+.filterBar.hasFilter {
+  border-left: 3px solid var(--accent-yellow);
+  padding-left: 14px;
+}
+
+.filterHeader {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--bg-card);
-  border: 1.5px solid var(--border-light);
-  border-radius: var(--radius-md);
-  padding: 8px 14px;
-  box-shadow: var(--shadow-sm);
-  flex-wrap: wrap;
+  padding-right: 16px;
+  border-right: 1.5px solid var(--border);
 }
-.pickerLabel {
-  font-size: 11px;
+
+.filterIcon {
+  width: 18px;
+  height: 18px;
+  color: var(--accent-yellow);
+  stroke-width: 2.5;
+}
+
+.filterLabel {
+  font-size: 13px;
   font-weight: 700;
-  color: var(--text-muted);
+  color: var(--text-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-right: 2px;
 }
+
+.filterControls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filterGroupLabel {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 4px;
+}
+
 .sel {
   font-family: var(--font-body);
   font-size: 13px;
@@ -59,59 +108,417 @@
   color: var(--text-primary);
   background: var(--bg-panel);
   border: 1px solid var(--border);
-  border-radius: 7px;
-  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  min-width: 120px;
   outline: none;
   cursor: pointer;
-}
-.sel:focus { border-color: var(--accent-yellow); }
-.liveChip {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--accent-green);
-  margin-left: 4px;
-}
-.liveDot {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  background: var(--accent-green);
-  animation: pulse 2s infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.5; transform: scale(0.85); }
+  transition: all 0.2s ease;
 }
 
-/* ── Stat cards ── */
+.sel:hover {
+  border-color: var(--accent-yellow);
+  background: var(--bg-card);
+}
+
+.sel:focus {
+  border-color: var(--accent-yellow);
+  box-shadow: 0 0 0 3px rgba(245, 183, 0, 0.1);
+}
+
+.filterActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 4px;
+}
+
+.applyBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--accent-yellow);
+  color: #1A1A2E;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 8px 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.applyBtn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.applyBtn:hover::before {
+  left: 100%;
+}
+
+.applyBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 183, 0, 0.3);
+  background: #e0a800;
+}
+
+.applyBtn:active {
+  transform: translateY(0);
+}
+
+.clearBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 7px 18px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clearBtn:hover {
+  border-color: #EF4444;
+  color: #EF4444;
+  background: rgba(239, 68, 68, 0.05);
+  transform: translateY(-1px);
+}
+
+.clearBtn:active {
+  transform: translateY(0);
+}
+
+.btnIcon {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.5;
+}
+
+/* Active Filters Indicator */
+.activeFilters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  background: var(--cream);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--accent-yellow);
+  animation: slideIn 0.3s ease-out;
+}
+
+.activeFiltersLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filterTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.filterTag::before {
+  content: '•';
+  color: var(--accent-yellow);
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.filterTag:hover {
+  border-color: var(--accent-yellow);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(245, 183, 0, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(245, 183, 0, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 183, 0, 0);
+  }
+}
+
+.applyBtn:focus {
+  animation: pulse 0.5s ease-out;
+}
+
+/* Loading state for buttons */
+.applyBtn.loading {
+  position: relative;
+  color: transparent;
+  pointer-events: none;
+}
+
+.applyBtn.loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin-left: -8px;
+  margin-top: -8px;
+  border: 2px solid rgba(26, 26, 46, 0.3);
+  border-top-color: var(--text-primary);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Stat cards — 2 wide ── */
 .statsGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
 
 /* ── Charts row ── */
 .chartsRow {
   display: grid;
-  grid-template-columns: 1fr 360px;
+  grid-template-columns: 1fr 340px;
   gap: 16px;
   align-items: start;
 }
-.chartMain { min-width: 0; }
-.chartSide { min-width: 0; }
 
-/* ── Responsive ── */
-@media (max-width: 1200px) {
-  .statsGrid { grid-template-columns: repeat(2, 1fr); }
+.chartMain { 
+  min-width: 0; 
 }
+
+.chartSide { 
+  min-width: 0; 
+}
+
+/* Enhanced focus styles for accessibility */
+.sel:focus-visible,
+.applyBtn:focus-visible,
+.clearBtn:focus-visible {
+  outline: 2px solid var(--accent-yellow);
+  outline-offset: 2px;
+}
+
+/* Tooltip styles for better UX */
+.filterGroup {
+  position: relative;
+}
+
+.filterGroup:hover .filterGroupLabel {
+  color: var(--accent-yellow);
+}
+
+/* Smooth transitions for all interactive elements */
+.sel, .applyBtn, .clearBtn, .filterTag {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Responsive Design ── */
 @media (max-width: 1050px) {
-  .chartsRow { grid-template-columns: 1fr; }
+  .chartsRow { 
+    grid-template-columns: 1fr; 
+  }
 }
+
 @media (max-width: 900px) {
-  .page { margin-left: 0; padding: 18px 14px 40px; }
+  .page {
+    padding: 20px 20px 40px;
+  }
+  
+  .filterBar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+    width: 100%;
+  }
+  
+  .filterHeader {
+    border-right: none;
+    border-bottom: 1.5px solid var(--border);
+    padding-bottom: 12px;
+    padding-right: 0;
+    justify-content: center;
+  }
+  
+  .filterControls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .filterGroup {
+    width: 100%;
+  }
+  
+  .sel {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .filterActions {
+    flex-direction: column;
+    margin-left: 0;
+    margin-top: 4px;
+  }
+  
+  .applyBtn, .clearBtn {
+    justify-content: center;
+    width: 100%;
+  }
 }
-@media (max-width: 560px) {
-  .statsGrid { grid-template-columns: 1fr; }
+
+@media (max-width: 700px) {
+  .page { 
+    padding: 18px 14px 40px; 
+  }
+  
+  .statsGrid { 
+    grid-template-columns: 1fr; 
+  }
+  
+  .topBar { 
+    flex-direction: column; 
+    align-items: flex-start; 
+  }
+}
+
+@media (max-width: 480px) {
+  .filterBar {
+    padding: 12px;
+  }
+  
+  .sel {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+  
+  .applyBtn, .clearBtn {
+    font-size: 12px;
+    padding: 6px 16px;
+  }
+  
+  .filterIcon {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .filterLabel {
+    font-size: 11px;
+  }
+  
+  .filterGroupLabel {
+    font-size: 9px;
+  }
+  
+  /* Better touch targets on mobile */
+  .sel,
+  .applyBtn,
+  .clearBtn,
+  .filterTag {
+    min-height: 44px;
+  }
+  
+  .activeFilters {
+    padding: 10px 12px;
+  }
+  
+  .filterTag {
+    padding: 6px 14px;
+    font-size: 13px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .filterBar,
+  .activeFilters,
+  .applyBtn,
+  .clearBtn {
+    display: none;
+  }
+  
+  .statsGrid {
+    break-inside: avoid;
+  }
+  
+  .chartsRow {
+    break-inside: avoid;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .filterBar,
+  .activeFilters,
+  .filterTag,
+  .applyBtn,
+  .clearBtn,
+  .sel {
+    animation: none;
+    transition: none;
+  }
+  
+  .applyBtn::before {
+    display: none;
+  }
+}
+
+/* High contrast mode support */
+@media (forced-colors: active) {
+  .filterBar {
+    border: 2px solid CanvasText;
+  }
+  
+  .applyBtn {
+    border: 1px solid CanvasText;
+  }
+  
+  .filterTag::before {
+    content: '✓';
+  }
 }

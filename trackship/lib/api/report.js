@@ -3,8 +3,8 @@ import { ENDPOINTS, buildQueryString } from '../config';
 import { request } from './client';
 
 /**
- * GET /admin/reports/revenue/total
- * @param {{ month?: number, year?: number }} params
+ * GET /admin/report/revenue/total
+ * Response: { success: true, data: { total_revenue: number } }
  */
 export async function getTotalRevenue(params = {}) {
   const qs = buildQueryString(params);
@@ -12,8 +12,8 @@ export async function getTotalRevenue(params = {}) {
 }
 
 /**
- * GET /admin/reports/shipments/delivered/total
- * @param {{ month?: number, year?: number }} params
+ * GET /admin/report/shipments/delivered/total
+ * Response: { success: true, data: { total_delivered: number } }
  */
 export async function getTotalDeliveredShipments(params = {}) {
   const qs = buildQueryString(params);
@@ -21,15 +21,14 @@ export async function getTotalDeliveredShipments(params = {}) {
 }
 
 /**
- * GET /admin/reports/transporter/count
- */
-export async function getTransporterCount() {
-  return request(ENDPOINTS.reports.transporterCount, { method: 'GET' });
-}
-
-/**
- * GET /admin/reports/revenue/monthly-graph
- * @param {{ year?: number }} params
+ * GET /admin/report/revenue/monthly-graph?year=
+ * Response: {
+ *   success: true,
+ *   data: {
+ *     labels: string[],
+ *     datasets: [{ label, data: number[], backgroundColor, borderColor, ... }]
+ *   }
+ * }
  */
 export async function getMonthlyRevenueGraph(params = {}) {
   const qs = buildQueryString(params);
@@ -37,8 +36,12 @@ export async function getMonthlyRevenueGraph(params = {}) {
 }
 
 /**
- * GET /admin/reports/shipments/status-distribution
- * @param {{ month?: number, year?: number }} params
+ * GET /admin/report/shipments/status-distribution?month=&year=
+ * Response: {
+ *   success: true,
+ *   data: { labels: string[], datasets: [{ data: number[], backgroundColor: string[] }] },
+ *   summary: { total_shipments: number, status_breakdown: [{ status, count }] }
+ * }
  */
 export async function getShipmentStatusDistribution(params = {}) {
   const qs = buildQueryString(params);
@@ -46,44 +49,42 @@ export async function getShipmentStatusDistribution(params = {}) {
 }
 
 /**
- * Download Revenue CSV
- * @param {{ start_date?: string, end_date?: string }} params
+ * Download Revenue CSV — triggers browser download
+ * GET /admin/report/export/revenue-csv?start_date=&end_date=
  */
 export async function exportRevenueCSV(params = {}) {
   const qs = buildQueryString(params);
   const res = await fetch(`${ENDPOINTS.reports.exportRevenueCSV}${qs}`, {
     headers: {
-      'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-      'Accept': 'text/csv',
+      Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+      Accept: 'text/csv',
     },
   });
-  if (!res.ok) throw new Error('Failed to export revenue CSV');
+  if (!res.ok) throw new Error(`Export failed (${res.status})`);
   const blob = await res.blob();
-  triggerDownload(blob, `revenue-report-${params.start_date ?? 'all'}-to-${params.end_date ?? 'all'}.csv`);
+  _download(blob, `revenue-report-${params.start_date ?? 'all'}-to-${params.end_date ?? 'all'}.csv`);
 }
 
 /**
- * Download Shipment CSV
- * @param {{ start_date?: string, end_date?: string }} params
+ * Download Shipment CSV — triggers browser download
+ * GET /admin/report/export/shipment-csv?start_date=&end_date=
  */
 export async function exportShipmentCSV(params = {}) {
   const qs = buildQueryString(params);
   const res = await fetch(`${ENDPOINTS.reports.exportShipmentCSV}${qs}`, {
     headers: {
-      'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-      'Accept': 'text/csv',
+      Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+      Accept: 'text/csv',
     },
   });
-  if (!res.ok) throw new Error('Failed to export shipment CSV');
+  if (!res.ok) throw new Error(`Export failed (${res.status})`);
   const blob = await res.blob();
-  triggerDownload(blob, `shipment-report-${params.start_date ?? 'all'}-to-${params.end_date ?? 'all'}.csv`);
+  _download(blob, `shipment-report-${params.start_date ?? 'all'}-to-${params.end_date ?? 'all'}.csv`);
 }
 
-function triggerDownload(blob, filename) {
+function _download(blob, filename) {
   const url = window.URL.createObjectURL(blob);
-  const a   = document.createElement('a');
-  a.href     = url;
-  a.download = filename;
+  const a   = Object.assign(document.createElement('a'), { href: url, download: filename });
   document.body.appendChild(a);
   a.click();
   a.remove();
