@@ -64,10 +64,13 @@ export async function request(url, { method = 'GET', body, retry = true } = {}) 
       } catch (refreshError) {
         processQueue(refreshError); // reject all queued requests
         isRefreshing = false;
-        // ✅ Don't throw — just redirect. Callers don't need to handle this.
-        window.location.href = '/login';
-        // Return a promise that never resolves so in-flight UI updates stop cleanly
-        return new Promise(() => { });
+        // Redirect to login, but still reject so loading states can unwind.
+        if (typeof window !== 'undefined') {
+          window.location.replace('/login');
+        }
+        const error = new Error('Session expired. Please log in again.');
+        error.cause = refreshError;
+        throw error;
       }
     }
 
