@@ -1,4 +1,3 @@
-// app/(screens)/report/page.js
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { getTotalRevenue, getTotalDeliveredShipments } from '@/lib/api';
@@ -22,12 +21,12 @@ function fmtCurrency(n) {
 
 export default function ReportPage() {
   // pending = what's in the dropdowns
-  const [selMonth, setSelMonth] = useState('');          // '' = all months
-  const [selYear,  setSelYear]  = useState(CURRENT_YEAR);
+  const [selMonth, setSelMonth] = useState('');  // '' = all months
+  const [selYear,  setSelYear]  = useState('');  // '' = all years (FIXED)
 
   // applied = what was last fetched
   const [appliedMonth, setAppliedMonth] = useState(null);
-  const [appliedYear,  setAppliedYear]  = useState(CURRENT_YEAR);
+  const [appliedYear,  setAppliedYear]  = useState(null); // (FIXED)
 
   const [revenue,       setRevenue]       = useState(null);
   const [delivered,     setDelivered]     = useState(null);
@@ -36,36 +35,48 @@ export default function ReportPage() {
   const [loading,       setLoading]       = useState(true);
   const [isApplying,    setIsApplying]    = useState(false);
 
-  const isFiltered = appliedMonth !== null || appliedYear !== CURRENT_YEAR;
+  const isFiltered = appliedMonth !== null || appliedYear !== null;
 
   const load = useCallback(async (month, year, showLoading = true) => {
     if (showLoading) setLoading(true);
-    const params     = month ? { month, year } : { year };
+    
+    // Don't include year if it's null/undefined
+    const params = month 
+      ? { month, year } 
+      : year 
+        ? { year } 
+        : {}; // Empty params for all-time total
+    
+    // For previous period comparison
     const prevParams = month
       ? { month: month === 1 ? 12 : month - 1, year: month === 1 ? year - 1 : year }
-      : { year: year - 1 };
+      : year
+        ? { year: year - 1 }
+        : {}; // Empty for all-time comparison
 
     const [rev, del, pRev, pDel] = await Promise.allSettled([
       getTotalRevenue(params),
       getTotalDeliveredShipments(params),
-      getTotalRevenue(prevParams),
-      getTotalDeliveredShipments(prevParams),
+      year ? getTotalRevenue(prevParams) : Promise.resolve(null), // Skip prev comparison for all-time
+      year ? getTotalDeliveredShipments(prevParams) : Promise.resolve(null),
     ]);
 
-    setRevenue(      rev.status  === 'fulfilled' ? rev.value?.data?.total_revenue    ?? null : null);
-    setDelivered(    del.status  === 'fulfilled' ? del.value?.data?.total_delivered  ?? null : null);
-    setPrevRevenue(  pRev.status === 'fulfilled' ? pRev.value?.data?.total_revenue   ?? null : null);
+    setRevenue(rev.status === 'fulfilled' ? rev.value?.data?.total_revenue ?? null : null);
+    setDelivered(del.status === 'fulfilled' ? del.value?.data?.total_delivered ?? null : null);
+    setPrevRevenue(pRev.status === 'fulfilled' ? pRev.value?.data?.total_revenue ?? null : null);
     setPrevDelivered(pDel.status === 'fulfilled' ? pDel.value?.data?.total_delivered ?? null : null);
     if (showLoading) setLoading(false);
   }, []);
 
-  // Default: full current year
-  useEffect(() => { load(null, CURRENT_YEAR); }, [load]);
+  // Default: all-time totals (FIXED)
+  useEffect(() => { 
+    load(null, null); // Pass null for both params to get all-time totals
+  }, [load]);
 
   const handleApply = async () => {
     setIsApplying(true);
     const month = selMonth ? +selMonth : null;
-    const year  = +selYear;
+    const year = selYear ? +selYear : null; // (FIXED)
     setAppliedMonth(month);
     setAppliedYear(year);
     await load(month, year);
@@ -74,10 +85,10 @@ export default function ReportPage() {
 
   const handleClear = async () => {
     setSelMonth('');
-    setSelYear(CURRENT_YEAR);
+    setSelYear(''); // (FIXED)
     setAppliedMonth(null);
-    setAppliedYear(CURRENT_YEAR);
-    await load(null, CURRENT_YEAR);
+    setAppliedYear(null);
+    await load(null, null);
   };
 
   function calcDelta(curr, prev) {
@@ -85,16 +96,21 @@ export default function ReportPage() {
     return +((( Number(curr) - Number(prev)) / Number(prev)) * 100).toFixed(1);
   }
 
-  const revDelta = calcDelta(revenue,   prevRevenue);
+  const revDelta = calcDelta(revenue, prevRevenue);
   const delDelta = calcDelta(delivered, prevDelivered);
 
+  // (FIXED) periodLabel and vsLabel
   const periodLabel = appliedMonth
     ? `${MONTHS_SHORT[appliedMonth - 1]} ${appliedYear}`
-    : `Full year ${appliedYear}`;
+    : appliedYear
+      ? `Full year ${appliedYear}`
+      : 'All time';
 
   const vsLabel = appliedMonth
     ? `vs ${MONTHS_SHORT[(appliedMonth === 1 ? 12 : appliedMonth - 1) - 1]}`
-    : `vs ${appliedYear - 1}`;
+    : appliedYear
+      ? `vs ${appliedYear - 1}`
+      : '';
 
   // Filter icon component
   const FilterIcon = () => (
@@ -157,9 +173,10 @@ export default function ReportPage() {
               <select 
                 className={styles.sel} 
                 value={selYear} 
-                onChange={(e) => setSelYear(+e.target.value)}
+                onChange={(e) => setSelYear(e.target.value ? +e.target.value : '')} 
                 aria-label="Select year"
               >
+                <option value=''>All years</option> {/* (FIXED) Added option */}
                 {[CURRENT_YEAR - 2, CURRENT_YEAR - 1, CURRENT_YEAR].map((y) => (
                   <option key={y} value={y}>{y}</option>
                 ))}
@@ -201,9 +218,11 @@ export default function ReportPage() {
               {MONTHS_FULL[appliedMonth - 1]}
             </span>
           )}
-          <span className={styles.filterTag}>
-            {appliedYear}
-          </span>
+          {appliedYear && ( /* (FIXED) Only show if year is set */
+            <span className={styles.filterTag}>
+              {appliedYear}
+            </span>
+          )}
         </div>
       )}
 

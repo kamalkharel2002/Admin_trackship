@@ -4,7 +4,6 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  height: 100%;
 }
 
 /* ── Calendar card ── */
@@ -30,10 +29,7 @@
   font-family: var(--font-head);
 }
 
-.calNav {
-  display: flex;
-  gap: 4px;
-}
+.calNav { display: flex; gap: 4px; }
 
 .calNavBtn {
   width: 28px; height: 28px;
@@ -44,12 +40,9 @@
   border: 1px solid var(--border-light);
   transition: all 0.15s;
   cursor: pointer;
-  font-size: 14px;
 }
-
 .calNavBtn:hover { background: var(--text-primary); color: #fff; }
 
-/* Range display */
 .rangeDisplay {
   background: var(--cream);
   padding: 8px 12px;
@@ -92,75 +85,38 @@
   font-family: var(--font-body);
   position: relative;
 }
+.calDay:hover:not(.empty) { background: var(--cream); color: var(--text-primary); }
+.calDay.empty { cursor: default; background: transparent; }
 
-.calDay:hover:not(.empty) {
-  background: var(--cream);
-  color: var(--text-primary);
-}
-
-.calDay.empty { 
-  cursor: default; 
-  background: transparent;
-}
-
-/* Range selection styles */
-.calDay.inRange {
-  background: rgba(245, 183, 0, 0.15);
-  border-radius: 0;
-}
-
+.calDay.inRange { background: rgba(245, 183, 0, 0.15); border-radius: 0; }
 .calDay.rangeStart {
   background: linear-gradient(135deg, #1A1A2E, #2D2D50);
-  color: #fff;
-  font-weight: 700;
-  border-radius: 8px 0 0 8px;
-  position: relative;
+  color: #fff; font-weight: 700; border-radius: 8px 0 0 8px;
 }
-
 .calDay.rangeEnd {
   background: linear-gradient(135deg, #1A1A2E, #2D2D50);
-  color: #fff;
-  font-weight: 700;
-  border-radius: 0 8px 8px 0;
-  position: relative;
+  color: #fff; font-weight: 700; border-radius: 0 8px 8px 0;
 }
-
 .calDay.singleDate {
   background: linear-gradient(135deg, #1A1A2E, #2D2D50);
-  color: #fff;
-  font-weight: 700;
-  border-radius: 8px;
+  color: #fff; font-weight: 700; border-radius: 8px;
 }
+.calDay.rangeStart.rangeEnd { border-radius: 8px; }
 
-.calDay.rangeStart.rangeEnd {
-  border-radius: 8px;
-}
-
-.calDay.today {
-  color: var(--accent-blue);
-  font-weight: 700;
-  position: relative;
-}
-
+.calDay.today { color: var(--accent-blue); font-weight: 700; }
 .calDay.today::after {
   content: '';
   position: absolute;
-  bottom: 2px;
-  left: 50%;
+  bottom: 2px; left: 50%;
   transform: translateX(-50%);
-  width: 4px;
-  height: 4px;
+  width: 4px; height: 4px;
   background: var(--accent-blue);
   border-radius: 50%;
 }
-
 .calDay.rangeStart.today::after,
 .calDay.rangeEnd.today::after,
-.calDay.singleDate.today::after {
-  background: #fff;
-}
+.calDay.singleDate.today::after { background: #fff; }
 
-/* Clear date button */
 .clearBtn {
   width: 100%;
   margin-top: 12px;
@@ -174,28 +130,20 @@
   border: 1px solid var(--border);
   transition: all 0.15s;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   gap: 6px;
 }
-
 .clearBtn:hover { background: #FEE2E2; color: #DC2626; border-color: #FCA5A5; }
+.clearBtn.active { background: var(--accent-yellow); color: var(--text-primary); border-color: var(--accent-yellow); }
 
-.clearBtn.active {
-  background: var(--accent-yellow);
-  color: var(--text-primary);
-  border-color: var(--accent-yellow);
-}
-
-/* ── Pending transporters ── */
+/* ── Pending card — tall enough to match hub chart card ── */
 .pendingCard {
   background: var(--bg-card);
   border-radius: var(--radius-lg);
   padding: 20px;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-light);
-  flex: 1;
+  min-height: 440px;     /* ← grows to fill the remaining space */
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -206,6 +154,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
 }
 
 .pendingTitle {
@@ -230,7 +179,7 @@
   flex-direction: column;
   gap: 10px;
   overflow-y: auto;
-  max-height: 280px;
+  flex: 1;
 }
 
 .pendingItem {
@@ -243,7 +192,6 @@
   border: 1px solid var(--border-light);
   transition: box-shadow 0.15s;
 }
-
 .pendingItem:hover { box-shadow: var(--shadow-sm); }
 
 .pendingAvatar {

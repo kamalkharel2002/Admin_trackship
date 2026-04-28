@@ -108,29 +108,6 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.hints {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 18px;
-}
-@media (max-width: 560px) { .hints { grid-template-columns: 1fr; } }
-.hintBox {
-  background: var(--bg-panel);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-sm);
-  padding: 11px 14px;
-}
-.hintTitle {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  margin-bottom: 4px;
-}
-.hintText { font-size: 11.5px; color: var(--text-muted); line-height: 1.6; }
-
 .toast {
   position: absolute;
   top: 14px; right: 14px;
@@ -150,4 +127,23 @@
 @keyframes slideDown {
   from { opacity: 0; transform: translateY(-8px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+.warning {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  color: #856404;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  margin: 12px 0 0 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.warning::before {
+  content: '⚠️';
+  font-size: 14px;
 }
