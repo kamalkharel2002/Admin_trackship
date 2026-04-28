@@ -1,11 +1,11 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import './DocumentModal.css';
 
 /* ── File helpers ── */
 function getFileType(base64) {
   if (!base64) return 'unknown';
-  if (base64.startsWith('/9j/'))  return 'jpg';
+  if (base64.startsWith('/9j/')) return 'jpg';
   if (base64.startsWith('iVBOR')) return 'png';
   if (base64.startsWith('JVBER')) return 'pdf';
   return 'unknown';
@@ -18,24 +18,32 @@ function getFileDataUrl(base64) {
 }
 
 const DOC_LABELS = {
-  // Transporter documents
   license_front: 'License Front',
-  license_back:  'License Back',
-  bluebook:      'Bluebook',
-  insurance:     'Insurance',
-  // Vehicle documents
+  license_back: 'License Back',
+  bluebook: 'Bluebook',
+  insurance: 'Insurance',
   registration_cert: 'Registration Certificate',
-  pollution_cert:    'Pollution Certificate',
-  fitness_cert:      'Fitness Certificate',
-  permit:            'Permit',
-  insurance_cert:    'Insurance Certificate',
+  pollution_cert: 'Pollution Certificate',
+  fitness_cert: 'Fitness Certificate',
+  permit: 'Permit',
+  insurance_cert: 'Insurance Certificate',
+  // Additional document types from backend
+  aadhar_card: 'Aadhar Card',
+  pan_card: 'PAN Card',
+  gst_certificate: 'GST Certificate',
+  bank_proof: 'Bank Proof',
+  rc_book: 'RC Book',
+  vehicle_insurance: 'Vehicle Insurance',
+  vehicle_permit: 'Vehicle Permit',
+  vehicle_fitness: 'Vehicle Fitness',
+  vehicle_pollution: 'Pollution Certificate',
 };
 
 function getLabel(type) {
-  return DOC_LABELS[type] || type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  return DOC_LABELS[type] || type?.replace(/_/g, ' ')?.replace(/\b\w/g, c => c.toUpperCase()) || type;
 }
 
-/* ── Icons (same as before) ── */
+/* ── Icons ── */
 const CloseIcon = () => (
   <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5"
     strokeLinecap="round" viewBox="0 0 24 24">
@@ -90,68 +98,198 @@ const VehicleIcon = () => (
   </svg>
 );
 
-/* ── Status config ── */
 const STATUS_CONFIG = {
-  APPROVED:             { label: 'Approved', cls: 'status-approved' },
-  DECLINED:             { label: 'Declined', cls: 'status-declined' },
-  PENDING_VERIFICATION: { label: 'Pending',  cls: 'status-pending'  },
-  ACTIVE:               { label: 'Active',   cls: 'status-approved' },
+  APPROVED: { label: 'Approved', cls: 'status-approved' },
+  DECLINED: { label: 'Declined', cls: 'status-declined' },
+  PENDING_VERIFICATION: { label: 'Pending', cls: 'status-pending' },
+  ACTIVE: { label: 'Active', cls: 'status-approved' },
+  REJECTED: { label: 'Rejected', cls: 'status-declined' },
 };
 
 function getInitials(name = '') {
+  if (!name) return '??';
   return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 }
 
-/* ══════════════════════════════════════
-   MAIN COMPONENT
-══════════════════════════════════════ */
 export default function DocumentModal({
   transporter,
   documents = [],
-  vehicles = [], // For vehicle change requests
+  vehicles = [],
   loading = false,
-  modalType = 'registration', // 'registration' or 'vehicle-change'
+  modalType = 'registration',
   onClose,
   onApprove,
   onDecline,
-  onVehicleDocApprove, // For approving individual vehicle documents
-  onVehicleDocReject,  // For rejecting individual vehicle documents
+  onVehicleDocApprove,
+  onVehicleDocReject,
+  // New props for showing approval results
+  approvingDocId = null,
+  rejectingDocId = null,
 }) {
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [vehicleMap, setVehicleMap] = useState(new Map());
 
-  const status    = transporter?.verification_status || 'PENDING_VERIFICATION';
+  // Build vehicle map from documents
+  useEffect(() => {
+    if (modalType === 'vehicle-change' && documents.length > 0) {
+      const map = new Map();
+      documents.forEach(doc => {
+        if (doc.vehicle_id && !map.has(doc.vehicle_id)) {
+          map.set(doc.vehicle_id, {
+            vehicle_id: doc.vehicle_id,
+            vehicle_no: doc.vehicle_no,
+            vehicle_type: doc.vehicle_type,
+            verification_status: doc.verification_status || doc.vehicle_status,
+            pending_docs_count: 0,
+          });
+        }
+      });
+      
+      // Count pending docs per vehicle
+      map.forEach((vehicle, id) => {
+        const pendingDocs = documents.filter(doc => 
+          doc.vehicle_id === id && doc.status === 'PENDING'
+        ).length;
+        vehicle.pending_docs_count = pendingDocs;
+      });
+      
+      setVehicleMap(map);
+      
+      // Auto-select first vehicle if none selected
+      if (!selectedVehicle && map.size > 0) {
+        const firstVehicle = Array.from(map.values())[0];
+        setSelectedVehicle(firstVehicle);
+      }
+    }
+  }, [modalType, documents, selectedVehicle]);
+
+  // DEDUPLICATE documents to prevent key errors
+  const uniqueDocuments = useMemo(() => {
+    if (!documents || documents.length === 0) return [];
+    
+    const uniqueMap = new Map();
+    documents.forEach(doc => {
+      const id = doc.document_id || doc.id;
+      if (id && !uniqueMap.has(id)) {
+        uniqueMap.set(id, doc);
+      } else if (!id) {
+        // Fallback for documents without ID
+        const key = `${doc.doc_type}_${doc.vehicle_id || 'transporter'}_${doc.uploaded_at}`;
+        if (!uniqueMap.has(key)) {
+          uniqueMap.set(key, doc);
+        }
+      }
+    });
+    
+    if (uniqueMap.size !== documents.length) {
+      console.log(`DocumentModal: Deduplicated ${documents.length} docs to ${uniqueMap.size}`);
+    }
+    
+    return Array.from(uniqueMap.values());
+  }, [documents]);
+
+  // Get unique vehicles from the vehicles prop or from documents
+  const uniqueVehicles = useMemo(() => {
+    if (vehicles && vehicles.length > 0) {
+      const uniqueMap = new Map();
+      vehicles.forEach(vehicle => {
+        const id = vehicle.vehicle_id;
+        if (!uniqueMap.has(id)) {
+          // Count pending documents for this vehicle
+          const pendingDocs = uniqueDocuments.filter(doc => 
+            doc.vehicle_id === id && doc.status === 'PENDING'
+          ).length;
+          uniqueMap.set(id, {
+            ...vehicle,
+            pending_docs_count: pendingDocs,
+          });
+        }
+      });
+      return Array.from(uniqueMap.values());
+    }
+    
+    // Fallback: build from documents
+    return Array.from(vehicleMap.values());
+  }, [vehicles, uniqueDocuments, vehicleMap]);
+
+  const status = transporter?.verification_status || 'PENDING_VERIFICATION';
   const statusCfg = STATUS_CONFIG[status] || STATUS_CONFIG.PENDING_VERIFICATION;
   const isPendingRegistration = status === 'PENDING_VERIFICATION';
   const isVehicleChangeMode = modalType === 'vehicle-change';
 
   const fields = [
-    { label: 'Full Name',    value: transporter?.user_name    },
-    { label: 'Email',        value: transporter?.email        },
-    { label: 'Phone',        value: transporter?.phone        },
-    { label: 'License No.',  value: transporter?.license_no   },
+    { label: 'Full Name', value: transporter?.user_name },
+    { label: 'Email', value: transporter?.email },
+    { label: 'Phone', value: transporter?.phone },
+    { label: 'License No.', value: transporter?.license_no },
   ];
 
-  // Add vehicle-specific fields if in vehicle-change mode
   if (isVehicleChangeMode && selectedVehicle) {
     fields.push(
       { label: 'Vehicle Type', value: selectedVehicle.vehicle_type },
-      { label: 'Vehicle No.',  value: selectedVehicle.vehicle_no }
+      { label: 'Vehicle No.', value: selectedVehicle.vehicle_no },
+      { label: 'Vehicle Status', value: selectedVehicle.verification_status || 'PENDING' }
     );
   } else if (!isVehicleChangeMode) {
     fields.push(
       { label: 'Vehicle Type', value: transporter?.vehicle_type },
-      { label: 'Vehicle No.',  value: transporter?.vehicle_no }
+      { label: 'Vehicle No.', value: transporter?.vehicle_no }
     );
   }
 
+  const getDocumentKey = useCallback((doc, index) => {
+    if (doc.document_id) return `doc_${doc.document_id}`;
+    if (doc.id) return `doc_${doc.id}`;
+    return `doc_${doc.doc_type || doc.type}_${doc.vehicle_id || 'transporter'}_${index}`;
+  }, []);
+
+  const getVehicleKey = useCallback((vehicle) => {
+    if (vehicle.vehicle_id) return `vehicle_${vehicle.vehicle_id}`;
+    return `vehicle_${vehicle.vehicle_no}_${vehicle.vehicle_type}`;
+  }, []);
+
+  // Get documents to display (filter by selected vehicle if needed)
+  const displayedDocuments = useMemo(() => {
+    if (!isVehicleChangeMode || !selectedVehicle) {
+      return uniqueDocuments;
+    }
+    return uniqueDocuments.filter(doc => doc.vehicle_id === selectedVehicle?.vehicle_id);
+  }, [uniqueDocuments, isVehicleChangeMode, selectedVehicle]);
+
+  // Check if all documents for selected vehicle are approved
+  const isVehicleFullyApproved = useMemo(() => {
+    if (!isVehicleChangeMode || !selectedVehicle || displayedDocuments.length === 0) {
+      return false;
+    }
+    const hasPending = displayedDocuments.some(doc => doc.status === 'PENDING');
+    const hasRejected = displayedDocuments.some(doc => doc.status === 'REJECTED');
+    return !hasPending && !hasRejected && displayedDocuments.length > 0;
+  }, [isVehicleChangeMode, selectedVehicle, displayedDocuments]);
+
+  // Handle document approval with loading state
+  const handleApproveDocument = async (documentId) => {
+    if (onVehicleDocApprove) {
+      await onVehicleDocApprove(documentId);
+    }
+  };
+
+  // Handle document rejection
+  const handleRejectDocument = async (documentId) => {
+    const reason = window.prompt('Please provide a reason for rejection:');
+    if (reason && reason.trim()) {
+      if (onVehicleDocReject) {
+        await onVehicleDocReject(documentId, reason);
+      }
+    } else if (reason === '') {
+      alert('Rejection reason is required');
+    }
+  };
+
   return (
     <>
-      {/* ── Main modal ── */}
       <div className="dm-backdrop" onClick={onClose}>
         <div className="dm-modal" onClick={e => e.stopPropagation()}>
-
-          {/* Header */}
           <div className="dm-header">
             <div className="dm-header-left">
               <div className="dm-avatar">{getInitials(transporter?.user_name)}</div>
@@ -174,17 +312,14 @@ export default function DocumentModal({
             </button>
           </div>
 
-          {/* Body */}
           <div className="dm-body">
-
-            {/* Info grid */}
             <section className="dm-section">
               <p className="dm-section-label">
                 {isVehicleChangeMode ? 'Transporter Details' : 'Registration Details'}
               </p>
               <div className="dm-info-grid">
-                {fields.map(({ label, value }) => (
-                  <div className="dm-info-cell" key={label}>
+                {fields.map(({ label, value }, idx) => (
+                  <div className="dm-info-cell" key={`field_${label}_${idx}`}>
                     <span className="dm-info-label">{label}</span>
                     <span className="dm-info-value">{value || '—'}</span>
                   </div>
@@ -192,14 +327,13 @@ export default function DocumentModal({
               </div>
             </section>
 
-            {/* Vehicle selection for vehicle-change mode */}
-            {isVehicleChangeMode && vehicles.length > 0 && (
+            {isVehicleChangeMode && uniqueVehicles.length > 0 && (
               <section className="dm-section">
                 <p className="dm-section-label">Select Vehicle</p>
                 <div className="dm-vehicle-selector">
-                  {vehicles.map(vehicle => (
+                  {uniqueVehicles.map(vehicle => (
                     <button
-                      key={vehicle.vehicle_id}
+                      key={getVehicleKey(vehicle)}
                       className={`dm-vehicle-card ${selectedVehicle?.vehicle_id === vehicle.vehicle_id ? 'active' : ''}`}
                       onClick={() => setSelectedVehicle(vehicle)}
                     >
@@ -213,13 +347,15 @@ export default function DocumentModal({
                           {vehicle.pending_docs_count} pending
                         </span>
                       )}
+                      {vehicle.verification_status === 'ACTIVE' && (
+                        <span className="dm-verified-badge">✓ Active</span>
+                      )}
                     </button>
                   ))}
                 </div>
               </section>
             )}
 
-            {/* Documents */}
             <section className="dm-section">
               <div className="dm-section-header">
                 <p className="dm-section-label">
@@ -227,9 +363,9 @@ export default function DocumentModal({
                     ? `Documents for ${selectedVehicle.vehicle_no}`
                     : 'Uploaded Documents'}
                 </p>
-                {!loading && documents.length > 0 && (
+                {!loading && displayedDocuments.length > 0 && (
                   <span className="dm-doc-count">
-                    {documents.length} file{documents.length !== 1 ? 's' : ''}
+                    {displayedDocuments.length} file{displayedDocuments.length !== 1 ? 's' : ''}
                   </span>
                 )}
               </div>
@@ -239,7 +375,7 @@ export default function DocumentModal({
                   <div className="dm-loading-track"><div className="dm-loading-bar" /></div>
                   <span className="dm-loading-text">Loading documents…</span>
                 </div>
-              ) : documents.length === 0 ? (
+              ) : displayedDocuments.length === 0 ? (
                 <div className="dm-empty">
                   <div className="dm-empty-icon"><EmptyDocsIcon /></div>
                   <p className="dm-empty-title">No documents uploaded</p>
@@ -251,15 +387,19 @@ export default function DocumentModal({
                 </div>
               ) : (
                 <div className="dm-doc-grid">
-                  {documents.map((doc, i) => {
+                  {displayedDocuments.map((doc, i) => {
                     const fileType = getFileType(doc.file);
-                    const url      = getFileDataUrl(doc.file);
+                    const url = getFileDataUrl(doc.file);
                     const isPending = doc.status === 'PENDING';
+                    const isApproved = doc.status === 'ACTIVE';
+                    const isRejected = doc.status === 'REJECTED';
+                    const isProcessing = approvingDocId === doc.document_id || rejectingDocId === doc.document_id;
+                    const documentKey = getDocumentKey(doc, i);
                     
                     return (
-                      <div key={i} className="dm-doc-wrapper">
+                      <div key={documentKey} className="dm-doc-wrapper">
                         <button
-                          className="dm-doc-card"
+                          className={`dm-doc-card ${isApproved ? 'approved' : ''} ${isRejected ? 'rejected' : ''}`}
                           style={{ animationDelay: `${i * 0.05}s` }}
                           onClick={() => setSelectedDoc(doc)}
                           aria-label={`View ${getLabel(doc.doc_type || doc.type)}`}
@@ -280,24 +420,27 @@ export default function DocumentModal({
                           <span className="dm-doc-label">
                             {getLabel(doc.doc_type || doc.type)}
                           </span>
-                          {isVehicleChangeMode && isPending && (
-                            <span className="dm-pending-label">Pending</span>
+                          {isVehicleChangeMode && (
+                            <span className={`dm-doc-status ${isPending ? 'pending' : isApproved ? 'approved' : 'rejected'}`}>
+                              {isPending ? 'Pending' : isApproved ? 'Approved' : 'Rejected'}
+                            </span>
                           )}
                         </button>
                         
-                        {/* Individual document actions for vehicle change mode */}
                         {isVehicleChangeMode && isPending && onVehicleDocApprove && onVehicleDocReject && (
                           <div className="dm-doc-actions">
                             <button
                               className="dm-doc-action-reject"
-                              onClick={() => onVehicleDocReject(doc.document_id)}
+                              onClick={() => handleRejectDocument(doc.document_id)}
+                              disabled={isProcessing}
                               title="Reject document"
                             >
                               <XIcon />
                             </button>
                             <button
                               className="dm-doc-action-approve"
-                              onClick={() => onVehicleDocApprove(doc.document_id)}
+                              onClick={() => handleApproveDocument(doc.document_id)}
+                              disabled={isProcessing}
                               title="Approve document"
                             >
                               <CheckIcon />
@@ -309,11 +452,16 @@ export default function DocumentModal({
                   })}
                 </div>
               )}
+              
+              {isVehicleChangeMode && selectedVehicle && isVehicleFullyApproved && (
+                <div className="dm-vehicle-approved-message">
+                  <CheckIcon />
+                  <span>All documents approved! Vehicle will be activated automatically.</span>
+                </div>
+              )}
             </section>
-
           </div>
 
-          {/* Footer - Only show for initial registration */}
           {!isVehicleChangeMode && isPendingRegistration && onApprove && onDecline && (
             <div className="dm-footer">
               <p className="dm-footer-hint">Review all documents before taking action.</p>
@@ -330,27 +478,24 @@ export default function DocumentModal({
             </div>
           )}
 
-          {/* Footer for vehicle change mode - Batch actions */}
           {isVehicleChangeMode && selectedVehicle && (
             <div className="dm-footer">
               <p className="dm-footer-hint">
-                Review and verify each document individually.
+                Review each document individually. Click ✓ to approve or ✗ to reject.
+                {selectedVehicle.pending_docs_count === 0 && (
+                  <span className="dm-all-reviewed"> All documents reviewed!</span>
+                )}
               </p>
               <div className="dm-footer-actions">
-                <button 
-                  className="dm-btn-secondary" 
-                  onClick={onClose}
-                >
+                <button className="dm-btn-secondary" onClick={onClose}>
                   Close
                 </button>
               </div>
             </div>
           )}
-
         </div>
       </div>
 
-      {/* ── Document viewer ── */}
       {selectedDoc && (
         <div className="dm-viewer-backdrop" onClick={() => setSelectedDoc(null)}>
           <div className="dm-viewer-modal" onClick={e => e.stopPropagation()}>
