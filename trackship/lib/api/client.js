@@ -1,25 +1,19 @@
-// /lib/api/client.js — Generic API request handler with timeout and error parsing
-import { REQUEST_TIMEOUT, API_BASE } from '@/lib/config';
+// /lib/api/client.js
+import { REQUEST_TIMEOUT, API_BASE, ENDPOINTS } from '@/lib/config';
 
 export function parseJsonSafe(text) {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(text); } catch { return null; }
 }
 
-// Token refresh handling
 let isRefreshing = false;
-let refreshSubscribers = [];
+// Store resolve/reject pairs so ALL queued callers get retried or rejected
+let refreshQueue = [];
 
-function onRefreshed() {
-  refreshSubscribers.forEach(cb => cb());
-  refreshSubscribers = [];
-}
-
-function addRefreshSubscriber(cb) {
-  refreshSubscribers.push(cb);
+function processQueue(error) {
+  refreshQueue.forEach(({ resolve, reject }) =>
+    error ? reject(error) : resolve()
+  );
+  refreshQueue = [];
 }
 
 export async function request(url, { method = 'GET', body, retry = true } = {}) {
@@ -29,9 +23,7 @@ export async function request(url, { method = 'GET', body, retry = true } = {}) 
   try {
     const res = await fetch(url, {
       method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: body ? JSON.stringify(body) : undefined,
       signal: controller.signal,
       cache: 'no-store',
@@ -41,47 +33,46 @@ export async function request(url, { method = 'GET', body, retry = true } = {}) 
     const text = await res.text();
     const data = parseJsonSafe(text);
 
-    // Handle 401 Unauthorized - try to refresh token
-    if (res.status === 401 && retry && !url.includes('/auth/refresh') && !url.includes('/auth/login')) {
-      if (!isRefreshing) {
-        isRefreshing = true;
-        
-        try {
-          const refreshRes = await fetch(`${API_BASE}/auth/refresh`, {
-            method: 'POST',
-            credentials: 'include',
-          });
-          
-          if (refreshRes.ok) {
-            isRefreshing = false;
-            onRefreshed();
-            // Retry original request
-            return request(url, { method, body, retry: false });
-          } else {
-            // Refresh failed - redirect to login
-            isRefreshing = false;
-            window.location.href = '/login';
-            throw new Error('Session expired');
-          }
-        } catch (error) {
-          isRefreshing = false;
-          window.location.href = '/login';
-          throw error;
-        }
+    if (
+      res.status === 401 &&
+      retry &&
+      !url.includes('/auth/refresh') &&
+      !url.includes('/auth/login')
+    ) {
+      // If a refresh is already underway, queue this request
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          refreshQueue.push({ resolve, reject });
+        }).then(() => request(url, { method, body, retry: false }));
       }
-      
-      // Wait for refresh to complete
-      return new Promise((resolve, reject) => {
-        addRefreshSubscriber(() => {
-          request(url, { method, body, retry: false })
-            .then(resolve)
-            .catch(reject);
+
+      isRefreshing = true;
+
+      try {
+        const refreshRes = await fetch(ENDPOINTS.auth.refresh, {
+          method: 'GET', 
+          credentials: 'include',
+          cache: 'no-store',
         });
-      });
+
+        if (!refreshRes.ok) throw new Error('Refresh failed');
+
+        processQueue(null);         // unblock queued requests
+        isRefreshing = false;
+        return request(url, { method, body, retry: false });
+
+      } catch (refreshError) {
+        processQueue(refreshError); // reject all queued requests
+        isRefreshing = false;
+        // ✅ Don't throw — just redirect. Callers don't need to handle this.
+        window.location.href = '/login';
+        // Return a promise that never resolves so in-flight UI updates stop cleanly
+        return new Promise(() => { });
+      }
     }
 
     if (!res.ok) {
-      const message = data?.message || `Request failed (${res.status})`;
+      const message = data?.message ?? `Request failed (${res.status})`;
       const error = new Error(message);
       error.status = res.status;
       error.payload = data;
@@ -89,6 +80,7 @@ export async function request(url, { method = 'GET', body, retry = true } = {}) 
     }
 
     return data;
+
   } finally {
     clearTimeout(timer);
   }
