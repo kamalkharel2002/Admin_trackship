@@ -3,7 +3,7 @@ export { loginUser, logoutUser } from './auth';
 export {
   getDashboardSummary,
   getHubShipments,
-  getPendingTransporters,
+  getPendingTransporters as getDashboardPendingTransporters,
   getAdminProfile,
 } from './dashboard';
 export {
@@ -25,14 +25,22 @@ export {
   getShipmentById,
 } from './shipments';
 export {
+  // Transporter management (admin)
   getTransporters,
-  getPendingTransporters as getPendingTransportersAdmin,
+  getPendingTransporters,
   getTransporterById,
-  createTransporter,
-  updateTransporter,
   deleteTransporter,
   getAdminTransporterDocuments,
   verifyTransporter,
+  // Vehicle document management
+  getPendingVehicleDocuments,
+  verifyVehicleDocument,
+  getAllPendingVehicleChangeRequests,
+  // Helper functions
+  getTransporterWithDocuments,
+  batchVerifyVehicleDocuments,
+  getPendingVerificationCounts,
+  checkAndUpdateVehicleStatus,  // New export
 } from './transporter';
 export {
   getPaymentDashboardSummary,

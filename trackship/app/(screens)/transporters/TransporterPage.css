@@ -85,6 +85,16 @@
   margin: 0;
 }
 
+.transporter-page-stat-card.active-filter {
+  border-color: var(--tp-card-accent);
+  box-shadow: 0 0 0 2px var(--tp-card-glow), var(--tp-shadow-sm);
+  background: linear-gradient(135deg, var(--tp-card) 0%, var(--tp-card-glow) 100%);
+}
+
+.transporter-page-stat-card[role="button"] {
+  cursor: pointer;
+}
+
 /* Breadcrumb */
 .transporter-page-breadcrumb {
   display: flex;

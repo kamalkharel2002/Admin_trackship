@@ -559,6 +559,149 @@
 }
 .dm-btn-approve:active { transform: translateY(0); }
 
+/* Add these new styles to your existing CSS */
+
+.dm-badge-vehicle-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 12px;
+  padding: 4px 10px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.dm-vehicle-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.dm-vehicle-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dm-vehicle-card:hover {
+  border-color: #3b82f6;
+  background: #f0f9ff;
+}
+
+.dm-vehicle-card.active {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.dm-vehicle-no {
+  font-weight: 600;
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.dm-vehicle-type {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.dm-pending-badge {
+  margin-left: auto;
+  padding: 2px 8px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.dm-doc-wrapper {
+  position: relative;
+}
+
+.dm-pending-label {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 2px 6px;
+  background: #f59e0b;
+  color: white;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.dm-doc-actions {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.dm-doc-wrapper:hover .dm-doc-actions {
+  opacity: 1;
+}
+
+.dm-doc-action-approve,
+.dm-doc-action-reject {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.dm-doc-action-approve {
+  background: #10b981;
+  color: white;
+}
+
+.dm-doc-action-approve:hover {
+  background: #059669;
+  transform: scale(1.05);
+}
+
+.dm-doc-action-reject {
+  background: #ef4444;
+  color: white;
+}
+
+.dm-doc-action-reject:hover {
+  background: #dc2626;
+  transform: scale(1.05);
+}
+
+.dm-btn-secondary {
+  padding: 8px 20px;
+  border: 1px solid #d1d5db;
+  background: white;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dm-btn-secondary:hover {
+  background: #f9fafb;
+}
 /* ══════════════════════════════════════
    VIEWER MODAL
 ══════════════════════════════════════ */

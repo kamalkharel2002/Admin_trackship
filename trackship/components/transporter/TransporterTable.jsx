@@ -1,4 +1,3 @@
-// TransporterTable.jsx
 'use client';
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import TransporterRow from './TransporterRow';
@@ -8,24 +7,15 @@ import './TransporterTable.css';
 
 import {
   getTransporters,
-  createTransporter,
-  updateTransporter,
   deleteTransporter,
   getAdminTransporterDocuments,
   verifyTransporter,
+  getPendingVehicleDocuments,
+  verifyVehicleDocument,
 } from '@/lib/api/transporter';
 
 const ROWS_PER_PAGE = 10;
 const DEFAULT_REFRESH_INTERVAL = 30000;
-
-const EMPTY_FORM = {
-  user_name: '',
-  email: '',
-  phone: '',
-  password: '',
-  license_no: '',
-  vehicle_type: '',
-};
 
 /* ── Icons ── */
 const CloseIcon = () => (
@@ -46,6 +36,15 @@ const TruckIcon = () => (
   </svg>
 );
 
+const VehicleIcon = () => (
+  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"
+    viewBox="0 0 24 24">
+    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+    <circle cx="8" cy="17" r="2"/><circle cx="16" cy="17" r="2"/>
+    <line x1="2" y1="11" x2="22" y2="11"/>
+  </svg>
+);
+
 export default function TransporterTable({
   selected,
   setSelected,
@@ -62,20 +61,18 @@ export default function TransporterTable({
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
 
-  const [showModal, setShowModal] = useState(false);
   const [showDocModal, setShowDocModal] = useState(false);
-  const [editTransporter, setEditTransporter] = useState(null);
   const [selectedTransporter, setSelectedTransporter] = useState(null);
   const [documents, setDocuments] = useState([]);
+  const [modalType, setModalType] = useState('registration'); // 'registration' or 'vehicle-change'
 
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [submitting, setSubmitting] = useState(false);
   const [docLoading, setDocLoading] = useState(false);
+  const [vehicleDocs, setVehicleDocs] = useState([]);
+  const [vehiclesWithPendingDocs, setVehiclesWithPendingDocs] = useState([]);
 
   const [verifying, setVerifying] = useState(false);
   const [verifyingId, setVerifyingId] = useState(null);
 
-  const firstInputRef = useRef(null);
   const refreshTimerRef = useRef(null);
 
   /* ── Data fetching ── */
@@ -97,15 +94,11 @@ export default function TransporterTable({
 
   /* ── Auto-refresh ── */
   useEffect(() => {
-    if (autoRefresh && !showModal && !showDocModal) {
+    if (autoRefresh && !showDocModal) {
       refreshTimerRef.current = setInterval(() => fetchTransporters(), refreshInterval);
     }
     return () => clearInterval(refreshTimerRef.current);
-  }, [autoRefresh, refreshInterval, fetchTransporters, showModal, showDocModal]);
-
-  useEffect(() => {
-    if (showModal) setTimeout(() => firstInputRef.current?.focus(), 80);
-  }, [showModal]);
+  }, [autoRefresh, refreshInterval, fetchTransporters, showDocModal]);
 
   /* ── Filtering ── */
   const pendingTransporters = useMemo(() => {
@@ -178,9 +171,10 @@ export default function TransporterTable({
     setPage(1);
   }
 
-  /* ── Documents ── */
+  /* ── Documents for Registration ── */
   async function handleViewDocuments(transporter) {
     setSelectedTransporter(transporter);
+    setModalType('registration');
     setDocLoading(true);
     clearInterval(refreshTimerRef.current);
     try {
@@ -195,56 +189,124 @@ export default function TransporterTable({
     }
   }
 
-  /* ── Modal helpers ── */
-  function openCreate() {
-    setEditTransporter(null);
-    setForm(EMPTY_FORM);
-    setShowModal(true);
+  /* ── Handle Vehicle Change Requests ── */
+  async function handleViewVehicleChangeRequests(transporter) {
+    setSelectedTransporter(transporter);
+    setModalType('vehicle-change');
+    setDocLoading(true);
+    clearInterval(refreshTimerRef.current);
+    try {
+      const pendingDocs = await getPendingVehicleDocuments(transporter.transporter_id);
+      
+      // Group documents by vehicle
+      const vehicleMap = new Map();
+      pendingDocs.forEach(doc => {
+        if (!vehicleMap.has(doc.vehicle_id)) {
+          vehicleMap.set(doc.vehicle_id, {
+            vehicle_id: doc.vehicle_id,
+            vehicle_no: doc.vehicle_no,
+            vehicle_type: doc.vehicle_type,
+            documents: [],
+            pending_docs_count: 0
+          });
+        }
+        const vehicle = vehicleMap.get(doc.vehicle_id);
+        vehicle.documents.push(doc);
+        vehicle.pending_docs_count++;
+      });
+      
+      setVehiclesWithPendingDocs(Array.from(vehicleMap.values()));
+      setVehicleDocs(pendingDocs);
+      setShowDocModal(true);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to load vehicle change requests');
+    } finally {
+      setDocLoading(false);
+    }
   }
 
-  function openEdit(t) {
-    setEditTransporter(t);
-    setForm({
-      user_name: t.user_name || '',
-      email: t.email || '',
-      phone: t.phone || '',
-      password: '',
-      license_no: t.license_no || '',
-      vehicle_type: t.vehicle_type || '',
-    });
-    setShowModal(true);
+  /* ── Handle Individual Vehicle Document Verification ── */
+  async function handleVehicleDocApprove(documentId) {
+    try {
+      await verifyVehicleDocument(documentId, 'APPROVED');
+      alert('Document approved successfully');
+      
+      // Refresh the vehicle change requests view
+      if (selectedTransporter) {
+        const updatedDocs = await getPendingVehicleDocuments(selectedTransporter.transporter_id);
+        setVehicleDocs(updatedDocs);
+        
+        // Re-group documents by vehicle
+        const vehicleMap = new Map();
+        updatedDocs.forEach(doc => {
+          if (!vehicleMap.has(doc.vehicle_id)) {
+            vehicleMap.set(doc.vehicle_id, {
+              vehicle_id: doc.vehicle_id,
+              vehicle_no: doc.vehicle_no,
+              vehicle_type: doc.vehicle_type,
+              documents: [],
+              pending_docs_count: 0
+            });
+          }
+          const vehicle = vehicleMap.get(doc.vehicle_id);
+          vehicle.documents.push(doc);
+          vehicle.pending_docs_count++;
+        });
+        setVehiclesWithPendingDocs(Array.from(vehicleMap.values()));
+      }
+      
+      // If no more pending docs, close modal after short delay
+      if (vehicleDocs.filter(d => d.document_id !== documentId).length === 0) {
+        setTimeout(() => {
+          setShowDocModal(false);
+          fetchTransporters(); // Refresh to update any statuses
+        }, 1500);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to approve document');
+    }
   }
 
-  function closeModal() {
-    setShowModal(false);
-    setEditTransporter(null);
+  async function handleVehicleDocReject(documentId) {
+    const reason = prompt('Provide a reason for rejecting this document:');
+    if (reason === null) return;
+    
+    try {
+      await verifyVehicleDocument(documentId, 'REJECTED');
+      alert('Document rejected successfully');
+      
+      // Refresh the vehicle change requests view
+      if (selectedTransporter) {
+        const updatedDocs = await getPendingVehicleDocuments(selectedTransporter.transporter_id);
+        setVehicleDocs(updatedDocs);
+        
+        // Re-group documents by vehicle
+        const vehicleMap = new Map();
+        updatedDocs.forEach(doc => {
+          if (!vehicleMap.has(doc.vehicle_id)) {
+            vehicleMap.set(doc.vehicle_id, {
+              vehicle_id: doc.vehicle_id,
+              vehicle_no: doc.vehicle_no,
+              vehicle_type: doc.vehicle_type,
+              documents: [],
+              pending_docs_count: 0
+            });
+          }
+          const vehicle = vehicleMap.get(doc.vehicle_id);
+          vehicle.documents.push(doc);
+          vehicle.pending_docs_count++;
+        });
+        setVehiclesWithPendingDocs(Array.from(vehicleMap.values()));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to reject document');
+    }
   }
 
   /* ── CRUD handlers ── */
-  async function handleSubmit() {
-    if (!form.user_name.trim() || !form.email.trim()) return;
-    if (!editTransporter && !form.password.trim()) {
-      alert('Password is required for new transporters');
-      return;
-    }
-    try {
-      setSubmitting(true);
-      if (editTransporter) {
-        await updateTransporter(editTransporter.transporter_id, form);
-      } else {
-        await createTransporter(form);
-      }
-      closeModal();
-      await fetchTransporters();
-      onUpdate?.();
-    } catch (err) {
-      console.error(err);
-      alert(err.message || 'Something went wrong');
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
   async function handleDelete(id) {
     if (!confirm('Delete this transporter? This action cannot be undone.')) return;
     try {
@@ -280,12 +342,6 @@ export default function TransporterTable({
     }
   }
 
-  /* ── Form field helper ── */
-  const setField = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }));
-
-  const canSubmit = form.user_name.trim() && form.email.trim() &&
-    (editTransporter || form.password.trim());
-
   return (
     <>
       {/* Header row */}
@@ -293,7 +349,6 @@ export default function TransporterTable({
         <TransporterHeader
           selected={selected}
           onSearch={v => { setSearch(v); setPage(1); }}
-          onAdd={openCreate}
           activeStatuses={statusFilter.length > 0 ? statusFilter : activeStatuses}
           onStatusToggle={handleStatusToggle}
         />
@@ -302,10 +357,10 @@ export default function TransporterTable({
       {/* Tables */}
       <div className="transporter-tables-container">
 
-        {/* Pending Requests Table */}
+        {/* Pending Requests Table (Initial Registration) */}
         <div className="transporter-table-section">
           <div className="transporter-table-section-header">
-            <h3 className="transporter-table-section-title">Pending Requests</h3>
+            <h3 className="transporter-table-section-title">Pending Registration Requests</h3>
             <span className="transporter-table-section-count">
               {filteredPending.length} transporter{filteredPending.length !== 1 ? 's' : ''}
             </span>
@@ -356,7 +411,6 @@ export default function TransporterTable({
                   checked={selected.includes(transporter.transporter_id)}
                   onToggle={() => togglePending(transporter.transporter_id)}
                   onView={() => handleViewDocuments(transporter)}
-                  onEdit={() => openEdit(transporter)}
                   onDelete={() => handleDelete(transporter.transporter_id)}
                   onApprove={() => handleVerifyAction(transporter, 'APPROVED')}
                   onDecline={() => handleVerifyAction(transporter, 'DECLINED')}
@@ -407,7 +461,7 @@ export default function TransporterTable({
           </div>
         </div>
 
-        {/* Approved/Active Transporters Table */}
+        {/* Active Transporters Table */}
         <div className="transporter-table-section">
           <div className="transporter-table-section-header">
             <h3 className="transporter-table-section-title">Active Transporters</h3>
@@ -463,10 +517,9 @@ export default function TransporterTable({
                   checked={selected.includes(transporter.transporter_id)}
                   onToggle={() => toggleApproved(transporter.transporter_id)}
                   onView={() => handleViewDocuments(transporter)}
-                  onEdit={() => openEdit(transporter)}
                   onDelete={() => handleDelete(transporter.transporter_id)}
-                  onApprove={() => handleVerifyAction(transporter, 'APPROVED')}
-                  onDecline={() => handleVerifyAction(transporter, 'DECLINED')}
+                  onViewVehicleChanges={() => handleViewVehicleChangeRequests(transporter)}
+                  hasVehicleChanges={transporter.has_pending_vehicle_docs}
                 />
               ))
             )}
@@ -516,122 +569,38 @@ export default function TransporterTable({
 
       </div>
 
-      {/* Add / Edit Modal */}
-      {showModal && (
-        <div className="tt-modal-backdrop" onClick={closeModal}>
-          <div className="tt-modal" onClick={e => e.stopPropagation()}>
-            <div className="tt-modal-header">
-              <h3 className="tt-modal-title">
-                {editTransporter ? 'Edit Transporter' : 'Add Transporter'}
-              </h3>
-              <button className="tt-modal-close" onClick={closeModal}>
-                <CloseIcon />
-              </button>
-            </div>
-
-            <div className="tt-modal-body">
-              <div className="tt-field">
-                <label className="tt-label">Full Name *</label>
-                <input
-                  ref={firstInputRef}
-                  className="tt-input"
-                  placeholder="e.g. Tenzin Dorji"
-                  value={form.user_name}
-                  onChange={setField('user_name')}
-                />
-              </div>
-              <div className="tt-field">
-                <label className="tt-label">Email Address *</label>
-                <input
-                  className="tt-input"
-                  type="email"
-                  placeholder="transporter@example.com"
-                  value={form.email}
-                  onChange={setField('email')}
-                />
-              </div>
-              <div className="tt-field">
-                <label className="tt-label">Phone Number</label>
-                <input
-                  className="tt-input"
-                  placeholder="+975 17 000 000"
-                  value={form.phone}
-                  onChange={setField('phone')}
-                />
-              </div>
-              <div className="tt-field">
-                <label className="tt-label">License Number</label>
-                <input
-                  className="tt-input"
-                  placeholder="License number"
-                  value={form.license_no}
-                  onChange={setField('license_no')}
-                />
-              </div>
-              {!editTransporter && (
-                <>
-                  <div className="tt-field">
-                    <label className="tt-label">Password *</label>
-                    <input
-                      className="tt-input"
-                      type="password"
-                      placeholder="Minimum 8 characters"
-                      value={form.password}
-                      onChange={setField('password')}
-                    />
-                  </div>
-                  <div className="tt-field">
-                    <label className="tt-label">Vehicle Type</label>
-                    <input
-                      className="tt-input"
-                      placeholder="e.g. Truck, Van, Pickup"
-                      value={form.vehicle_type}
-                      onChange={setField('vehicle_type')}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="tt-modal-footer">
-              <button className="tt-btn-cancel" onClick={closeModal} disabled={submitting}>
-                Cancel
-              </button>
-              <button
-                className="tt-btn-submit"
-                onClick={handleSubmit}
-                disabled={submitting || !canSubmit}
-              >
-                {submitting
-                  ? (editTransporter ? 'Updating…' : 'Creating…')
-                  : (editTransporter ? 'Update Transporter' : 'Create Transporter')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Document Viewer Modal */}
+      {/* Document Viewer Modal - Supports both registration and vehicle change */}
       {showDocModal && (
         <DocumentModal
           transporter={selectedTransporter}
-          documents={documents}
+          documents={modalType === 'registration' ? documents : vehicleDocs}
+          vehicles={modalType === 'vehicle-change' ? vehiclesWithPendingDocs : []}
           loading={docLoading}
+          modalType={modalType}
           onClose={() => {
             setShowDocModal(false);
+            setModalType('registration');
+            setVehicleDocs([]);
+            setVehiclesWithPendingDocs([]);
             if (autoRefresh) {
               clearInterval(refreshTimerRef.current);
               refreshTimerRef.current = setInterval(() => fetchTransporters(), refreshInterval);
             }
           }}
           onApprove={() => {
-            handleVerifyAction(selectedTransporter, 'APPROVED');
-            setShowDocModal(false);
+            if (modalType === 'registration') {
+              handleVerifyAction(selectedTransporter, 'APPROVED');
+              setShowDocModal(false);
+            }
           }}
           onDecline={() => {
-            handleVerifyAction(selectedTransporter, 'DECLINED');
-            setShowDocModal(false);
+            if (modalType === 'registration') {
+              handleVerifyAction(selectedTransporter, 'DECLINED');
+              setShowDocModal(false);
+            }
           }}
+          onVehicleDocApprove={modalType === 'vehicle-change' ? handleVehicleDocApprove : undefined}
+          onVehicleDocReject={modalType === 'vehicle-change' ? handleVehicleDocReject : undefined}
         />
       )}
     </>

@@ -195,6 +195,33 @@
   border-radius: 50%;
 }
 
+/* Status cell enhancements */
+.transporter-row-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.transporter-row-vehicle-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: #fef3c7;
+  border-radius: 12px;
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: #92400e;
+  white-space: nowrap;
+  font-family: var(--tr-font);
+}
+
+.transporter-row-vehicle-badge svg {
+  width: 12px;
+  height: 12px;
+}
+
 /* Actions */
 .transporter-row-actions {
   display: flex;
@@ -217,6 +244,7 @@
   font-family: var(--tr-font);
 }
 
+/* View button */
 .transporter-row-action-btn.view {
   background: var(--tr-amber-dim);
   color: var(--tr-amber);
@@ -231,6 +259,69 @@
   box-shadow: 0 2px 8px rgba(212,146,10,0.30);
 }
 
+/* Approve button */
+.transporter-row-action-btn.approve {
+  background: var(--tr-green-dim);
+  color: var(--tr-green);
+  border-color: var(--tr-green-border);
+}
+
+.transporter-row-action-btn.approve:hover {
+  background: var(--tr-green);
+  color: #fff;
+  border-color: var(--tr-green);
+  transform: scale(1.06);
+  box-shadow: 0 2px 8px rgba(26,158,92,0.30);
+}
+
+/* Decline button */
+.transporter-row-action-btn.decline {
+  background: var(--tr-red-dim);
+  color: var(--tr-red);
+  border-color: var(--tr-red-border);
+}
+
+.transporter-row-action-btn.decline:hover {
+  background: var(--tr-red);
+  color: #fff;
+  border-color: var(--tr-red);
+  transform: scale(1.06);
+  box-shadow: 0 2px 8px rgba(192,57,43,0.30);
+}
+
+/* Vehicle change button */
+.transporter-row-action-btn.vehicle-change {
+  position: relative;
+  background: #fef3c7;
+  color: #92400e;
+  border-color: rgba(212, 146, 10, 0.25);
+}
+
+.transporter-row-action-btn.vehicle-change:hover {
+  background: #f59e0b;
+  color: #fff;
+  border-color: #f59e0b;
+  transform: scale(1.06);
+  box-shadow: 0 2px 8px rgba(245,158,11,0.30);
+}
+
+.vehicle-change-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 10px;
+  background: #ef4444;
+  color: white;
+  font-size: 9px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Delete button */
 .transporter-row-action-btn.delete {
   background: transparent;
   color: var(--tr-ink-20);
@@ -244,30 +335,53 @@
   transform: scale(1.06);
 }
 
-/* Responsive */
+/* Row hover enhancements */
+.transporter-row:hover {
+  background: var(--tr-amber-hover);
+}
+
+.transporter-row.checked {
+  background: var(--tr-amber-dim);
+}
+
+/* Responsive adjustments */
 @media (max-width: 1200px) {
   .transporter-row {
-    grid-template-columns: 44px 1fr 1fr 0.85fr 100px 108px;
+    grid-template-columns: 44px 1fr 1fr 0.85fr 100px 120px;
+  }
+  
+  .transporter-row-vehicle-badge {
+    display: none; /* Hide on smaller screens to save space */
   }
 }
 
 @media (max-width: 900px) {
   .transporter-row {
-    grid-template-columns: 40px 1fr 1fr 82px;
+    grid-template-columns: 40px 1fr 1fr 100px;
   }
+  
   .transporter-row > *:nth-child(4),
   .transporter-row > *:nth-child(5) {
+    display: none;
+  }
+  
+  .transporter-row-vehicle-badge {
     display: none;
   }
 }
 
 @media (max-width: 600px) {
   .transporter-row {
-    grid-template-columns: 36px 1fr 82px;
+    grid-template-columns: 36px 1fr 100px;
   }
+  
   .transporter-row > *:nth-child(3),
   .transporter-row > *:nth-child(4),
   .transporter-row > *:nth-child(5) {
+    display: none;
+  }
+  
+  .transporter-row-action-btn span {
     display: none;
   }
 }

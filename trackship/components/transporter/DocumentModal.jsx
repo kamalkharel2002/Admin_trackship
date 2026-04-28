@@ -18,16 +18,24 @@ function getFileDataUrl(base64) {
 }
 
 const DOC_LABELS = {
+  // Transporter documents
   license_front: 'License Front',
   license_back:  'License Back',
   bluebook:      'Bluebook',
   insurance:     'Insurance',
+  // Vehicle documents
+  registration_cert: 'Registration Certificate',
+  pollution_cert:    'Pollution Certificate',
+  fitness_cert:      'Fitness Certificate',
+  permit:            'Permit',
+  insurance_cert:    'Insurance Certificate',
 };
+
 function getLabel(type) {
   return DOC_LABELS[type] || type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
-/* ── Icons ── */
+/* ── Icons (same as before) ── */
 const CloseIcon = () => (
   <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5"
     strokeLinecap="round" viewBox="0 0 24 24">
@@ -73,11 +81,21 @@ const EmptyDocsIcon = () => (
   </svg>
 );
 
+const VehicleIcon = () => (
+  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"
+    viewBox="0 0 24 24">
+    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+    <circle cx="8" cy="17" r="2"/><circle cx="16" cy="17" r="2"/>
+    <line x1="2" y1="11" x2="22" y2="11"/>
+  </svg>
+);
+
 /* ── Status config ── */
 const STATUS_CONFIG = {
   APPROVED:             { label: 'Approved', cls: 'status-approved' },
   DECLINED:             { label: 'Declined', cls: 'status-declined' },
   PENDING_VERIFICATION: { label: 'Pending',  cls: 'status-pending'  },
+  ACTIVE:               { label: 'Active',   cls: 'status-approved' },
 };
 
 function getInitials(name = '') {
@@ -90,24 +108,42 @@ function getInitials(name = '') {
 export default function DocumentModal({
   transporter,
   documents = [],
+  vehicles = [], // For vehicle change requests
   loading = false,
+  modalType = 'registration', // 'registration' or 'vehicle-change'
   onClose,
   onApprove,
   onDecline,
+  onVehicleDocApprove, // For approving individual vehicle documents
+  onVehicleDocReject,  // For rejecting individual vehicle documents
 }) {
   const [selectedDoc, setSelectedDoc] = useState(null);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
 
   const status    = transporter?.verification_status || 'PENDING_VERIFICATION';
   const statusCfg = STATUS_CONFIG[status] || STATUS_CONFIG.PENDING_VERIFICATION;
-  const isPending = status === 'PENDING_VERIFICATION';
+  const isPendingRegistration = status === 'PENDING_VERIFICATION';
+  const isVehicleChangeMode = modalType === 'vehicle-change';
 
   const fields = [
     { label: 'Full Name',    value: transporter?.user_name    },
+    { label: 'Email',        value: transporter?.email        },
     { label: 'Phone',        value: transporter?.phone        },
-    { label: 'Vehicle Type', value: transporter?.vehicle_type },
     { label: 'License No.',  value: transporter?.license_no   },
-    { label: 'Vehicle No.',  value: transporter?.vehicle_no   },
   ];
+
+  // Add vehicle-specific fields if in vehicle-change mode
+  if (isVehicleChangeMode && selectedVehicle) {
+    fields.push(
+      { label: 'Vehicle Type', value: selectedVehicle.vehicle_type },
+      { label: 'Vehicle No.',  value: selectedVehicle.vehicle_no }
+    );
+  } else if (!isVehicleChangeMode) {
+    fields.push(
+      { label: 'Vehicle Type', value: transporter?.vehicle_type },
+      { label: 'Vehicle No.',  value: transporter?.vehicle_no }
+    );
+  }
 
   return (
     <>
@@ -125,6 +161,12 @@ export default function DocumentModal({
                   <span className="dm-status-dot" />
                   {statusCfg.label}
                 </span>
+                {isVehicleChangeMode && (
+                  <span className="dm-badge-vehicle-change">
+                    <VehicleIcon />
+                    Vehicle Update Request
+                  </span>
+                )}
               </div>
             </div>
             <button className="dm-close-btn" onClick={onClose} aria-label="Close">
@@ -137,7 +179,9 @@ export default function DocumentModal({
 
             {/* Info grid */}
             <section className="dm-section">
-              <p className="dm-section-label">Transporter Details</p>
+              <p className="dm-section-label">
+                {isVehicleChangeMode ? 'Transporter Details' : 'Registration Details'}
+              </p>
               <div className="dm-info-grid">
                 {fields.map(({ label, value }) => (
                   <div className="dm-info-cell" key={label}>
@@ -148,10 +192,41 @@ export default function DocumentModal({
               </div>
             </section>
 
+            {/* Vehicle selection for vehicle-change mode */}
+            {isVehicleChangeMode && vehicles.length > 0 && (
+              <section className="dm-section">
+                <p className="dm-section-label">Select Vehicle</p>
+                <div className="dm-vehicle-selector">
+                  {vehicles.map(vehicle => (
+                    <button
+                      key={vehicle.vehicle_id}
+                      className={`dm-vehicle-card ${selectedVehicle?.vehicle_id === vehicle.vehicle_id ? 'active' : ''}`}
+                      onClick={() => setSelectedVehicle(vehicle)}
+                    >
+                      <VehicleIcon />
+                      <div>
+                        <div className="dm-vehicle-no">{vehicle.vehicle_no}</div>
+                        <div className="dm-vehicle-type">{vehicle.vehicle_type}</div>
+                      </div>
+                      {vehicle.pending_docs_count > 0 && (
+                        <span className="dm-pending-badge">
+                          {vehicle.pending_docs_count} pending
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {/* Documents */}
             <section className="dm-section">
               <div className="dm-section-header">
-                <p className="dm-section-label">Uploaded Documents</p>
+                <p className="dm-section-label">
+                  {isVehicleChangeMode && selectedVehicle 
+                    ? `Documents for ${selectedVehicle.vehicle_no}`
+                    : 'Uploaded Documents'}
+                </p>
                 {!loading && documents.length > 0 && (
                   <span className="dm-doc-count">
                     {documents.length} file{documents.length !== 1 ? 's' : ''}
@@ -168,36 +243,68 @@ export default function DocumentModal({
                 <div className="dm-empty">
                   <div className="dm-empty-icon"><EmptyDocsIcon /></div>
                   <p className="dm-empty-title">No documents uploaded</p>
-                  <p className="dm-empty-sub">This transporter hasn't submitted any documents yet.</p>
+                  <p className="dm-empty-sub">
+                    {isVehicleChangeMode 
+                      ? 'No pending documents for this vehicle.'
+                      : 'This transporter hasn\'t submitted any documents yet.'}
+                  </p>
                 </div>
               ) : (
                 <div className="dm-doc-grid">
                   {documents.map((doc, i) => {
                     const fileType = getFileType(doc.file);
                     const url      = getFileDataUrl(doc.file);
+                    const isPending = doc.status === 'PENDING';
+                    
                     return (
-                      <button
-                        key={i}
-                        className="dm-doc-card"
-                        style={{ animationDelay: `${i * 0.05}s` }}
-                        onClick={() => setSelectedDoc(doc)}
-                        aria-label={`View ${getLabel(doc.type)}`}
-                      >
-                        <div className="dm-doc-thumb">
-                          {fileType === 'pdf' ? (
-                            <div className="dm-doc-pdf-thumb">
-                              <DocFileIcon />
-                              <span>PDF</span>
+                      <div key={i} className="dm-doc-wrapper">
+                        <button
+                          className="dm-doc-card"
+                          style={{ animationDelay: `${i * 0.05}s` }}
+                          onClick={() => setSelectedDoc(doc)}
+                          aria-label={`View ${getLabel(doc.doc_type || doc.type)}`}
+                        >
+                          <div className="dm-doc-thumb">
+                            {fileType === 'pdf' ? (
+                              <div className="dm-doc-pdf-thumb">
+                                <DocFileIcon />
+                                <span>PDF</span>
+                              </div>
+                            ) : (
+                              <img src={url} alt={doc.doc_type || doc.type} draggable={false} />
+                            )}
+                            <div className="dm-doc-overlay">
+                              <span>View</span>
                             </div>
-                          ) : (
-                            <img src={url} alt={doc.type} draggable={false} />
-                          )}
-                          <div className="dm-doc-overlay">
-                            <span>View</span>
                           </div>
-                        </div>
-                        <span className="dm-doc-label">{getLabel(doc.type)}</span>
-                      </button>
+                          <span className="dm-doc-label">
+                            {getLabel(doc.doc_type || doc.type)}
+                          </span>
+                          {isVehicleChangeMode && isPending && (
+                            <span className="dm-pending-label">Pending</span>
+                          )}
+                        </button>
+                        
+                        {/* Individual document actions for vehicle change mode */}
+                        {isVehicleChangeMode && isPending && onVehicleDocApprove && onVehicleDocReject && (
+                          <div className="dm-doc-actions">
+                            <button
+                              className="dm-doc-action-reject"
+                              onClick={() => onVehicleDocReject(doc.document_id)}
+                              title="Reject document"
+                            >
+                              <XIcon />
+                            </button>
+                            <button
+                              className="dm-doc-action-approve"
+                              onClick={() => onVehicleDocApprove(doc.document_id)}
+                              title="Approve document"
+                            >
+                              <CheckIcon />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
@@ -206,18 +313,35 @@ export default function DocumentModal({
 
           </div>
 
-          {/* Footer */}
-          {isPending && onApprove && onDecline && (
+          {/* Footer - Only show for initial registration */}
+          {!isVehicleChangeMode && isPendingRegistration && onApprove && onDecline && (
             <div className="dm-footer">
               <p className="dm-footer-hint">Review all documents before taking action.</p>
               <div className="dm-footer-actions">
                 <button className="dm-btn-decline" onClick={onDecline}>
                   <XIcon />
-                  Decline
+                  Decline Registration
                 </button>
                 <button className="dm-btn-approve" onClick={onApprove}>
                   <CheckIcon />
-                  Approve
+                  Approve Registration
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Footer for vehicle change mode - Batch actions */}
+          {isVehicleChangeMode && selectedVehicle && (
+            <div className="dm-footer">
+              <p className="dm-footer-hint">
+                Review and verify each document individually.
+              </p>
+              <div className="dm-footer-actions">
+                <button 
+                  className="dm-btn-secondary" 
+                  onClick={onClose}
+                >
+                  Close
                 </button>
               </div>
             </div>
@@ -235,7 +359,9 @@ export default function DocumentModal({
                 <BackIcon />
                 Back
               </button>
-              <span className="dm-viewer-title">{getLabel(selectedDoc.type)}</span>
+              <span className="dm-viewer-title">
+                {getLabel(selectedDoc.doc_type || selectedDoc.type)}
+              </span>
               <button className="dm-viewer-close" onClick={() => setSelectedDoc(null)} aria-label="Close">
                 <CloseIcon />
               </button>
@@ -244,13 +370,13 @@ export default function DocumentModal({
               {getFileType(selectedDoc.file) === 'pdf' ? (
                 <iframe
                   src={getFileDataUrl(selectedDoc.file)}
-                  title={selectedDoc.type}
+                  title={selectedDoc.doc_type || selectedDoc.type}
                   className="dm-viewer-pdf"
                 />
               ) : (
                 <img
                   src={getFileDataUrl(selectedDoc.file)}
-                  alt={selectedDoc.type}
+                  alt={selectedDoc.doc_type || selectedDoc.type}
                   className="dm-viewer-img"
                   draggable={false}
                 />

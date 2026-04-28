@@ -521,7 +521,43 @@
   transform: none;
   box-shadow: none;
 }
+/* Add to TransporterTable.css */
 
+.tt-action-btn.vehicle-change {
+  position: relative;
+  background: var(--tt-amber-dim);
+  border-color: var(--tt-amber-border);
+  color: var(--tt-amber);
+}
+
+.pending-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 10px;
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dm-badge-vehicle-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 12px;
+  padding: 4px 10px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
 /* ══════════════════════════════════════
    TABLE SECTIONS (TWO TABLES)
 ══════════════════════════════════════ */

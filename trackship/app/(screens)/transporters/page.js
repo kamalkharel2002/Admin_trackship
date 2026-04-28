@@ -1,4 +1,3 @@
-// TransporterPage.jsx
 'use client';
 import { useEffect, useState } from 'react';
 import TransporterHeader from '@/components/transporter/TransporterHeader';
@@ -32,7 +31,8 @@ export default function TransporterPage() {
       const statusCounts = {
         'PENDING_VERIFICATION': 0,
         'APPROVED': 0,
-        'DECLINED': 0
+        'DECLINED': 0,
+        'ACTIVE': 0
       };
       
       (data || []).forEach(t => {
@@ -42,15 +42,18 @@ export default function TransporterPage() {
         }
       });
       
+      // Merge ACTIVE into APPROVED count for display (since they're functionally the same)
+      const approvedCount = statusCounts['APPROVED'] + statusCounts['ACTIVE'];
+      
       const statsArray = [
         { status: 'Pending', key: 'PENDING_VERIFICATION', count: statusCounts['PENDING_VERIFICATION'], color: '#F97316' },
-        { status: 'Approved', key: 'APPROVED', count: statusCounts['APPROVED'], color: '#22C55E' },
+        { status: 'Approved', key: 'APPROVED', count: approvedCount, color: '#22C55E' },
         { status: 'Declined', key: 'DECLINED', count: statusCounts['DECLINED'], color: '#EF4444' }
       ];
       
       setStats(statsArray);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to fetch stats:', err);
     } finally {
       setLoadingStats(false);
     }
@@ -66,6 +69,11 @@ export default function TransporterPage() {
         ? prev.filter(s => s !== statusId)
         : [...prev, statusId]
     );
+  }
+
+  // Handle search from header
+  function handleSearch(searchValue) {
+    setSearchQuery(searchValue);
   }
 
   const totalTransporters = stats.reduce((sum, s) => sum + (Number(s.count) || 0), 0);
@@ -95,8 +103,11 @@ export default function TransporterPage() {
           {stats.map((s, i) => {
             const { accent, glow } = ACCENTS[i % ACCENTS.length];
             return (
-              <div key={s.key} className="transporter-page-stat-card"
-                style={{ '--tp-card-accent': accent, '--tp-card-glow': glow }}>
+              <div 
+                key={s.key} 
+                className="transporter-page-stat-card"
+                style={{ '--tp-card-accent': accent, '--tp-card-glow': glow }}
+              >
                 <div className="transporter-page-stat-status">{s.status}</div>
                 <div className="transporter-page-stat-number">{s.count}</div>
                 <div className="transporter-page-stat-sub">
@@ -115,6 +126,14 @@ export default function TransporterPage() {
         <div className="transporter-page-stats-empty">No transporter data available</div>
       )}
 
+      {/* ── Transporter Header with Search and Filter ── */}
+      <TransporterHeader
+        selected={selected}
+        onSearch={handleSearch}
+        activeStatuses={activeStatuses}
+        onStatusToggle={handleStatusToggle}
+      />
+
       {/* ── Table section ── */}
       <div className="transporter-page-table-section">
         <div className="transporter-page-section-label">
@@ -123,9 +142,11 @@ export default function TransporterPage() {
             {totalTransporters > 0 && (
               <span className="transporter-page-total-pill">{totalTransporters} total</span>
             )}
-            <span className="transporter-page-section-count">
-              {selected.length > 0 ? `${selected.length} selected` : ''}
-            </span>
+            {selected.length > 0 && (
+              <span className="transporter-page-section-count">
+                {selected.length} selected
+              </span>
+            )}
           </div>
         </div>
 

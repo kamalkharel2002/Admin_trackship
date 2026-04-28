@@ -366,6 +366,8 @@
   
   .transporter-header-search-wrap {
     width: 100%;
+    min-width: auto;
+    max-width: none;
   }
   
   .transporter-header-actions {
@@ -384,7 +386,7 @@
   }
 }
 
-/* Print styles - hide filter dropdown when printing */
+/* Print styles */
 @media print {
   .transporter-header-actions,
   .transporter-header-active-tags,
@@ -393,27 +395,11 @@
   }
   
   .transporter-header {
-  --th-font: 'DM Sans', sans-serif;
-  --th-amber: #D4920A;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  width: 100%;
-  font-family: var(--th-font);
-  padding: 12px 16px;
-  background: var(--th-card);
-  border-radius: 10px;
-  border: 1px solid var(--th-border);
-  box-shadow: 0 1px 3px rgba(15,17,23,0.05);
-  margin-bottom: 12px;
-}
-
-.transporter-header-search-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-  flex: 1;
-  min-width: 400px;
-}
+    padding: 8px;
+    margin-bottom: 8px;
+  }
+  
+  .transporter-header-search-wrap {
+    min-width: auto;
+  }
 }
