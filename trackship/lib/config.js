@@ -1,7 +1,7 @@
 // lib/config.js
 
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.65:3000/api';
+  process.env.NEXT_PUBLIC_API_URL || 'http://192.168.56.1:3000/api';
 
 export const REQUEST_TIMEOUT = 15000;
 
@@ -9,6 +9,7 @@ export const ENDPOINTS = {
   auth: {
     login:  `${API_BASE}/admin/auth/login`,
     logout: `${API_BASE}/admin/auth/logout`,
+    refresh: `${API_BASE}/admin/auth/refresh`,
   },
   dashboard: {
     summary:      `${API_BASE}/admin/dashboard/summary`,
