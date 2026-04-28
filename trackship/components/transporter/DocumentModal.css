@@ -702,6 +702,112 @@
 .dm-btn-secondary:hover {
   background: #f9fafb;
 }
+
+/* Add to DocumentModal.css */
+
+.dm-doc-card.approved {
+  opacity: 0.7;
+  border-color: #22c55e;
+}
+
+.dm-doc-card.rejected {
+  opacity: 0.5;
+  border-color: #ef4444;
+}
+
+.dm-doc-status {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-top: 4px;
+}
+
+.dm-doc-status.pending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.dm-doc-status.approved {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.dm-doc-status.rejected {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.dm-doc-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+.dm-doc-action-approve,
+.dm-doc-action-reject {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.dm-doc-action-approve {
+  background: #22c55e;
+  color: white;
+}
+
+.dm-doc-action-approve:hover:not(:disabled) {
+  background: #16a34a;
+  transform: scale(1.05);
+}
+
+.dm-doc-action-reject {
+  background: #ef4444;
+  color: white;
+}
+
+.dm-doc-action-reject:hover:not(:disabled) {
+  background: #dc2626;
+  transform: scale(1.05);
+}
+
+.dm-doc-action-approve:disabled,
+.dm-doc-action-reject:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dm-verified-badge {
+  font-size: 10px;
+  background: #22c55e;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 8px;
+}
+
+.dm-vehicle-approved-message {
+  margin-top: 16px;
+  padding: 10px 12px;
+  background: #dcfce7;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #16a34a;
+  font-size: 13px;
+}
+
+.dm-all-reviewed {
+  color: #16a34a;
+  font-weight: 500;
+}
 /* ══════════════════════════════════════
    VIEWER MODAL
 ══════════════════════════════════════ */

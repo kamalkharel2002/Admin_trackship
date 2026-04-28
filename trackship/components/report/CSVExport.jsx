@@ -1,6 +1,6 @@
 // components/report/CSVExport.jsx
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { exportRevenueCSV, exportShipmentCSV } from '@/lib/api';
 import styles from './CSVExport.module.css';
 
@@ -20,6 +20,24 @@ export default function CSVExport() {
   const [endDate,   setEndDate]   = useState(today);
   const [busy,      setBusy]      = useState({ revenue: false, shipment: false });
   const [toast,     setToast]     = useState(null);
+  const [warning,   setWarning]   = useState('');
+
+  // Check if date range might have no data
+  useEffect(() => {
+    if (startDate && endDate) {
+      // Check if date range is before first data record (March 2026)
+      const start = new Date(startDate);
+      const firstDataDate = new Date('2026-03-01');
+      
+      if (start < firstDataDate && endDate >= '2026-03-01') {
+        setWarning('Note: No data available before March 2026');
+      } else if (endDate < firstDataDate) {
+        setWarning('Warning: No data exists for selected date range');
+      } else {
+        setWarning('');
+      }
+    }
+  }, [startDate, endDate]);
 
   const notify = (msg, type = 'ok') => {
     setToast({ msg, type });
@@ -83,6 +101,12 @@ export default function CSVExport() {
           </div>
         </div>
 
+        {warning && (
+          <div className={styles.warning}>
+            ⚠️ {warning}
+          </div>
+        )}
+
         {startDate && endDate && (
           <div className={styles.rangeChip}>
             📅 {startDate} — {endDate}
@@ -106,17 +130,6 @@ export default function CSVExport() {
             {busy.shipment ? <span className={styles.spin} /> : <DownloadIcon />}
             Shipment Report
           </button>
-        </div>
-
-        <div className={styles.hints}>
-          <div className={styles.hintBox}>
-            <p className={styles.hintTitle}>Revenue CSV</p>
-            <p className={styles.hintText}>Shipment Code · Created At · Status · Delivery Mode · Payment Method · Amount · Source / Destination Hub</p>
-          </div>
-          <div className={styles.hintBox}>
-            <p className={styles.hintTitle}>Shipment CSV</p>
-            <p className={styles.hintText}>Shipment Code · Created At · Status · Delivery Type · Total Price · Sender · Receiver · Source / Destination Hub · Vehicle No</p>
-          </div>
         </div>
       </div>
     </div>

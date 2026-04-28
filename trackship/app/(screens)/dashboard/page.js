@@ -13,6 +13,7 @@ import {
   getDashboardSummary,
   getHubShipments,
   getPendingTransporters,
+  getAllPendingVehicleChangeRequests,  // Add this import
   getAdminProfile,
 } from '@/lib/api';
 
@@ -24,9 +25,11 @@ export default function DashboardPage() {
   const [endDate, setEndDate] = useState(null);
   const [summary, setSummary] = useState(null);
   const [hubs, setHubs] = useState([]);
-  const [transporters, setTransporters] = useState([]);
+  const [transporters, setTransporters] = useState([]);  // For pending transporters
+  const [vehicleDocuments, setVehicleDocuments] = useState([]);  // Add this for vehicle docs
   const [loadingMain, setLoadingMain] = useState(true);
-  const [loadingT, setLoadingT] = useState(true);
+  const [loadingT, setLoadingT] = useState(true);  // For transporters
+  const [loadingV, setLoadingV] = useState(true);  // Add this for vehicle docs
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [error, setError] = useState(null);
 
@@ -73,11 +76,13 @@ export default function DashboardPage() {
     }
   }, [buildParams]);
 
+  // Fetch pending transporters
   const fetchTransporters = useCallback(async () => {
     setLoadingT(true);
     try {
       const data = await getPendingTransporters();
-      setTransporters(data);
+      console.log('Fetched pending transporters:', data);
+      setTransporters(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Transporters fetch error:', err);
       setTransporters([]);
@@ -86,10 +91,26 @@ export default function DashboardPage() {
     }
   }, []);
 
+  // Add this: Fetch pending vehicle documents
+  const fetchVehicleDocuments = useCallback(async () => {
+    setLoadingV(true);
+    try {
+      const data = await getAllPendingVehicleChangeRequests();
+      console.log('Fetched pending vehicle documents:', data);
+      setVehicleDocuments(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Vehicle documents fetch error:', err);
+      setVehicleDocuments([]);
+    } finally {
+      setLoadingV(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchMain();
     fetchTransporters();
-  }, [fetchMain, fetchTransporters]);
+    fetchVehicleDocuments();  // Add this
+  }, [fetchMain, fetchTransporters, fetchVehicleDocuments]);
 
   useEffect(() => {
     fetchMain();
@@ -132,7 +153,7 @@ export default function DashboardPage() {
           user={user}
           title="Shipment Statistics"
           subtitle={getSubtitle()}
-          hasNotifs={transporters.length > 0}
+          hasNotifs={transporters.length > 0 || vehicleDocuments.length > 0}
         />
 
         {error && (
@@ -187,8 +208,10 @@ export default function DashboardPage() {
               startDate={startDate}
               endDate={endDate}
               onRangeChange={handleRangeChange}
-              transporters={transporters}
-              loadingT={loadingT}
+              transporters={transporters}  // Fixed: use transporters state
+              vehicleDocuments={vehicleDocuments}  // Fixed: use vehicleDocuments state
+              loadingT={loadingT}  // Fixed: use loadingT state
+              loadingV={loadingV}  // Fixed: use loadingV state
             />
           </div>
         </div>
