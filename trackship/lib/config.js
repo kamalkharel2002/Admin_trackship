@@ -1,7 +1,7 @@
 // lib/config.js
 
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || 'http://192.168.56.1:3000/api';
+  process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.65:3000/api';
 
 export const REQUEST_TIMEOUT = 15000;
 
@@ -63,8 +63,8 @@ export const ENDPOINTS = {
     exportPaymentReconciliation: `${API_BASE}/payment-reports/payment-reconciliation/export`,
   },
   reports: {
-    totalRevenue:        `${API_BASE}/admin/report/revenue/total`,                   // ?month=&year= (both optional)
-    totalDelivered:      `${API_BASE}/admin/report/shipments/delivered/total`,        // ?month=&year= (both optional)
+    totalRevenue:        `${API_BASE}/admin/report/revenue/total`,                   
+    totalDelivered:      `${API_BASE}/admin/report/shipments/delivered/total`,        
     monthlyRevenueGraph: `${API_BASE}/admin/report/revenue/monthly-graph`,           // ?year= (required)
     statusDistribution:  `${API_BASE}/admin/report/shipments/status-distribution`,   // ?month=&year= (both optional)
     exportRevenueCSV:    `${API_BASE}/admin/report/export/revenue-csv`,              // ?start_date=&end_date=

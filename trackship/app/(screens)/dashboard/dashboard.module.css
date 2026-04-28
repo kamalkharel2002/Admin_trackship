@@ -1,6 +1,5 @@
 /* app/dashboard/dashboard.module.css */
 
-/* ── Shell: no extra margin, parent handles spacing ── */
 .shell {
   width: 100%;
   min-height: 100vh;
@@ -14,28 +13,31 @@
   background: var(--bg-page);
 }
 
-/* ── Two-column grid: left content + sticky right panel ── */
+/* ── Two-column grid — stretch so right panel fills full height ── */
 .content {
   display: grid;
   grid-template-columns: 1fr 300px;
   gap: 24px;
-  align-items: start;
+  align-items: stretch;          /* ← was 'start'; now both columns same height */
   max-width: 1600px;
   margin: 0 auto;
 }
 
-/* Left column: stats + chart stacked */
 .left {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  min-width: 0; /* Prevents overflow */
+  min-width: 0;
 }
 
-/* Right column: sticks while scrolling */
+/* Right column fills the full height of the left column */
 .right {
   position: sticky;
   top: 24px;
+  /* Let it stretch to match left column height */
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ── Stat cards: 4-up row ── */
@@ -60,55 +62,30 @@
   gap: 8px;
 }
 
-/* ── Responsive breakpoints ── */
+/* ── Responsive ── */
 @media (max-width: 1200px) {
-  .content { 
+  .content {
     grid-template-columns: 1fr 280px;
     gap: 20px;
   }
-  .statsRow {
-    gap: 16px;
-  }
+  .statsRow { gap: 16px; }
 }
 
 @media (max-width: 992px) {
-  .content { 
-    grid-template-columns: 1fr 260px;
-  }
-  .statsRow { 
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .main {
-    padding: 24px 20px;
-  }
+  .content { grid-template-columns: 1fr 260px; }
+  .statsRow { grid-template-columns: repeat(2, 1fr); }
+  .main { padding: 24px 20px; }
 }
 
 @media (max-width: 768px) {
-  .main {
-    padding: 20px 16px;
-  }
-  .content {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-  .right {
-    position: static;
-  }
-  .statsRow {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
+  .main { padding: 20px 16px; }
+  .content { grid-template-columns: 1fr; gap: 24px; }
+  .right { position: static; align-self: auto; }
+  .statsRow { grid-template-columns: repeat(2, 1fr); gap: 12px; }
 }
 
 @media (max-width: 480px) {
-  .main {
-    padding: 16px;
-  }
-  .statsRow { 
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-  .content {
-    gap: 20px;
-  }
+  .main { padding: 16px; }
+  .statsRow { grid-template-columns: 1fr; gap: 12px; }
+  .content { gap: 20px; }
 }

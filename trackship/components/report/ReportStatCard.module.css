@@ -13,6 +13,35 @@
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
+
+/* ── Parcel background watermark ── */
+.parcelBg {
+  position: absolute;
+  bottom: -10px;
+  right: -10px;
+  width: 140px;
+  height: 140px;
+  background-image: url('/package-box.png');
+  background-size: contain;           /* ← was missing before */
+  background-repeat: no-repeat;
+  background-position: bottom right;
+  filter: grayscale(1) brightness(0.75);
+  opacity: 0.5;                      /* raised from 0.07 → visible but subtle */
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Ensure all card children sit above the watermark */
+.accentBar,
+.top,
+.value,
+.label,
+.sub,
+.blob {
+  position: relative;
+  z-index: 1;
+}
+
 .accentBar {
   position: absolute;
   top: 0; left: 0; right: 0;
@@ -27,6 +56,7 @@
   border-radius: 50%;
   background: color-mix(in srgb, var(--acc, var(--accent-yellow)) 9%, transparent);
   pointer-events: none;
+  z-index: 0;
 }
 .top {
   display: flex;
@@ -34,13 +64,21 @@
   justify-content: space-between;
   margin-bottom: 16px;
 }
+
+/* ── SVG icon wrapper — outline style ── */
 .iconWrap {
   width: 42px; height: 42px;
   border-radius: 10px;
-  background: color-mix(in srgb, var(--acc, var(--accent-yellow)) 13%, transparent);
+  background: color-mix(in srgb, var(--acc, var(--accent-yellow)) 10%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--acc, var(--accent-yellow)) 25%, transparent);
   display: flex; align-items: center; justify-content: center;
-  font-size: 20px;
+  transition: box-shadow 0.2s ease, background 0.2s ease;
 }
+.card:hover .iconWrap {
+  background: color-mix(in srgb, var(--acc, var(--accent-yellow)) 16%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--acc, var(--accent-yellow)) 10%, transparent);
+}
+
 .delta {
   font-family: var(--font-head);
   font-size: 11.5px;
@@ -50,6 +88,7 @@
 }
 .up   { background: #dcfce7; color: #15803d; }
 .down { background: #fee2e2; color: #b91c1c; }
+
 .value {
   font-family: var(--font-head);
   font-size: 30px;
