@@ -29,6 +29,11 @@ export const ENDPOINTS = {
     allPendingVehicleDocs: `${API_BASE}/admin/transporters/vehicle-documents/pending/all`,
     checkVehicleStatus: (id) => `${API_BASE}/admin/vehicles/${id}/check-status`,
   },
+  setting: {
+    details: `${API_BASE}/admin/profile/details`,
+    phone: `${API_BASE}/admin/profile/phone`,
+    password: `${API_BASE}/admin/profile/password`
+  },
   hubs: {
     list:                      `${API_BASE}/admin/hub`,
     byId:              (id) => `${API_BASE}/admin/hub/${id}`,
