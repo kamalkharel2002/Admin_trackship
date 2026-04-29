@@ -37,6 +37,7 @@ export const ENDPOINTS = {
     byId:              (id) => `${API_BASE}/admin/hub/${id}`,
     coordinators:              `${API_BASE}/admin/hub-coordinator/list`,
     coordinatorsByHub: (id) => `${API_BASE}/admin/hub/${id}/coordinators`,
+    shipmentCounts:    (id) => `${API_BASE}/admin/hub/${id}/shipment-counts`,
   },
   user: {
     list:           `${API_BASE}/admin/users`,

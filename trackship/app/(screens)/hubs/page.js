@@ -23,6 +23,7 @@ import {
   deleteHub,
   getCoordinators,
   getHubCoordinatorsForEdits,
+  getHubShipmentCounts,
 } from '@/lib/api';
 
 import s from './hubs.module.css';
@@ -56,7 +57,18 @@ export default function HubsPage() {
         getHubs(),
         getCoordinators().catch(() => []),  // gracefully skip if endpoint unavailable
       ]);
-      setHubs(hubList);
+      // Fetch shipment counts for all hubs in parallel
+      const counts = await Promise.all(
+        hubList.map(h => getHubShipmentCounts(h.id).catch(() => ({ incoming: 0, outgoing: 0 })))
+      );
+
+      const hubsWithCounts = hubList.map((h, i) => ({
+        ...h,
+        incoming_shipments: counts[i].incoming,
+        outgoing_shipments: counts[i].outgoing,
+      }));
+
+      setHubs(hubsWithCounts);
       setCoordinators(coordList);
     } catch (err) {
       setError(err.message ?? 'Failed to load hubs');

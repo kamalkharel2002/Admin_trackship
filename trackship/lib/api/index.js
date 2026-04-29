@@ -13,6 +13,7 @@ export {
   deleteHub,
   getCoordinators,
   getHubCoordinatorsForEdits,
+  getHubShipmentCounts,
 } from './hub';
 export {
   getUsers,

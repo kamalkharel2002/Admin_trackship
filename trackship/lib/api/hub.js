@@ -13,6 +13,8 @@ function normalizeHub(h) {
     coordinators:   Array.isArray(h.coordinators) ? h.coordinators : [],
     active_drivers: Number(h.active_drivers ?? 0),
     shipments:      Number(h.shipments ?? h.shipment_count ?? 0),
+    incoming_shipments:  Number(h.incoming_shipments ?? 0), // ← add
+    outgoing_shipments:  Number(h.outgoing_shipments ?? 0), // ← add
   };
 }
 
@@ -23,6 +25,14 @@ function normalizeList(raw) {
 
 export async function getHubs() {
   return normalizeList(await request(ENDPOINTS.hubs.list));
+}
+
+export async function getHubShipmentCounts(hubId) {
+  const raw = await request(ENDPOINTS.hubs.shipmentCounts(hubId));
+  return {
+    incoming: Number(raw?.incoming ?? 0),
+    outgoing: Number(raw?.outgoing ?? 0),
+  };
 }
 
 export async function createHub(body) {

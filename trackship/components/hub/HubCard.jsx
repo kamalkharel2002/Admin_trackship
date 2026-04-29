@@ -66,14 +66,15 @@ export default function HubCard({ hub, onEdit, onDelete }) {
       <div className={s.divider} />
 
       {/* Stats */}
+      {/* Stats */}
       <div className={s.stats}>
         <div className={s.stat}>
-          <div className={s.statLabel}>Active Drivers</div>
-          <div className={`${s.statValue} ${s.blue}`}>{hub.active_drivers}</div>
+          <div className={s.statLabel}>Incoming</div>
+          <div className={`${s.statValue} ${s.blue}`}>{hub.incoming_shipments ?? 0}</div>
         </div>
         <div className={s.stat}>
-          <div className={s.statLabel}>Shipments</div>
-          <div className={`${s.statValue} ${s.green}`}>{hub.shipments}</div>
+          <div className={s.statLabel}>Outgoing</div>
+          <div className={`${s.statValue} ${s.green}`}>{hub.outgoing_shipments ?? 0}</div>
         </div>
       </div>
 
