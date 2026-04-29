@@ -1,5 +1,4 @@
-// lib/api/index.js - Updated exports
-
+// lib/api/index.js
 export { loginUser, logoutUser } from './auth';
 export {
   getDashboardSummary,
@@ -26,23 +25,20 @@ export {
   getShipmentById,
 } from './shipments';
 export {
-  // Transporter management (admin)
   getTransporters,
   getPendingTransporters,
   getTransporterById,
   deleteTransporter,
   getAdminTransporterDocuments,
   verifyTransporter,
-  // Vehicle management (updated)
   getPendingVehicleDocuments,
   getAllPendingVehicleRequests,
   getVehicleApprovalStatus,
-  verifyVehicle,  // New: verify by vehicleId
-  // Helper functions
+  verifyVehicle,
   getTransporterWithDocuments,
-  batchVerifyVehicles,  // Updated: batch verify by vehicleId
+  batchVerifyVehicles,
   getPendingVerificationCounts,
-  getAllPendingVehicleChangeRequests, // Legacy compatibility
+  getAllPendingVehicleChangeRequests,
 } from './transporter';
 export {
   getPaymentDashboardSummary,
@@ -61,3 +57,7 @@ export {
   exportRevenueCSV,
   exportShipmentCSV,
 } from './report';
+export {
+  getPricingConfig,
+  updatePricingConfig,
+} from './pricing';

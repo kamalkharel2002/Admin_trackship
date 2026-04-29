@@ -1,14 +1,14 @@
 // lib/config.js
 
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || 'http://192.168.56.1:3000/api';
+  process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.65:3000/api';
 
 export const REQUEST_TIMEOUT = 15000;
 
 export const ENDPOINTS = {
   auth: {
-    login:  `${API_BASE}/admin/auth/login`,
-    logout: `${API_BASE}/admin/auth/logout`,
+    login:   `${API_BASE}/admin/auth/login`,
+    logout:  `${API_BASE}/admin/auth/logout`,
     refresh: `${API_BASE}/admin/auth/refresh`,
   },
   dashboard: {
@@ -22,16 +22,15 @@ export const ENDPOINTS = {
     list:      `${API_BASE}/admin/transporters`,
     documents: (id) => `${API_BASE}/admin/transporters/${id}/documents`,
     verify:    (id) => `${API_BASE}/admin/transporters/${id}/verify`,
-    // Vehicle document endpoints
-    pendingVehicleDocs: (id) => `${API_BASE}/admin/transporters/${id}/vehicle-documents/pending`,
-    verifyVehicle: (vehicleId) => `${API_BASE}/admin/vehicles/${vehicleId}/verify`,
-    allPendingVehicleRequests: `${API_BASE}/admin/vehicles/pending`,
-    vehicleApprovalStatus: (vehicleId) => `${API_BASE}/admin/vehicles/${vehicleId}/status`,
+    pendingVehicleDocs:        (id)       => `${API_BASE}/admin/transporters/${id}/vehicle-documents/pending`,
+    verifyVehicle:             (vehicleId) => `${API_BASE}/admin/vehicles/${vehicleId}/verify`,
+    allPendingVehicleRequests:              `${API_BASE}/admin/vehicles/pending`,
+    vehicleApprovalStatus:     (vehicleId) => `${API_BASE}/admin/vehicles/${vehicleId}/status`,
   },
   setting: {
-    details: `${API_BASE}/admin/profile/details`,
-    phone: `${API_BASE}/admin/profile/phone`,
-    password: `${API_BASE}/admin/profile/password`
+    details:  `${API_BASE}/admin/profile/details`,
+    phone:    `${API_BASE}/admin/profile/phone`,
+    password: `${API_BASE}/admin/profile/password`,
   },
   hubs: {
     list:                      `${API_BASE}/admin/hub`,
@@ -73,12 +72,17 @@ export const ENDPOINTS = {
     exportPaymentReconciliation: `${API_BASE}/payment-reports/payment-reconciliation/export`,
   },
   reports: {
-    totalRevenue:        `${API_BASE}/admin/report/revenue/total`,                   
-    totalDelivered:      `${API_BASE}/admin/report/shipments/delivered/total`,        
+    totalRevenue:        `${API_BASE}/admin/report/revenue/total`,
+    totalDelivered:      `${API_BASE}/admin/report/shipments/delivered/total`,
     monthlyRevenueGraph: `${API_BASE}/admin/report/revenue/monthly-graph`,
     statusDistribution:  `${API_BASE}/admin/report/shipments/status-distribution`,
     exportRevenueCSV:    `${API_BASE}/admin/report/export/revenue-csv`,
     exportShipmentCSV:   `${API_BASE}/admin/report/export/shipment-csv`,
+  },
+  // ─── Pricing ──────────────────────────────────────────────────────────────
+  pricing: {
+    list:           `${API_BASE}/admin/pricing`,
+    update: (key) => `${API_BASE}/admin/pricing/${key}`,
   },
 };
 

@@ -1,0 +1,172 @@
+/* components/pricing/TierTable.module.css */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.header {
+  padding: 22px 24px 0;
+  margin-bottom: 16px;
+}
+.title {
+  font-family: var(--font-head);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.sub { font-size: 12.5px; color: var(--text-muted); margin-top: 3px; }
+
+.tableWrap { overflow-x: auto; }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+.table thead tr {
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+}
+.table th {
+  padding: 10px 20px;
+  text-align: left;
+  font-family: var(--font-head);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.table tbody tr {
+  border-bottom: 1px solid var(--border-light);
+  transition: background 0.12s;
+}
+.table tbody tr:last-child { border-bottom: none; }
+.table tbody tr:hover { background: var(--bg-panel); }
+.table td { padding: 14px 20px; vertical-align: middle; }
+
+.tierBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-head);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--tc, #22C55E);
+  background: color-mix(in srgb, var(--tc, #22C55E) 12%, transparent);
+  border-radius: 20px;
+  padding: 4px 12px;
+}
+.rangeCell {
+  font-family: var(--font-head);
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.unlimited {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* editable cell */
+.cellView {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 7px;
+  border: 1.5px solid transparent;
+  transition: all 0.15s;
+}
+.cellView:hover {
+  background: var(--bg-panel);
+  border-color: var(--border);
+}
+.val {
+  font-family: var(--font-head);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.valOk  { font-family: var(--font-head); font-size: 14px; font-weight: 700; color: #15803d; }
+.valErr { font-family: var(--font-head); font-size: 14px; font-weight: 700; color: #b91c1c; }
+.pencil { font-size: 12px; color: var(--text-muted); opacity: 0; transition: opacity 0.15s; }
+.cellView:hover .pencil { opacity: 1; }
+
+.cellEdit {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.cellPre, .cellSuf {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.cellInput {
+  width: 80px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1.5px solid var(--accent-yellow);
+  border-radius: 6px;
+  padding: 5px 8px;
+  outline: none;
+}
+.cellSave {
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--accent-yellow);
+  color: #1A1A2E;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+  display: flex; align-items: center;
+  flex-shrink: 0;
+}
+.cellSave:disabled { opacity: 0.6; cursor: not-allowed; }
+.cellCancel {
+  font-size: 12px;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 3px 5px;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+.cellCancel:hover { color: #b91c1c; }
+
+.spin {
+  width: 12px; height: 12px;
+  border: 2px solid rgba(0,0,0,0.18);
+  border-top-color: #1A1A2E;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 24px 18px;
+  background: color-mix(in srgb, var(--accent-blue) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-blue) 22%, transparent);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.noteIcon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }

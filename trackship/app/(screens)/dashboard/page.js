@@ -1,59 +1,49 @@
 'use client';
-// app/dashboard/page.jsx
+// app/(screens)/dashboard/page.jsx
 
 import { useState, useEffect, useCallback } from 'react';
 import { Package, Truck, CheckCircle, TrendingUp, AlertCircle } from 'lucide-react';
 
-import TopBar from '@/components/Topbar/Topbar';
-import StatCard from '@/components/dashboard/StatCard';
-import HubChart from '@/components/dashboard/HubChart';
+import TopBar    from '@/components/Topbar/Topbar';
+import StatCard  from '@/components/dashboard/StatCard';
+import HubChart  from '@/components/dashboard/HubChart';
 import RightPanel from '@/components/dashboard/RightPanel';
 
 import {
   getDashboardSummary,
   getHubShipments,
-  getPendingTransporters,
-  getAllPendingVehicleChangeRequests,  // Add this import
+  getDashboardPendingTransporters,   // ← correct export name from index.js
   getAdminProfile,
 } from '@/lib/api';
 
 import s from './dashboard.module.css';
 
 export default function DashboardPage() {
-  const [user, setUser] = useState(null);
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
-  const [summary, setSummary] = useState(null);
-  const [hubs, setHubs] = useState([]);
-  const [transporters, setTransporters] = useState([]);  // For pending transporters
-  const [vehicleDocuments, setVehicleDocuments] = useState([]);  // Add this for vehicle docs
-  const [loadingMain, setLoadingMain] = useState(true);
-  const [loadingT, setLoadingT] = useState(true);  // For transporters
-  const [loadingV, setLoadingV] = useState(true);  // Add this for vehicle docs
+  const [user,           setUser]           = useState(null);
+  const [startDate,      setStartDate]      = useState(null);
+  const [endDate,        setEndDate]        = useState(null);
+  const [summary,        setSummary]        = useState(null);
+  const [hubs,           setHubs]           = useState([]);
+  const [transporters,   setTransporters]   = useState([]);
+  const [vehicleDocuments, setVehicleDocuments] = useState([]);
+  const [loadingMain,    setLoadingMain]    = useState(true);
+  const [loadingT,       setLoadingT]       = useState(true);
+  const [loadingV]                          = useState(false);   // no vehicle endpoint yet
   const [loadingProfile, setLoadingProfile] = useState(true);
-  const [error, setError] = useState(null);
+  const [error,          setError]          = useState(null);
 
-  // Fetch admin profile from API
+  // ── Profile ──
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const profile = await getAdminProfile();
-        setUser(profile);
-      } catch (err) {
-        console.error('Failed to fetch profile:', err);
-      } finally {
-        setLoadingProfile(false);
-      }
-    };
-    fetchProfile();
+    getAdminProfile()
+      .then(setUser)
+      .catch((err) => console.error('Failed to fetch profile:', err))
+      .finally(() => setLoadingProfile(false));
   }, []);
 
+  // ── Main stats ──
   const buildParams = useCallback(() => {
-    if (startDate && endDate) {
-      return { startDate, endDate };
-    } else if (startDate && !endDate) {
-      return { startDate };
-    }
+    if (startDate && endDate) return { startDate, endDate };
+    if (startDate)            return { startDate };
     return {};
   }, [startDate, endDate]);
 
@@ -61,60 +51,39 @@ export default function DashboardPage() {
     setLoadingMain(true);
     setError(null);
     try {
-      const params = buildParams();
       const [sum, hubData] = await Promise.all([
-        getDashboardSummary(params),
-        getHubShipments(params),
+        getDashboardSummary(buildParams()),
+        getHubShipments(buildParams()),
       ]);
       setSummary(sum);
       setHubs(hubData);
     } catch (err) {
-      console.error('Fetch error:', err);
       setError(err.message ?? 'Failed to load dashboard data');
     } finally {
       setLoadingMain(false);
     }
   }, [buildParams]);
 
-  // Fetch pending transporters
+  // ── Pending transporters ──
   const fetchTransporters = useCallback(async () => {
     setLoadingT(true);
     try {
-      const data = await getPendingTransporters();
-      console.log('Fetched pending transporters:', data);
+      const data = await getDashboardPendingTransporters();
       setTransporters(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Transporters fetch error:', err);
       setTransporters([]);
     } finally {
-      setLoadingT(false);
-    }
-  }, []);
-
-  // Add this: Fetch pending vehicle documents
-  const fetchVehicleDocuments = useCallback(async () => {
-    setLoadingV(true);
-    try {
-      const data = await getAllPendingVehicleChangeRequests();
-      console.log('Fetched pending vehicle documents:', data);
-      setVehicleDocuments(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error('Vehicle documents fetch error:', err);
-      setVehicleDocuments([]);
-    } finally {
-      setLoadingV(false);
+      setLoadingT(false);   // ← always clears, even on error
     }
   }, []);
 
   useEffect(() => {
     fetchMain();
     fetchTransporters();
-    fetchVehicleDocuments();  // Add this
-  }, [fetchMain, fetchTransporters, fetchVehicleDocuments]);
+  }, [fetchMain, fetchTransporters]);
 
-  useEffect(() => {
-    fetchMain();
-  }, [startDate, endDate, fetchMain]);
+  useEffect(() => { fetchMain(); }, [startDate, endDate, fetchMain]);
 
   const handleRangeChange = (start, end) => {
     setStartDate(start);
@@ -122,11 +91,8 @@ export default function DashboardPage() {
   };
 
   const getSubtitle = () => {
-    if (startDate && endDate) {
-      return `Showing data from ${startDate} to ${endDate}`;
-    } else if (startDate && !endDate) {
-      return `Showing data for ${startDate}`;
-    }
+    if (startDate && endDate) return `Showing data from ${startDate} to ${endDate}`;
+    if (startDate)            return `Showing data for ${startDate}`;
     return 'All-time overview';
   };
 
@@ -134,13 +100,11 @@ export default function DashboardPage() {
     ? isNaN(Number(summary.success_rate)) ? '0%' : `${Number(summary.success_rate).toFixed(1)}%`
     : '—';
 
-  const badgeCounts = { transporters: transporters.length };
-
   if (loadingProfile) {
     return (
       <main className={s.main}>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-          Loading profile...
+          Loading…
         </div>
       </main>
     );
@@ -208,10 +172,10 @@ export default function DashboardPage() {
               startDate={startDate}
               endDate={endDate}
               onRangeChange={handleRangeChange}
-              transporters={transporters}  // Fixed: use transporters state
-              vehicleDocuments={vehicleDocuments}  // Fixed: use vehicleDocuments state
-              loadingT={loadingT}  // Fixed: use loadingT state
-              loadingV={loadingV}  // Fixed: use loadingV state
+              transporters={transporters}
+              vehicleDocuments={vehicleDocuments}
+              loadingT={loadingT}
+              loadingV={loadingV}
             />
           </div>
         </div>

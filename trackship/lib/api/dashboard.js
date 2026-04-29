@@ -1,4 +1,4 @@
-﻿// /lib/api/dashboard.js
+﻿// lib/api/dashboard.js
 import { ENDPOINTS, buildQueryString } from '@/lib/config';
 import { request } from '@/lib/api/client';
 
@@ -29,12 +29,16 @@ function normalizePendingTransporters(raw) {
             : Array.isArray(raw)       ? raw
             : [];
   return arr.map(t => ({
-    id:        t.id           ?? t.transporter_id ?? '',
-    name:      t.name         ?? t.user_name      ?? 'Unknown',
-    email:     t.email        ?? '',
-    phone:     t.phone        ?? t.mobile         ?? '',
-    vehicle:   t.vehicle_type ?? t.vehicle        ?? '—',
-    submitted: t.created_at   ?? t.submitted_at   ?? '',
+    // keep transporter_id so RightPanel's isTransporter check works
+    transporter_id: t.transporter_id ?? t.id ?? '',
+    id:             t.transporter_id ?? t.id ?? '',
+    name:           t.user_name      ?? t.name      ?? 'Unknown',
+    email:          t.email          ?? '',
+    phone:          t.phone          ?? t.mobile     ?? '',
+    vehicle:        t.vehicle_type   ?? t.vehicle    ?? '—',
+    vehicle_no:     t.vehicle_no     ?? '',
+    license_no:     t.license_no     ?? '',
+    submitted:      t.created_at     ?? t.submitted_at ?? '',
   }));
 }
 

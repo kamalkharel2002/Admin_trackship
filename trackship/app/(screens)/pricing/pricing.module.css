@@ -1,0 +1,124 @@
+/* app/(screens)/pricing/pricing.module.css */
+
+.page {
+  min-height: 100vh;
+  background: var(--bg-page);
+  padding: 28px 32px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.title {
+  font-family: var(--font-head);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+.sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.updated {
+  font-style: italic;
+  color: var(--text-muted);
+}
+/* ── Error ── */
+.errorBanner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-sm);
+  color: #b91c1c;
+  font-size: 13px;
+  padding: 10px 16px;
+}
+.retryBtn {
+  font-size: 12px;
+  font-weight: 600;
+  color: #b91c1c;
+  background: none;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  padding: 3px 10px;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+/* ── Sections ── */
+.section { display: flex; flex-direction: column; gap: 14px; }
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sectionDot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.sectionTitle {
+  font-family: var(--font-head);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.sectionBadge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
+  padding: 2px 10px;
+}
+.sectionSub { font-size: 12.5px; color: var(--text-muted); margin-top: -4px; }
+
+/* ── Price card grid ── */
+.priceGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+/* ── Skeletons ── */
+.skelCard {
+  height: 148px;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--border-light);
+  background: linear-gradient(90deg, #f0ede6 25%, #faf9f6 50%, #f0ede6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+.skelTable {
+  height: 240px;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--border-light);
+  background: linear-gradient(90deg, #f0ede6 25%, #faf9f6 50%, #f0ede6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+/* ── Responsive ── */
+@media (max-width: 1100px) {
+  .priceGrid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 700px) {
+  .page      { padding: 18px 14px 40px; }
+  .priceGrid { grid-template-columns: 1fr; }
+}

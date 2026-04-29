@@ -1,0 +1,137 @@
+/* components/pricing/PriceCard.module.css */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 22px 22px 20px;
+  border: 1.5px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+
+.topBar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--acc, var(--accent-yellow));
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+/* blob */
+.card::after {
+  content: '';
+  position: absolute;
+  bottom: -18px; right: -18px;
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--acc, var(--accent-yellow)) 9%, transparent);
+  pointer-events: none;
+}
+
+.iconRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.icon {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--acc, var(--accent-yellow)) 13%, transparent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+.toastOk  { font-size: 12px; font-weight: 600; color: #15803d; background: #dcfce7; padding: 3px 10px; border-radius: 20px; }
+.toastErr { font-size: 12px; font-weight: 600; color: #b91c1c; background: #fee2e2; padding: 3px 10px; border-radius: 20px; }
+
+.label {
+  font-family: var(--font-head);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+}
+.desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+/* display */
+.valueRow { display: flex; align-items: center; justify-content: space-between; }
+.value {
+  font-family: var(--font-head);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+.editBtn {
+  display: flex; align-items: center; gap: 5px;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.editBtn:hover { border-color: var(--acc, var(--accent-yellow)); color: var(--text-primary); }
+
+/* editing */
+.editRow { display: flex; align-items: center; gap: 6px; }
+.prefix { font-size: 13px; font-weight: 600; color: var(--text-muted); flex-shrink: 0; }
+.input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-panel);
+  border: 1.5px solid var(--acc, var(--accent-yellow));
+  border-radius: 7px;
+  padding: 6px 10px;
+  outline: none;
+}
+.saveBtn {
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 700;
+  background: var(--acc, var(--accent-yellow));
+  color: #1A1A2E;
+  border: none;
+  border-radius: 7px;
+  padding: 7px 14px;
+  cursor: pointer;
+  display: flex; align-items: center;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.saveBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+.cancelBtn {
+  font-size: 13px;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 5px;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+.cancelBtn:hover { color: #b91c1c; }
+
+.spin {
+  width: 13px; height: 13px;
+  border: 2px solid rgba(0,0,0,0.2);
+  border-top-color: #1A1A2E;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
