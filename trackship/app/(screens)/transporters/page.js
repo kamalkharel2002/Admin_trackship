@@ -25,7 +25,8 @@ export default function TransporterPage() {
   async function fetchStats() {
     try {
       setLoadingStats(true);
-      const data = await getTransporters({ offset: 0, limit: 100 });
+      // Get all transporters (no pagination params needed)
+      const data = await getTransporters();
       
       // Calculate statistics from transporter data
       const statusCounts = {
@@ -54,6 +55,12 @@ export default function TransporterPage() {
       setStats(statsArray);
     } catch (err) {
       console.error('Failed to fetch stats:', err);
+      // Set empty stats on error
+      setStats([
+        { status: 'Pending', key: 'PENDING_VERIFICATION', count: 0, color: '#F97316' },
+        { status: 'Approved', key: 'APPROVED', count: 0, color: '#22C55E' },
+        { status: 'Declined', key: 'DECLINED', count: 0, color: '#EF4444' }
+      ]);
     } finally {
       setLoadingStats(false);
     }
@@ -125,14 +132,6 @@ export default function TransporterPage() {
       ) : (
         <div className="transporter-page-stats-empty">No transporter data available</div>
       )}
-
-      {/* ── Transporter Header with Search and Filter ── */}
-      <TransporterHeader
-        selected={selected}
-        onSearch={handleSearch}
-        activeStatuses={activeStatuses}
-        onStatusToggle={handleStatusToggle}
-      />
 
       {/* ── Table section ── */}
       <div className="transporter-page-table-section">

@@ -161,26 +161,6 @@ export default function TransporterRow({
           </button>
         )}
 
-        {/* Approve/Decline Buttons - only for pending registrations */}
-        {showVerifyButtons && (
-          <>
-            <button
-              className="transporter-row-action-btn decline"
-              title="Decline registration"
-              onClick={onDecline}
-            >
-              <XIcon />
-            </button>
-            <button
-              className="transporter-row-action-btn approve"
-              title="Approve registration"
-              onClick={onApprove}
-            >
-              <CheckIcon />
-            </button>
-          </>
-        )}
-
         {/* Delete Button - for all transporters */}
         {onDelete && (
           <button

@@ -1,3 +1,5 @@
+// lib/api/transporter.js (complete corrected version)
+
 import { ENDPOINTS, buildQueryString } from '@/lib/config';
 import { request } from '@/lib/api/client';
 
@@ -46,9 +48,12 @@ function normalizeTransporters(raw) {
 function normalizeTransporterDocuments(raw) {
   let allDocs = [];
   
+  // Collect transporter documents
   if (raw?.transporter_documents && Array.isArray(raw.transporter_documents)) {
     allDocs.push(...raw.transporter_documents);
   }
+  
+  // Collect vehicle documents (includes insurance)
   if (raw?.vehicle_documents && Array.isArray(raw.vehicle_documents)) {
     allDocs.push(...raw.vehicle_documents);
   }
@@ -57,16 +62,29 @@ function normalizeTransporterDocuments(raw) {
     allDocs = raw;
   }
   
+  // Debug logging
+  console.log('Raw transporter docs:', raw?.transporter_documents?.map(d => d.doc_type));
+  console.log('Raw vehicle docs:', raw?.vehicle_documents?.map(d => d.doc_type));
+  console.log('All docs combined:', allDocs.map(d => d.doc_type));
+  console.log('Insurance found in allDocs?', allDocs.some(d => d.doc_type === 'insurance'));
+  
   const documents = {};
   const fileList = [];
   
   allDocs.forEach(doc => {
     documents[doc.doc_type] = doc.file;
     fileList.push({
-      type: doc.doc_type,
+      doc_type: doc.doc_type,      // CRITICAL: Use 'doc_type' not 'type'
       file: doc.file,
+      document_id: doc.document_id,
+      uploaded_at: doc.uploaded_at,
+      status: doc.status || null,
+      vehicle_id: doc.vehicle_id || null
     });
   });
+  
+  console.log('Final fileList types:', fileList.map(f => f.doc_type));
+  console.log('Insurance in fileList?', fileList.some(f => f.doc_type === 'insurance'));
   
   return {
     documents,
@@ -82,15 +100,21 @@ function normalizeTransporterDocuments(raw) {
 function normalizePendingVehicleDocuments(raw) {
   let arr = [];
   
-  if (Array.isArray(raw)) {
-    arr = raw;
+  // Handle different response structures
+  if (raw?.vehicle_documents && Array.isArray(raw.vehicle_documents)) {
+    arr = raw.vehicle_documents;
   } else if (raw?.data && Array.isArray(raw.data)) {
     arr = raw.data;
+  } else if (Array.isArray(raw)) {
+    arr = raw;
   } else if (raw?.files && Array.isArray(raw.files)) {
     arr = raw.files;
   } else {
     arr = [];
   }
+  
+  console.log('Raw pending docs:', arr.map(d => d.doc_type));
+  console.log('Insurance in pending raw?', arr.some(d => d.doc_type === 'insurance'));
   
   // Deduplicate by document_id
   const uniqueMap = new Map();
@@ -109,9 +133,6 @@ function normalizePendingVehicleDocuments(raw) {
           uploaded_at: doc.uploaded_at,
           file: doc.file,
           status: doc.status || 'PENDING',
-          transporter_id: doc.transporter_id,
-          transporter_name: doc.user_name,
-          transporter_email: doc.email,
         });
       }
       return;
@@ -127,14 +148,61 @@ function normalizePendingVehicleDocuments(raw) {
         uploaded_at: doc.uploaded_at,
         file: doc.file,
         status: doc.status || 'PENDING',
-        transporter_id: doc.transporter_id,
-        transporter_name: doc.user_name,
-        transporter_email: doc.email,
       });
     }
   });
   
-  return Array.from(uniqueMap.values());
+  const result = Array.from(uniqueMap.values());
+  console.log('Deduped pending docs:', result.map(d => d.doc_type));
+  console.log('Insurance in deduped?', result.some(d => d.doc_type === 'insurance'));
+  
+  return result;
+}
+
+// Normalize vehicle approval status response
+function normalizeVehicleApprovalStatus(raw) {
+  if (!raw?.success) {
+    return {
+      vehicle: null,
+      documents: {
+        total_docs: 0,
+        approved_docs: 0,
+        rejected_docs: 0,
+        pending_docs: 0,
+        is_fully_approved: false
+      }
+    };
+  }
+  
+  return {
+    vehicle: raw.vehicle,
+    documents: raw.documents
+  };
+}
+
+// Normalize pending vehicle requests
+function normalizePendingVehicleRequests(raw) {
+  let arr = [];
+  
+  if (raw?.data && Array.isArray(raw.data)) {
+    arr = raw.data;
+  } else if (Array.isArray(raw)) {
+    arr = raw;
+  } else {
+    arr = [];
+  }
+  
+  return arr.map(item => ({
+    vehicle_id: item.vehicle_id,
+    vehicle_no: item.vehicle_no,
+    vehicle_type: item.vehicle_type,
+    vehicle_status: item.vehicle_status,
+    vehicle_created_at: item.vehicle_created_at,
+    transporter_id: item.transporter_id,
+    user_name: item.user_name,
+    email: item.email,
+    documents: item.documents || []
+  }));
 }
 
 // ============= ADMIN TRANSPORTER API FUNCTIONS =============
@@ -200,15 +268,18 @@ export async function getTransporterById(transporterId) {
   }
 }
 
-// ============= VEHICLE DOCUMENT FUNCTIONS =============
+// ============= VEHICLE VERIFICATION FUNCTIONS =============
 
+// Get pending vehicle documents for a specific transporter
 export async function getPendingVehicleDocuments(transporterId) {
   try {
     const url = ENDPOINTS.transporters.pendingVehicleDocs(transporterId);
     const response = await request(url);
     
-    // Ensure we have an array and deduplicate
-    const docs = Array.isArray(response) ? response : [];
+    console.log('Pending vehicle docs response:', response);
+    
+    // Response structure: { success: true, vehicle_documents: [], summary: {} }
+    const docs = response?.vehicle_documents || [];
     const normalized = normalizePendingVehicleDocuments(docs);
     
     // Final deduplication safety
@@ -232,55 +303,52 @@ export async function getPendingVehicleDocuments(transporterId) {
   }
 }
 
-export async function verifyVehicleDocument(documentId, action, reason = null) {
+// Get all pending vehicle requests (across all transporters)
+export async function getAllPendingVehicleRequests() {
   try {
-    const url = ENDPOINTS.transporters.verifyVehicleDoc(documentId);
-    const response = await request(url, {
-      method: 'POST',
-      body: { action, reason },
-    });
-    return response;
+    const url = ENDPOINTS.transporters.allPendingVehicleRequests;
+    const response = await request(url);
+    return normalizePendingVehicleRequests(response);
   } catch (error) {
-    console.error('Failed to verify vehicle document:', error);
-    throw error;
+    console.error('Failed to fetch pending vehicle requests:', error);
+    return [];
   }
 }
 
-export async function getAllPendingVehicleChangeRequests() {
+// Get vehicle approval status
+export async function getVehicleApprovalStatus(vehicleId) {
   try {
-    const allTransporters = await getTransporters();
-    const activeTransporters = allTransporters.filter(t => 
-      ['APPROVED', 'ACTIVE'].includes(t.verification_status)
-    );
-    
-    const allDocs = [];
-    for (const transporter of activeTransporters) {
-      try {
-        const pendingDocs = await getPendingVehicleDocuments(transporter.transporter_id);
-        allDocs.push(...pendingDocs.map(doc => ({
-          ...doc,
-          transporter_id: transporter.transporter_id,
-          transporter_name: transporter.user_name,
-          transporter_email: transporter.email,
-        })));
-      } catch (error) {
-        console.error(`Failed to fetch docs for transporter ${transporter.transporter_id}:`, error);
-      }
-    }
-    
-    // Final deduplication across all transporters
-    const uniqueMap = new Map();
-    allDocs.forEach(doc => {
-      if (!uniqueMap.has(doc.document_id)) {
-        uniqueMap.set(doc.document_id, doc);
-      }
-    });
-    
-    return Array.from(uniqueMap.values());
+    const url = ENDPOINTS.transporters.vehicleApprovalStatus(vehicleId);
+    const response = await request(url);
+    return normalizeVehicleApprovalStatus(response);
   } catch (error) {
-    console.error('Failed to fetch all pending vehicle changes:', error);
-    return [];
+    console.error('Failed to fetch vehicle approval status:', error);
+    return {
+      vehicle: null,
+      documents: {
+        total_docs: 0,
+        approved_docs: 0,
+        rejected_docs: 0,
+        pending_docs: 0,
+        is_fully_approved: false
+      }
+    };
   }
+}
+
+// Verify a vehicle (approve or reject with all its documents)
+export async function verifyVehicle(vehicleId, action, reason = null) {
+  const url = ENDPOINTS.transporters.verifyVehicle(vehicleId);
+  return await request(url, {
+    method: 'POST',
+    body: { action, reason },
+  });
+}
+
+// Legacy function - maps to verifyVehicle for compatibility
+export async function verifyVehicleDocument(documentId, action, reason = null) {
+  console.warn('verifyVehicleDocument is deprecated. Use verifyVehicle with vehicleId instead');
+  throw new Error('Use verifyVehicle with vehicleId instead of documentId');
 }
 
 // ============= HELPER FUNCTIONS =============
@@ -298,15 +366,16 @@ export async function getTransporterWithDocuments(transporterId) {
   }
 }
 
-export async function batchVerifyVehicleDocuments(verifications) {
+// Batch verify vehicles (not documents)
+export async function batchVerifyVehicles(verifications) {
   try {
     const results = await Promise.all(
-      verifications.map(async ({ documentId, action, reason }) => {
+      verifications.map(async ({ vehicleId, action, reason }) => {
         try {
-          const result = await verifyVehicleDocument(documentId, action, reason);
-          return { success: true, documentId, action, data: result };
+          const result = await verifyVehicle(vehicleId, action, reason);
+          return { success: true, vehicleId, action, data: result };
         } catch (error) {
-          return { success: false, documentId, action, error: error.message };
+          return { success: false, vehicleId, action, error: error.message };
         }
       })
     );
@@ -319,22 +388,68 @@ export async function batchVerifyVehicleDocuments(verifications) {
       failedCount: results.filter(r => !r.success).length,
     };
   } catch (error) {
-    console.error('Failed to batch verify documents:', error);
+    console.error('Failed to batch verify vehicles:', error);
     return { success: [], failed: verifications, total: verifications.length, successCount: 0, failedCount: verifications.length };
+  }
+}
+
+// Get all pending vehicle change requests (aggregated)
+export async function getAllPendingVehicleChangeRequests() {
+  try {
+    // Use the dedicated backend endpoint if available
+    try {
+      const response = await getAllPendingVehicleRequests();
+      return response;
+    } catch (error) {
+      // Fallback: fetch from each transporter
+      console.log('Falling back to manual aggregation for vehicle requests');
+      const allTransporters = await getTransporters();
+      const activeTransporters = allTransporters.filter(t => 
+        ['APPROVED', 'ACTIVE'].includes(t.verification_status)
+      );
+      
+      const allDocs = [];
+      for (const transporter of activeTransporters) {
+        try {
+          const pendingDocs = await getPendingVehicleDocuments(transporter.transporter_id);
+          allDocs.push(...pendingDocs.map(doc => ({
+            ...doc,
+            transporter_id: transporter.transporter_id,
+            transporter_name: transporter.user_name,
+            transporter_email: transporter.email,
+          })));
+        } catch (error) {
+          console.error(`Failed to fetch docs for transporter ${transporter.transporter_id}:`, error);
+        }
+      }
+      
+      // Final deduplication across all transporters
+      const uniqueMap = new Map();
+      allDocs.forEach(doc => {
+        if (!uniqueMap.has(doc.document_id)) {
+          uniqueMap.set(doc.document_id, doc);
+        }
+      });
+      
+      return Array.from(uniqueMap.values());
+    }
+  } catch (error) {
+    console.error('Failed to fetch all pending vehicle changes:', error);
+    return [];
   }
 }
 
 export async function getPendingVerificationCounts() {
   try {
-    const [pendingTransporters, pendingVehicleChanges] = await Promise.all([
+    const [pendingTransporters, pendingVehicleRequests] = await Promise.all([
       getPendingTransporters(),
-      getAllPendingVehicleChangeRequests()
+      getAllPendingVehicleRequests()
     ]);
     
     return {
       pendingTransporters: pendingTransporters.length,
-      pendingVehicleChanges: pendingVehicleChanges.length,
-      total: pendingTransporters.length + pendingVehicleChanges.length,
+      pendingVehicleChanges: pendingVehicleRequests.length,
+      total: pendingTransporters.length + pendingVehicleRequests.length,
     };
   } catch (error) {
     console.error('Failed to fetch pending counts:', error);
