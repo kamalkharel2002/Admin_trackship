@@ -11,7 +11,9 @@ import {
   getAdminTransporterDocuments,
   verifyTransporter,
   getPendingVehicleDocuments,
-  verifyVehicleDocument,
+  verifyVehicle,  // Changed from verifyVehicleDocument
+  getAllPendingVehicleRequests, // New: for fetching all pending vehicle requests
+  getVehicleApprovalStatus, // New: for checking vehicle status
 } from '@/lib/api/transporter';
 
 const ROWS_PER_PAGE = 10;
@@ -67,8 +69,9 @@ export default function TransporterTable({
   const [modalType, setModalType] = useState('registration'); // 'registration' or 'vehicle-change'
 
   const [docLoading, setDocLoading] = useState(false);
-  const [vehicleDocs, setVehicleDocs] = useState([]);
+  const [vehicleRequests, setVehicleRequests] = useState([]); // Changed from vehicleDocs
   const [vehiclesWithPendingDocs, setVehiclesWithPendingDocs] = useState([]);
+  const [processingVehicleId, setProcessingVehicleId] = useState(null); // Track which vehicle is being processed
 
   const [verifying, setVerifying] = useState(false);
   const [verifyingId, setVerifyingId] = useState(null);
@@ -196,6 +199,7 @@ export default function TransporterTable({
     setDocLoading(true);
     clearInterval(refreshTimerRef.current);
     try {
+      // Fetch pending vehicle documents using the updated API
       const pendingDocs = await getPendingVehicleDocuments(transporter.transporter_id);
       
       // Group documents by vehicle
@@ -204,8 +208,8 @@ export default function TransporterTable({
         if (!vehicleMap.has(doc.vehicle_id)) {
           vehicleMap.set(doc.vehicle_id, {
             vehicle_id: doc.vehicle_id,
-            vehicle_no: doc.vehicle_no,
-            vehicle_type: doc.vehicle_type,
+            vehicle_no: doc.vehicle_no || 'N/A',
+            vehicle_type: doc.vehicle_type || 'N/A',
             documents: [],
             pending_docs_count: 0
           });
@@ -216,7 +220,7 @@ export default function TransporterTable({
       });
       
       setVehiclesWithPendingDocs(Array.from(vehicleMap.values()));
-      setVehicleDocs(pendingDocs);
+      setVehicleRequests(pendingDocs);
       setShowDocModal(true);
     } catch (err) {
       console.error(err);
@@ -226,16 +230,17 @@ export default function TransporterTable({
     }
   }
 
-  /* ── Handle Individual Vehicle Document Verification ── */
-  async function handleVehicleDocApprove(documentId) {
+  /* ── Handle Vehicle Verification (by vehicleId, not documentId) ── */
+  async function handleVehicleApprove(vehicleId) {
+    setProcessingVehicleId(vehicleId);
     try {
-      await verifyVehicleDocument(documentId, 'APPROVED');
-      alert('Document approved successfully');
+      await verifyVehicle(vehicleId, 'APPROVED');
+      alert('Vehicle approved successfully');
       
       // Refresh the vehicle change requests view
       if (selectedTransporter) {
         const updatedDocs = await getPendingVehicleDocuments(selectedTransporter.transporter_id);
-        setVehicleDocs(updatedDocs);
+        setVehicleRequests(updatedDocs);
         
         // Re-group documents by vehicle
         const vehicleMap = new Map();
@@ -256,8 +261,8 @@ export default function TransporterTable({
         setVehiclesWithPendingDocs(Array.from(vehicleMap.values()));
       }
       
-      // If no more pending docs, close modal after short delay
-      if (vehicleDocs.filter(d => d.document_id !== documentId).length === 0) {
+      // If no more pending vehicles, close modal after short delay
+      if (vehicleRequests.filter(d => d.vehicle_id !== vehicleId).length === 0) {
         setTimeout(() => {
           setShowDocModal(false);
           fetchTransporters(); // Refresh to update any statuses
@@ -265,22 +270,28 @@ export default function TransporterTable({
       }
     } catch (err) {
       console.error(err);
-      alert('Failed to approve document');
+      alert(err.message || 'Failed to approve vehicle');
+    } finally {
+      setProcessingVehicleId(null);
     }
   }
 
-  async function handleVehicleDocReject(documentId) {
-    const reason = prompt('Provide a reason for rejecting this document:');
-    if (reason === null) return;
+  async function handleVehicleReject(vehicleId) {
+    const reason = prompt('Provide a reason for rejecting this vehicle\'s documents:');
+    if (reason === null || reason.trim() === '') {
+      if (reason !== null) alert('Rejection reason is required');
+      return;
+    }
     
+    setProcessingVehicleId(vehicleId);
     try {
-      await verifyVehicleDocument(documentId, 'REJECTED');
-      alert('Document rejected successfully');
+      await verifyVehicle(vehicleId, 'REJECTED', reason);
+      alert('Vehicle rejected successfully');
       
       // Refresh the vehicle change requests view
       if (selectedTransporter) {
         const updatedDocs = await getPendingVehicleDocuments(selectedTransporter.transporter_id);
-        setVehicleDocs(updatedDocs);
+        setVehicleRequests(updatedDocs);
         
         // Re-group documents by vehicle
         const vehicleMap = new Map();
@@ -302,7 +313,9 @@ export default function TransporterTable({
       }
     } catch (err) {
       console.error(err);
-      alert('Failed to reject document');
+      alert(err.message || 'Failed to reject vehicle');
+    } finally {
+      setProcessingVehicleId(null);
     }
   }
 
@@ -573,14 +586,15 @@ export default function TransporterTable({
       {showDocModal && (
         <DocumentModal
           transporter={selectedTransporter}
-          documents={modalType === 'registration' ? documents : vehicleDocs}
+          documents={modalType === 'registration' ? documents : vehicleRequests}
           vehicles={modalType === 'vehicle-change' ? vehiclesWithPendingDocs : []}
           loading={docLoading}
           modalType={modalType}
+          processingVehicleId={processingVehicleId}
           onClose={() => {
             setShowDocModal(false);
             setModalType('registration');
-            setVehicleDocs([]);
+            setVehicleRequests([]);
             setVehiclesWithPendingDocs([]);
             if (autoRefresh) {
               clearInterval(refreshTimerRef.current);
@@ -599,8 +613,8 @@ export default function TransporterTable({
               setShowDocModal(false);
             }
           }}
-          onVehicleDocApprove={modalType === 'vehicle-change' ? handleVehicleDocApprove : undefined}
-          onVehicleDocReject={modalType === 'vehicle-change' ? handleVehicleDocReject : undefined}
+          onVehicleApprove={modalType === 'vehicle-change' ? handleVehicleApprove : undefined}
+          onVehicleReject={modalType === 'vehicle-change' ? handleVehicleReject : undefined}
         />
       )}
     </>

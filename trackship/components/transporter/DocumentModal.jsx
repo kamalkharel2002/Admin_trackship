@@ -27,7 +27,6 @@ const DOC_LABELS = {
   fitness_cert: 'Fitness Certificate',
   permit: 'Permit',
   insurance_cert: 'Insurance Certificate',
-  // Additional document types from backend
   aadhar_card: 'Aadhar Card',
   pan_card: 'PAN Card',
   gst_certificate: 'GST Certificate',
@@ -117,14 +116,12 @@ export default function DocumentModal({
   vehicles = [],
   loading = false,
   modalType = 'registration',
+  processingVehicleId = null,
   onClose,
   onApprove,
   onDecline,
-  onVehicleDocApprove,
-  onVehicleDocReject,
-  // New props for showing approval results
-  approvingDocId = null,
-  rejectingDocId = null,
+  onVehicleApprove,  // Changed from onVehicleDocApprove
+  onVehicleReject,   // Changed from onVehicleDocReject
 }) {
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
@@ -138,9 +135,8 @@ export default function DocumentModal({
         if (doc.vehicle_id && !map.has(doc.vehicle_id)) {
           map.set(doc.vehicle_id, {
             vehicle_id: doc.vehicle_id,
-            vehicle_no: doc.vehicle_no,
-            vehicle_type: doc.vehicle_type,
-            verification_status: doc.verification_status || doc.vehicle_status,
+            vehicle_no: doc.vehicle_no || 'N/A',
+            vehicle_type: doc.vehicle_type || 'N/A',
             pending_docs_count: 0,
           });
         }
@@ -174,7 +170,6 @@ export default function DocumentModal({
       if (id && !uniqueMap.has(id)) {
         uniqueMap.set(id, doc);
       } else if (!id) {
-        // Fallback for documents without ID
         const key = `${doc.doc_type}_${doc.vehicle_id || 'transporter'}_${doc.uploaded_at}`;
         if (!uniqueMap.has(key)) {
           uniqueMap.set(key, doc);
@@ -196,7 +191,6 @@ export default function DocumentModal({
       vehicles.forEach(vehicle => {
         const id = vehicle.vehicle_id;
         if (!uniqueMap.has(id)) {
-          // Count pending documents for this vehicle
           const pendingDocs = uniqueDocuments.filter(doc => 
             doc.vehicle_id === id && doc.status === 'PENDING'
           ).length;
@@ -209,7 +203,6 @@ export default function DocumentModal({
       return Array.from(uniqueMap.values());
     }
     
-    // Fallback: build from documents
     return Array.from(vehicleMap.values());
   }, [vehicles, uniqueDocuments, vehicleMap]);
 
@@ -228,8 +221,7 @@ export default function DocumentModal({
   if (isVehicleChangeMode && selectedVehicle) {
     fields.push(
       { label: 'Vehicle Type', value: selectedVehicle.vehicle_type },
-      { label: 'Vehicle No.', value: selectedVehicle.vehicle_no },
-      { label: 'Vehicle Status', value: selectedVehicle.verification_status || 'PENDING' }
+      { label: 'Vehicle No.', value: selectedVehicle.vehicle_no }
     );
   } else if (!isVehicleChangeMode) {
     fields.push(
@@ -263,28 +255,10 @@ export default function DocumentModal({
       return false;
     }
     const hasPending = displayedDocuments.some(doc => doc.status === 'PENDING');
-    const hasRejected = displayedDocuments.some(doc => doc.status === 'REJECTED');
-    return !hasPending && !hasRejected && displayedDocuments.length > 0;
+    return !hasPending && displayedDocuments.length > 0;
   }, [isVehicleChangeMode, selectedVehicle, displayedDocuments]);
 
-  // Handle document approval with loading state
-  const handleApproveDocument = async (documentId) => {
-    if (onVehicleDocApprove) {
-      await onVehicleDocApprove(documentId);
-    }
-  };
-
-  // Handle document rejection
-  const handleRejectDocument = async (documentId) => {
-    const reason = window.prompt('Please provide a reason for rejection:');
-    if (reason && reason.trim()) {
-      if (onVehicleDocReject) {
-        await onVehicleDocReject(documentId, reason);
-      }
-    } else if (reason === '') {
-      alert('Rejection reason is required');
-    }
-  };
+  const isProcessing = (vehicleId) => processingVehicleId === vehicleId;
 
   return (
     <>
@@ -336,6 +310,7 @@ export default function DocumentModal({
                       key={getVehicleKey(vehicle)}
                       className={`dm-vehicle-card ${selectedVehicle?.vehicle_id === vehicle.vehicle_id ? 'active' : ''}`}
                       onClick={() => setSelectedVehicle(vehicle)}
+                      disabled={isProcessing(vehicle.vehicle_id)}
                     >
                       <VehicleIcon />
                       <div>
@@ -346,9 +321,6 @@ export default function DocumentModal({
                         <span className="dm-pending-badge">
                           {vehicle.pending_docs_count} pending
                         </span>
-                      )}
-                      {vehicle.verification_status === 'ACTIVE' && (
-                        <span className="dm-verified-badge">✓ Active</span>
                       )}
                     </button>
                   ))}
@@ -393,7 +365,6 @@ export default function DocumentModal({
                     const isPending = doc.status === 'PENDING';
                     const isApproved = doc.status === 'ACTIVE';
                     const isRejected = doc.status === 'REJECTED';
-                    const isProcessing = approvingDocId === doc.document_id || rejectingDocId === doc.document_id;
                     const documentKey = getDocumentKey(doc, i);
                     
                     return (
@@ -426,27 +397,6 @@ export default function DocumentModal({
                             </span>
                           )}
                         </button>
-                        
-                        {isVehicleChangeMode && isPending && onVehicleDocApprove && onVehicleDocReject && (
-                          <div className="dm-doc-actions">
-                            <button
-                              className="dm-doc-action-reject"
-                              onClick={() => handleRejectDocument(doc.document_id)}
-                              disabled={isProcessing}
-                              title="Reject document"
-                            >
-                              <XIcon />
-                            </button>
-                            <button
-                              className="dm-doc-action-approve"
-                              onClick={() => handleApproveDocument(doc.document_id)}
-                              disabled={isProcessing}
-                              title="Approve document"
-                            >
-                              <CheckIcon />
-                            </button>
-                          </div>
-                        )}
                       </div>
                     );
                   })}
@@ -456,7 +406,7 @@ export default function DocumentModal({
               {isVehicleChangeMode && selectedVehicle && isVehicleFullyApproved && (
                 <div className="dm-vehicle-approved-message">
                   <CheckIcon />
-                  <span>All documents approved! Vehicle will be activated automatically.</span>
+                  <span>All documents approved! Click "Approve Vehicle" to finalize.</span>
                 </div>
               )}
             </section>
@@ -478,14 +428,34 @@ export default function DocumentModal({
             </div>
           )}
 
-          {isVehicleChangeMode && selectedVehicle && (
+          {isVehicleChangeMode && selectedVehicle && onVehicleApprove && onVehicleReject && (
             <div className="dm-footer">
               <p className="dm-footer-hint">
-                Review each document individually. Click ✓ to approve or ✗ to reject.
-                {selectedVehicle.pending_docs_count === 0 && (
-                  <span className="dm-all-reviewed"> All documents reviewed!</span>
-                )}
+                Review all documents for this vehicle before approving or rejecting.
               </p>
+              <div className="dm-footer-actions">
+                <button 
+                  className="dm-btn-decline" 
+                  onClick={() => onVehicleReject(selectedVehicle.vehicle_id)}
+                  disabled={isProcessing(selectedVehicle.vehicle_id)}
+                >
+                  <XIcon />
+                  {isProcessing(selectedVehicle.vehicle_id) ? 'Processing...' : 'Reject Vehicle'}
+                </button>
+                <button 
+                  className="dm-btn-approve" 
+                  onClick={() => onVehicleApprove(selectedVehicle.vehicle_id)}
+                  disabled={isProcessing(selectedVehicle.vehicle_id) || !isVehicleFullyApproved}
+                >
+                  <CheckIcon />
+                  {isProcessing(selectedVehicle.vehicle_id) ? 'Processing...' : 'Approve Vehicle'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {isVehicleChangeMode && !selectedVehicle && uniqueVehicles.length === 0 && (
+            <div className="dm-footer">
               <div className="dm-footer-actions">
                 <button className="dm-btn-secondary" onClick={onClose}>
                   Close
