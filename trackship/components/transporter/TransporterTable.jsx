@@ -11,23 +11,14 @@ import {
   getAdminTransporterDocuments,
   verifyTransporter,
   getPendingVehicleDocuments,
-  verifyVehicle,  // Changed from verifyVehicleDocument
-  getAllPendingVehicleRequests, // New: for fetching all pending vehicle requests
-  getVehicleApprovalStatus, // New: for checking vehicle status
+  verifyVehicle,
+  getAllPendingVehicleRequests,
 } from '@/lib/api/transporter';
 
 const ROWS_PER_PAGE = 10;
 const DEFAULT_REFRESH_INTERVAL = 30000;
 
 /* ── Icons ── */
-const CloseIcon = () => (
-  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5"
-    strokeLinecap="round" viewBox="0 0 24 24">
-    <line x1="18" y1="6" x2="6" y2="18"/>
-    <line x1="6" y1="6" x2="18" y2="18"/>
-  </svg>
-);
-
 const TruckIcon = () => (
   <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7"
     strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
@@ -57,51 +48,90 @@ export default function TransporterTable({
   refreshInterval = DEFAULT_REFRESH_INTERVAL,
 }) {
   const [transporters, setTransporters] = useState([]);
+  const [allPendingVehicleRequests, setAllPendingVehicleRequests] = useState([]);
   const [search, setSearch] = useState('');
   const [activeStatuses, setActiveStatuses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingVehicleRequests, setLoadingVehicleRequests] = useState(false);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
+  const [vehicleRequestPage, setVehicleRequestPage] = useState(1);
 
   const [showDocModal, setShowDocModal] = useState(false);
   const [selectedTransporter, setSelectedTransporter] = useState(null);
+  const [selectedVehicleRequest, setSelectedVehicleRequest] = useState(null);
   const [documents, setDocuments] = useState([]);
-  const [modalType, setModalType] = useState('registration'); // 'registration' or 'vehicle-change'
-
+  const [modalType, setModalType] = useState('registration');
   const [docLoading, setDocLoading] = useState(false);
-  const [vehicleRequests, setVehicleRequests] = useState([]); // Changed from vehicleDocs
+  const [vehicleRequests, setVehicleRequests] = useState([]);
   const [vehiclesWithPendingDocs, setVehiclesWithPendingDocs] = useState([]);
-  const [processingVehicleId, setProcessingVehicleId] = useState(null); // Track which vehicle is being processed
-
+  const [processingVehicleId, setProcessingVehicleId] = useState(null);
   const [verifying, setVerifying] = useState(false);
   const [verifyingId, setVerifyingId] = useState(null);
 
   const refreshTimerRef = useRef(null);
+  const isRefreshingRef = useRef(false);
 
   /* ── Data fetching ── */
-  const fetchTransporters = useCallback(async () => {
-    setLoading(true);
+  const fetchTransporters = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       setError(null);
       const data = await getTransporters();
       setTransporters(data || []);
     } catch (err) {
       console.error(err);
-      setError('Failed to load transporters. Please try again.');
+      if (!silent) setError('Failed to load transporters. Please try again.');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
-  useEffect(() => { fetchTransporters(); }, [fetchTransporters]);
+  const fetchAllPendingVehicleRequests = useCallback(async (silent = false) => {
+    if (!silent) setLoadingVehicleRequests(true);
+    try {
+      const requests = await getAllPendingVehicleRequests();
+      console.log('All pending vehicle requests:', requests);
+      setAllPendingVehicleRequests(requests || []);
+    } catch (err) {
+      console.error('Failed to fetch pending vehicle requests:', err);
+    } finally {
+      if (!silent) setLoadingVehicleRequests(false);
+    }
+  }, []);
 
-  /* ── Auto-refresh ── */
+  // Refresh all data - silent by default for auto-refresh
+  const refreshAllData = useCallback(async (silent = true) => {
+    if (isRefreshingRef.current) return;
+    
+    isRefreshingRef.current = true;
+    try {
+      await Promise.all([
+        fetchTransporters(silent),
+        fetchAllPendingVehicleRequests(silent)
+      ]);
+      onUpdate?.();
+    } catch (err) {
+      console.error('Refresh failed:', err);
+    } finally {
+      isRefreshingRef.current = false;
+    }
+  }, [fetchTransporters, fetchAllPendingVehicleRequests, onUpdate]);
+
+  // Initial load - not silent
+  useEffect(() => { 
+    refreshAllData(false);
+  }, [refreshAllData]);
+
+  /* ── Auto-refresh with silent mode ── */
   useEffect(() => {
     if (autoRefresh && !showDocModal) {
-      refreshTimerRef.current = setInterval(() => fetchTransporters(), refreshInterval);
+      refreshTimerRef.current = setInterval(() => {
+        refreshAllData(true);
+      }, refreshInterval);
     }
     return () => clearInterval(refreshTimerRef.current);
-  }, [autoRefresh, refreshInterval, fetchTransporters, showDocModal]);
+  }, [autoRefresh, refreshInterval, refreshAllData, showDocModal]);
 
   /* ── Filtering ── */
   const pendingTransporters = useMemo(() => {
@@ -109,7 +139,7 @@ export default function TransporterTable({
   }, [transporters]);
 
   const approvedTransporters = useMemo(() => {
-    return transporters.filter(t => t.verification_status === 'APPROVED' || t.verification_status === 'DECLINED');
+    return transporters.filter(t => ['APPROVED', 'ACTIVE', 'DECLINED'].includes(t.verification_status));
   }, [transporters]);
 
   const filteredPending = useMemo(() => {
@@ -132,6 +162,15 @@ export default function TransporterTable({
     });
   }, [approvedTransporters, searchQuery, search, statusFilter, activeStatuses]);
 
+  const filteredVehicleRequests = useMemo(() => {
+    const q = (searchQuery || search).toLowerCase();
+    return allPendingVehicleRequests.filter(request => {
+      const matchesSearch = !q ||
+        [request.user_name, request.email, request.vehicle_no].some(v => v?.toLowerCase().includes(q));
+      return matchesSearch;
+    });
+  }, [allPendingVehicleRequests, searchQuery, search]);
+
   const totalPagesPending = Math.max(1, Math.ceil(filteredPending.length / ROWS_PER_PAGE));
   const safePagePending = Math.min(page, totalPagesPending);
   const slicePending = filteredPending.slice((safePagePending - 1) * ROWS_PER_PAGE, safePagePending * ROWS_PER_PAGE);
@@ -140,43 +179,62 @@ export default function TransporterTable({
   const safePageApproved = Math.min(page, totalPagesApproved);
   const sliceApproved = filteredApproved.slice((safePageApproved - 1) * ROWS_PER_PAGE, safePageApproved * ROWS_PER_PAGE);
 
-  useEffect(() => { setPage(1); }, [search, activeStatuses, searchQuery, statusFilter]);
+  const totalPagesVehicleRequests = Math.max(1, Math.ceil(filteredVehicleRequests.length / ROWS_PER_PAGE));
+  const safePageVehicleRequests = Math.min(vehicleRequestPage, totalPagesVehicleRequests);
+  const sliceVehicleRequests = filteredVehicleRequests.slice((safePageVehicleRequests - 1) * ROWS_PER_PAGE, safePageVehicleRequests * ROWS_PER_PAGE);
 
-  /* ── Selection ── */
+  useEffect(() => { setPage(1); }, [search, activeStatuses, searchQuery, statusFilter]);
+  useEffect(() => { setVehicleRequestPage(1); }, [search, searchQuery]);
+
+  /* ── Selection handlers ── */
   const allCheckedPending = slicePending.length > 0 && slicePending.every(t => selected.includes(t.transporter_id));
   const someCheckedPending = slicePending.some(t => selected.includes(t.transporter_id));
+  
   const togglePending = (id) => setSelected(prev =>
     prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
   );
+  
   const toggleAllPending = () => {
     const ids = slicePending.map(t => t.transporter_id);
-    if (allCheckedPending) setSelected(prev => prev.filter(x => !ids.includes(x)));
-    else setSelected(prev => [...new Set([...prev, ...ids])]);
+    if (allCheckedPending) {
+      setSelected(prev => prev.filter(x => !ids.includes(x)));
+    } else {
+      setSelected(prev => [...new Set([...prev, ...ids])]);
+    }
   };
 
   const allCheckedApproved = sliceApproved.length > 0 && sliceApproved.every(t => selected.includes(t.transporter_id));
   const someCheckedApproved = sliceApproved.some(t => selected.includes(t.transporter_id));
+  
   const toggleApproved = (id) => setSelected(prev =>
     prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
   );
+  
   const toggleAllApproved = () => {
     const ids = sliceApproved.map(t => t.transporter_id);
-    if (allCheckedApproved) setSelected(prev => prev.filter(x => !ids.includes(x)));
-    else setSelected(prev => [...new Set([...prev, ...ids])]);
+    if (allCheckedApproved) {
+      setSelected(prev => prev.filter(x => !ids.includes(x)));
+    } else {
+      setSelected(prev => [...new Set([...prev, ...ids])]);
+    }
   };
 
-  /* ── Status filter toggle ── */
-  function handleStatusToggle(statusId) {
-    if (statusId === null) { setActiveStatuses([]); return; }
+  const handleStatusToggle = (statusId) => {
+    if (statusId === null) {
+      setActiveStatuses([]);
+      return;
+    }
     setActiveStatuses(prev =>
       prev.includes(statusId) ? prev.filter(s => s !== statusId) : [...prev, statusId]
     );
     setPage(1);
-  }
+  };
 
-  /* ── Documents for Registration ── */
-  async function handleViewDocuments(transporter) {
+  /* ── Document handlers ── */
+  // For viewing APPROVED documents of active transporters
+  const handleViewDocuments = async (transporter) => {
     setSelectedTransporter(transporter);
+    setSelectedVehicleRequest(null);
     setModalType('registration');
     setDocLoading(true);
     clearInterval(refreshTimerRef.current);
@@ -190,59 +248,55 @@ export default function TransporterTable({
     } finally {
       setDocLoading(false);
     }
-  }
+  };
 
-  /* ── Handle Vehicle Change Requests ── */
-  async function handleViewVehicleChangeRequests(transporter) {
-    setSelectedTransporter(transporter);
+  // For viewing PENDING vehicle update requests (from the pending requests section)
+  const handleViewVehicleRequest = async (vehicleRequest) => {
+    setSelectedTransporter({
+      transporter_id: vehicleRequest.transporter_id,
+      user_name: vehicleRequest.user_name,
+      email: vehicleRequest.email,
+      license_no: vehicleRequest.license_no,
+      verification_status: 'ACTIVE'
+    });
+    setSelectedVehicleRequest(vehicleRequest);
     setModalType('vehicle-change');
     setDocLoading(true);
     clearInterval(refreshTimerRef.current);
     try {
-      // Fetch pending vehicle documents using the updated API
-      const pendingDocs = await getPendingVehicleDocuments(transporter.transporter_id);
+      const pendingDocs = await getPendingVehicleDocuments(vehicleRequest.transporter_id);
+      const vehicleDocs = pendingDocs.filter(doc => doc.vehicle_id === vehicleRequest.vehicle_id);
       
-      // Group documents by vehicle
-      const vehicleMap = new Map();
-      pendingDocs.forEach(doc => {
-        if (!vehicleMap.has(doc.vehicle_id)) {
-          vehicleMap.set(doc.vehicle_id, {
-            vehicle_id: doc.vehicle_id,
-            vehicle_no: doc.vehicle_no || 'N/A',
-            vehicle_type: doc.vehicle_type || 'N/A',
-            documents: [],
-            pending_docs_count: 0
-          });
-        }
-        const vehicle = vehicleMap.get(doc.vehicle_id);
-        vehicle.documents.push(doc);
-        vehicle.pending_docs_count++;
-      });
-      
-      setVehiclesWithPendingDocs(Array.from(vehicleMap.values()));
-      setVehicleRequests(pendingDocs);
+      setVehicleRequests(vehicleDocs);
+      setVehiclesWithPendingDocs([{
+        vehicle_id: vehicleRequest.vehicle_id,
+        vehicle_no: vehicleRequest.vehicle_no,
+        vehicle_type: vehicleRequest.vehicle_type,
+        documents: vehicleDocs,
+        pending_docs_count: vehicleDocs.filter(d => d.status === 'PENDING').length
+      }]);
       setShowDocModal(true);
     } catch (err) {
       console.error(err);
-      alert('Failed to load vehicle change requests');
+      alert('Failed to load vehicle documents');
     } finally {
       setDocLoading(false);
     }
-  }
+  };
 
-  /* ── Handle Vehicle Verification (by vehicleId, not documentId) ── */
-  async function handleVehicleApprove(vehicleId) {
+  /* ── Verification handlers ── */
+  const handleVehicleApprove = async (vehicleId) => {
     setProcessingVehicleId(vehicleId);
     try {
       await verifyVehicle(vehicleId, 'APPROVED');
-      alert('Vehicle approved successfully');
+      alert('Vehicle approved successfully!');
       
-      // Refresh the vehicle change requests view
-      if (selectedTransporter) {
+      await refreshAllData(false);
+      
+      if (selectedTransporter && modalType === 'vehicle-change') {
         const updatedDocs = await getPendingVehicleDocuments(selectedTransporter.transporter_id);
         setVehicleRequests(updatedDocs);
         
-        // Re-group documents by vehicle
         const vehicleMap = new Map();
         updatedDocs.forEach(doc => {
           if (!vehicleMap.has(doc.vehicle_id)) {
@@ -256,16 +310,17 @@ export default function TransporterTable({
           }
           const vehicle = vehicleMap.get(doc.vehicle_id);
           vehicle.documents.push(doc);
-          vehicle.pending_docs_count++;
+          if (doc.status === 'PENDING') vehicle.pending_docs_count++;
         });
         setVehiclesWithPendingDocs(Array.from(vehicleMap.values()));
       }
       
-      // If no more pending vehicles, close modal after short delay
-      if (vehicleRequests.filter(d => d.vehicle_id !== vehicleId).length === 0) {
+      if (selectedVehicleRequest && selectedVehicleRequest.vehicle_id === vehicleId) {
         setTimeout(() => {
-          setShowDocModal(false);
-          fetchTransporters(); // Refresh to update any statuses
+          const vehicleStillPending = vehiclesWithPendingDocs.some(v => 
+            v.vehicle_id === vehicleId && v.pending_docs_count > 0
+          );
+          if (!vehicleStillPending) setShowDocModal(false);
         }, 1500);
       }
     } catch (err) {
@@ -274,11 +329,11 @@ export default function TransporterTable({
     } finally {
       setProcessingVehicleId(null);
     }
-  }
+  };
 
-  async function handleVehicleReject(vehicleId) {
+  const handleVehicleReject = async (vehicleId) => {
     const reason = prompt('Provide a reason for rejecting this vehicle\'s documents:');
-    if (reason === null || reason.trim() === '') {
+    if (!reason || reason.trim() === '') {
       if (reason !== null) alert('Rejection reason is required');
       return;
     }
@@ -287,13 +342,12 @@ export default function TransporterTable({
     try {
       await verifyVehicle(vehicleId, 'REJECTED', reason);
       alert('Vehicle rejected successfully');
+      await refreshAllData(false);
       
-      // Refresh the vehicle change requests view
-      if (selectedTransporter) {
+      if (selectedTransporter && modalType === 'vehicle-change') {
         const updatedDocs = await getPendingVehicleDocuments(selectedTransporter.transporter_id);
         setVehicleRequests(updatedDocs);
         
-        // Re-group documents by vehicle
         const vehicleMap = new Map();
         updatedDocs.forEach(doc => {
           if (!vehicleMap.has(doc.vehicle_id)) {
@@ -307,7 +361,7 @@ export default function TransporterTable({
           }
           const vehicle = vehicleMap.get(doc.vehicle_id);
           vehicle.documents.push(doc);
-          vehicle.pending_docs_count++;
+          if (doc.status === 'PENDING') vehicle.pending_docs_count++;
         });
         setVehiclesWithPendingDocs(Array.from(vehicleMap.values()));
       }
@@ -317,35 +371,36 @@ export default function TransporterTable({
     } finally {
       setProcessingVehicleId(null);
     }
-  }
+  };
 
-  /* ── CRUD handlers ── */
-  async function handleDelete(id) {
+  const handleDelete = async (id) => {
     if (!confirm('Delete this transporter? This action cannot be undone.')) return;
     try {
       await deleteTransporter(id);
-      await fetchTransporters();
-      onUpdate?.();
+      await refreshAllData(false);
       setSelected(prev => prev.filter(x => x !== id));
     } catch (err) {
       console.error(err);
       alert('Failed to delete transporter');
     }
-  }
+  };
 
-  async function handleVerifyAction(transporter, action) {
+  const handleVerifyAction = async (transporter, action) => {
     if (!transporter) return;
     let reason = null;
     if (action === 'DECLINED') {
       reason = prompt('Provide a reason for declining this transporter:');
       if (reason === null) return;
+      if (reason.trim() === '') {
+        alert('Reason is required');
+        return;
+      }
     }
     try {
       setVerifying(true);
       setVerifyingId(transporter.transporter_id);
       await verifyTransporter(transporter.transporter_id, action, reason);
-      await fetchTransporters();
-      onUpdate?.();
+      await refreshAllData(false);
     } catch (err) {
       console.error(err);
       alert(err.message || 'Unable to update transporter status');
@@ -353,24 +408,102 @@ export default function TransporterTable({
       setVerifying(false);
       setVerifyingId(null);
     }
-  }
+  };
+
+  const handleModalClose = () => {
+    setShowDocModal(false);
+    setModalType('registration');
+    setVehicleRequests([]);
+    setVehiclesWithPendingDocs([]);
+    setSelectedVehicleRequest(null);
+    if (autoRefresh) {
+      clearInterval(refreshTimerRef.current);
+      refreshTimerRef.current = setInterval(() => refreshAllData(true), refreshInterval);
+    }
+  };
 
   return (
     <>
-      {/* Header row */}
       <div className="transporter-table-header-wrapper">
         <TransporterHeader
           selected={selected}
-          onSearch={v => { setSearch(v); setPage(1); }}
+          onSearch={v => { setSearch(v); setPage(1); setVehicleRequestPage(1); }}
           activeStatuses={statusFilter.length > 0 ? statusFilter : activeStatuses}
           onStatusToggle={handleStatusToggle}
+          
         />
       </div>
 
-      {/* Tables */}
       <div className="transporter-tables-container">
 
-        {/* Pending Requests Table (Initial Registration) */}
+        {/* Pending Vehicle Update Requests Section - Only show if there are requests */}
+        {!loadingVehicleRequests && filteredVehicleRequests.length > 0 && (
+          <div className="transporter-table-section">
+            <div className="transporter-table-section-header">
+              <h3 className="transporter-table-section-title">Pending Vehicle Update Requests</h3>
+              <span className="transporter-table-section-count">
+                {filteredVehicleRequests.length} vehicle update{filteredVehicleRequests.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+
+            <div className="transporter-table-wrap">
+              <div className="transporter-table-head">
+                <div className="transporter-table-th"> </div>
+                <div className="transporter-table-th">Email</div>
+                <div className="transporter-table-th">Vehicle No</div>
+                <div className="transporter-table-th">Vehicle Type</div>
+                <div className="transporter-table-th">Request Date</div>
+                <div className="transporter-table-th">Actions</div>
+              </div>
+
+              {sliceVehicleRequests.map(request => (
+                <div key={request.vehicle_id} className="transporter-row">
+                  <div className="transporter-row-name-cell">
+                    <div className="transporter-row-avatar">
+                      {getInitials(request.user_name)}
+                    </div>
+                    <span className="transporter-row-name">{request.user_name}</span>
+                  </div>
+                  <div className="transporter-row-email">{request.email}</div>
+                  <div className="transporter-row-license">{request.vehicle_no}</div>
+                  <div className="transporter-row-license">{request.vehicle_type}</div>
+                  <div className="transporter-row-license">
+                    {new Date(request.vehicle_created_at).toLocaleDateString()}
+                  </div>
+                  <div className="transporter-row-actions">
+                    <button
+                      className="transporter-row-action-btn view"
+                      title="Review vehicle update"
+                      onClick={() => handleViewVehicleRequest(request)}
+                    >
+                      <ViewIcon />
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {filteredVehicleRequests.length > ROWS_PER_PAGE && (
+                <div className="transporter-table-footer">
+                  <div className="transporter-table-pagination">
+                    <button
+                      className="transporter-table-page-btn"
+                      disabled={safePageVehicleRequests === 1}
+                      onClick={() => setVehicleRequestPage(p => p - 1)}
+                    >‹</button>
+                    <span>Page {safePageVehicleRequests} of {totalPagesVehicleRequests}</span>
+                    <button
+                      className="transporter-table-page-btn"
+                      disabled={safePageVehicleRequests === totalPagesVehicleRequests}
+                      onClick={() => setVehicleRequestPage(p => p + 1)}
+                    >›</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Pending Registration Requests Table */}
         <div className="transporter-table-section">
           <div className="transporter-table-section-header">
             <h3 className="transporter-table-section-title">Pending Registration Requests</h3>
@@ -380,7 +513,6 @@ export default function TransporterTable({
           </div>
 
           <div className="transporter-table-wrap">
-            {/* Head */}
             <div className="transporter-table-head">
               <div className="transporter-table-th">
                 <input
@@ -396,7 +528,6 @@ export default function TransporterTable({
               ))}
             </div>
 
-            {/* Body */}
             {loading && !transporters.length ? (
               [...Array(3)].map((_, i) => (
                 <div key={i} className="transporter-table-skeleton-row">
@@ -425,49 +556,29 @@ export default function TransporterTable({
                   onToggle={() => togglePending(transporter.transporter_id)}
                   onView={() => handleViewDocuments(transporter)}
                   onDelete={() => handleDelete(transporter.transporter_id)}
-                  onApprove={() => handleVerifyAction(transporter, 'APPROVED')}
-                  onDecline={() => handleVerifyAction(transporter, 'DECLINED')}
                 />
               ))
             )}
 
-            {/* Footer */}
             {!loading && !error && filteredPending.length > 0 && (
               <div className="transporter-table-footer">
                 <span className="transporter-table-footer-info">
-                  Showing&nbsp;
-                  <strong>{(safePagePending - 1) * ROWS_PER_PAGE + 1}–{Math.min(safePagePending * ROWS_PER_PAGE, filteredPending.length)}</strong>
-                  &nbsp;of&nbsp;<strong>{filteredPending.length}</strong>&nbsp;pending requests
+                  Showing {(safePagePending - 1) * ROWS_PER_PAGE + 1}–{Math.min(safePagePending * ROWS_PER_PAGE, filteredPending.length)} of {filteredPending.length} pending requests
                 </span>
                 <div className="transporter-table-pagination">
-                  <button
-                    className="transporter-table-page-btn"
-                    disabled={safePagePending === 1}
-                    onClick={() => setPage(p => p - 1)}
-                  >‹</button>
-                  {Array.from({ length: totalPagesPending }, (_, i) => i + 1)
-                    .filter(p => p === 1 || p === totalPagesPending || Math.abs(p - safePagePending) <= 1)
-                    .reduce((acc, p, idx, arr) => {
-                      if (idx > 0 && p - arr[idx - 1] > 1) acc.push('…');
-                      acc.push(p);
-                      return acc;
-                    }, []).map((p, i) =>
-                      p === '…' ? (
-                        <span key={`d-pending-${i}`} className="transporter-table-page-btn"
-                          style={{ cursor: 'default', border: 'none' }}>…</span>
-                      ) : (
-                        <button
-                          key={`pending-${p}`}
-                          className={`transporter-table-page-btn${p === safePagePending ? ' active' : ''}`}
-                          onClick={() => setPage(p)}
-                        >{p}</button>
-                      )
-                    )}
-                  <button
-                    className="transporter-table-page-btn"
-                    disabled={safePagePending === totalPagesPending}
-                    onClick={() => setPage(p => p + 1)}
-                  >›</button>
+                  <button className="transporter-table-page-btn" disabled={safePagePending === 1} onClick={() => setPage(p => p - 1)}>‹</button>
+                  <button className={`transporter-table-page-btn ${safePagePending === 1 ? 'active' : ''}`} onClick={() => setPage(1)}>1</button>
+                  {safePagePending > 3 && <span className="transporter-table-page-btn" style={{ cursor: 'default' }}>…</span>}
+                  {safePagePending > 2 && <button className="transporter-table-page-btn" onClick={() => setPage(safePagePending - 1)}>{safePagePending - 1}</button>}
+                  {safePagePending !== 1 && safePagePending !== totalPagesPending && (
+                    <button className="transporter-table-page-btn active">{safePagePending}</button>
+                  )}
+                  {safePagePending < totalPagesPending - 1 && <button className="transporter-table-page-btn" onClick={() => setPage(safePagePending + 1)}>{safePagePending + 1}</button>}
+                  {safePagePending < totalPagesPending - 2 && <span className="transporter-table-page-btn" style={{ cursor: 'default' }}>…</span>}
+                  {totalPagesPending > 1 && (
+                    <button className={`transporter-table-page-btn ${safePagePending === totalPagesPending ? 'active' : ''}`} onClick={() => setPage(totalPagesPending)}>{totalPagesPending}</button>
+                  )}
+                  <button className="transporter-table-page-btn" disabled={safePagePending === totalPagesPending} onClick={() => setPage(p => p + 1)}>›</button>
                 </div>
               </div>
             )}
@@ -484,7 +595,6 @@ export default function TransporterTable({
           </div>
 
           <div className="transporter-table-wrap">
-            {/* Head */}
             <div className="transporter-table-head">
               <div className="transporter-table-th">
                 <input
@@ -500,7 +610,6 @@ export default function TransporterTable({
               ))}
             </div>
 
-            {/* Body */}
             {loading && !transporters.length ? (
               [...Array(3)].map((_, i) => (
                 <div key={`approved-skel-${i}`} className="transporter-table-skeleton-row">
@@ -518,9 +627,6 @@ export default function TransporterTable({
             ) : filteredApproved.length === 0 ? (
               <div className="transporter-table-empty">
                 <p className="transporter-table-empty-title">No active transporters</p>
-                <p className="transporter-table-empty-sub">
-                  Active transporters will appear here.
-                </p>
               </div>
             ) : (
               sliceApproved.map(transporter => (
@@ -531,58 +637,36 @@ export default function TransporterTable({
                   onToggle={() => toggleApproved(transporter.transporter_id)}
                   onView={() => handleViewDocuments(transporter)}
                   onDelete={() => handleDelete(transporter.transporter_id)}
-                  onViewVehicleChanges={() => handleViewVehicleChangeRequests(transporter)}
-                  hasVehicleChanges={transporter.has_pending_vehicle_docs}
                 />
               ))
             )}
 
-            {/* Footer */}
             {!loading && !error && filteredApproved.length > 0 && (
               <div className="transporter-table-footer">
                 <span className="transporter-table-footer-info">
-                  Showing&nbsp;
-                  <strong>{(safePageApproved - 1) * ROWS_PER_PAGE + 1}–{Math.min(safePageApproved * ROWS_PER_PAGE, filteredApproved.length)}</strong>
-                  &nbsp;of&nbsp;<strong>{filteredApproved.length}</strong>&nbsp;approved transporters
+                  Showing {(safePageApproved - 1) * ROWS_PER_PAGE + 1}–{Math.min(safePageApproved * ROWS_PER_PAGE, filteredApproved.length)} of {filteredApproved.length} approved transporters
                 </span>
                 <div className="transporter-table-pagination">
-                  <button
-                    className="transporter-table-page-btn"
-                    disabled={safePageApproved === 1}
-                    onClick={() => setPage(p => p - 1)}
-                  >‹</button>
-                  {Array.from({ length: totalPagesApproved }, (_, i) => i + 1)
-                    .filter(p => p === 1 || p === totalPagesApproved || Math.abs(p - safePageApproved) <= 1)
-                    .reduce((acc, p, idx, arr) => {
-                      if (idx > 0 && p - arr[idx - 1] > 1) acc.push('…');
-                      acc.push(p);
-                      return acc;
-                    }, []).map((p, i) =>
-                      p === '…' ? (
-                        <span key={`d-approved-${i}`} className="transporter-table-page-btn"
-                          style={{ cursor: 'default', border: 'none' }}>…</span>
-                      ) : (
-                        <button
-                          key={`approved-${p}`}
-                          className={`transporter-table-page-btn${p === safePageApproved ? ' active' : ''}`}
-                          onClick={() => setPage(p)}
-                        >{p}</button>
-                      )
-                    )}
-                  <button
-                    className="transporter-table-page-btn"
-                    disabled={safePageApproved === totalPagesApproved}
-                    onClick={() => setPage(p => p + 1)}
-                  >›</button>
+                  <button className="transporter-table-page-btn" disabled={safePageApproved === 1} onClick={() => setPage(p => p - 1)}>‹</button>
+                  <button className={`transporter-table-page-btn ${safePageApproved === 1 ? 'active' : ''}`} onClick={() => setPage(1)}>1</button>
+                  {safePageApproved > 3 && <span className="transporter-table-page-btn" style={{ cursor: 'default' }}>…</span>}
+                  {safePageApproved > 2 && <button className="transporter-table-page-btn" onClick={() => setPage(safePageApproved - 1)}>{safePageApproved - 1}</button>}
+                  {safePageApproved !== 1 && safePageApproved !== totalPagesApproved && (
+                    <button className="transporter-table-page-btn active">{safePageApproved}</button>
+                  )}
+                  {safePageApproved < totalPagesApproved - 1 && <button className="transporter-table-page-btn" onClick={() => setPage(safePageApproved + 1)}>{safePageApproved + 1}</button>}
+                  {safePageApproved < totalPagesApproved - 2 && <span className="transporter-table-page-btn" style={{ cursor: 'default' }}>…</span>}
+                  {totalPagesApproved > 1 && (
+                    <button className={`transporter-table-page-btn ${safePageApproved === totalPagesApproved ? 'active' : ''}`} onClick={() => setPage(totalPagesApproved)}>{totalPagesApproved}</button>
+                  )}
+                  <button className="transporter-table-page-btn" disabled={safePageApproved === totalPagesApproved} onClick={() => setPage(p => p + 1)}>›</button>
                 </div>
               </div>
             )}
           </div>
         </div>
-
       </div>
 
-      {/* Document Viewer Modal - Supports both registration and vehicle change */}
       {showDocModal && (
         <DocumentModal
           transporter={selectedTransporter}
@@ -591,16 +675,7 @@ export default function TransporterTable({
           loading={docLoading}
           modalType={modalType}
           processingVehicleId={processingVehicleId}
-          onClose={() => {
-            setShowDocModal(false);
-            setModalType('registration');
-            setVehicleRequests([]);
-            setVehiclesWithPendingDocs([]);
-            if (autoRefresh) {
-              clearInterval(refreshTimerRef.current);
-              refreshTimerRef.current = setInterval(() => fetchTransporters(), refreshInterval);
-            }
-          }}
+          onClose={handleModalClose}
           onApprove={() => {
             if (modalType === 'registration') {
               handleVerifyAction(selectedTransporter, 'APPROVED');
@@ -620,3 +695,18 @@ export default function TransporterTable({
     </>
   );
 }
+
+// Helper function
+function getInitials(name = '') {
+  if (!name) return '??';
+  return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+}
+
+// View Icon component
+const ViewIcon = () => (
+  <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.2"
+    strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </svg>
+);

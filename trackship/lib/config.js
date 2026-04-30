@@ -22,10 +22,12 @@ export const ENDPOINTS = {
     list:      `${API_BASE}/admin/transporters`,
     documents: (id) => `${API_BASE}/admin/transporters/${id}/documents`,
     verify:    (id) => `${API_BASE}/admin/transporters/${id}/verify`,
-    pendingVehicleDocs:        (id)       => `${API_BASE}/admin/transporters/${id}/vehicle-documents/pending`,
-    verifyVehicle:             (vehicleId) => `${API_BASE}/admin/vehicles/${vehicleId}/verify`,
-    allPendingVehicleRequests:              `${API_BASE}/admin/vehicles/pending`,
-    vehicleApprovalStatus:     (vehicleId) => `${API_BASE}/admin/vehicles/${vehicleId}/status`,
+    approveFull: (id) => `${API_BASE}/admin/transporters/${id}/approve-full`,
+    // Vehicle document endpoints
+    pendingVehicleDocs: (id) => `${API_BASE}/admin/transporters/${id}/vehicle-documents/pending`,
+    verifyVehicle: (vehicleId) => `${API_BASE}/admin/vehicles/${vehicleId}/verify`,
+    allPendingVehicleRequests: `${API_BASE}/admin/vehicles/pending`,
+    vehicleApprovalStatus: (vehicleId) => `${API_BASE}/admin/vehicles/${vehicleId}/status`,
   },
   setting: {
     details:  `${API_BASE}/admin/profile/details`,

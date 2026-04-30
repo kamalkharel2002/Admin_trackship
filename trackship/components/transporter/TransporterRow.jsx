@@ -2,6 +2,7 @@
 import './TransporterRow.css';
 
 function getInitials(name = '') {
+  if (!name) return '??';
   return name
     .split(' ')
     .map(n => n[0])
@@ -28,31 +29,6 @@ const DeleteIcon = () => (
   </svg>
 );
 
-const CheckIcon = () => (
-  <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"
-    strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-    <polyline points="20 6 9 17 4 12"/>
-  </svg>
-);
-
-const XIcon = () => (
-  <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"
-    strokeLinecap="round" viewBox="0 0 24 24">
-    <line x1="18" y1="6" x2="6" y2="18"/>
-    <line x1="6" y1="6" x2="18" y2="18"/>
-  </svg>
-);
-
-const VehicleIcon = () => (
-  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"
-    viewBox="0 0 24 24">
-    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-    <circle cx="8" cy="17" r="2"/>
-    <circle cx="16" cy="17" r="2"/>
-    <line x1="2" y1="11" x2="22" y2="11"/>
-  </svg>
-);
-
 const STATUS_MAP = {
   APPROVED: {
     label: 'Approved',
@@ -74,6 +50,16 @@ const STATUS_MAP = {
     cls: 'approved',
     dot: '#1A9E5C',
   },
+  REJECTED: {
+    label: 'Rejected',
+    cls: 'declined',
+    dot: '#C0392B',
+  },
+  REPLACED: {
+    label: 'Replaced',
+    cls: 'declined',
+    dot: '#95A5A6',
+  },
 };
 
 export default function TransporterRow({
@@ -82,21 +68,13 @@ export default function TransporterRow({
   onToggle,
   onView,
   onDelete,
-  onApprove,
-  onDecline,
-  onViewVehicleChanges,
-  hasVehicleChanges = false,
 }) {
   const initials = getInitials(transporter.user_name);
   const status = transporter.verification_status || 'PENDING_VERIFICATION';
   const statusConfig = STATUS_MAP[status] || STATUS_MAP.PENDING_VERIFICATION;
-  
-  // Determine if this is a pending registration (shows approve/decline buttons)
-  const showVerifyButtons = status === 'PENDING_VERIFICATION' && onApprove && onDecline;
 
   return (
     <div className={`transporter-row${checked ? ' checked' : ''}`}>
-
       {/* Checkbox */}
       <div className="transporter-row-check">
         <input
@@ -104,75 +82,61 @@ export default function TransporterRow({
           className="transporter-row-checkbox"
           checked={checked}
           onChange={onToggle}
+          aria-label={`Select ${transporter.user_name}`}
         />
       </div>
 
       {/* Name + Avatar */}
       <div className="transporter-row-name-cell">
-        <div className="transporter-row-avatar">{initials}</div>
+        <div className="transporter-row-avatar" aria-label={`Avatar for ${transporter.user_name}`}>
+          {initials}
+        </div>
         <div className="transporter-row-name-info">
           <span className="transporter-row-name">{transporter.user_name}</span>
         </div>
       </div>
 
       {/* Email */}
-      <div className="transporter-row-email">{transporter.email}</div>
+      <div className="transporter-row-email" title={transporter.email}>
+        {transporter.email}
+      </div>
 
       {/* Phone */}
-      <div className="transporter-row-phone">{transporter.phone || '—'}</div>
+      <div className="transporter-row-phone">
+        {transporter.phone || '—'}
+      </div>
 
       {/* License */}
-      <div className="transporter-row-license">{transporter.license_no || '—'}</div>
+      <div className="transporter-row-license">
+        {transporter.license_no || '—'}
+      </div>
 
       {/* Status */}
       <div className="transporter-row-status">
         <span className={`transporter-row-badge ${statusConfig.cls}`}>
-          <span className="transporter-row-badge-dot" style={{ background: statusConfig.dot }} />
+          <span 
+            className="transporter-row-badge-dot" 
+            style={{ background: statusConfig.dot }}
+            aria-hidden="true"
+          />
           {statusConfig.label}
         </span>
-        {hasVehicleChanges && status === 'APPROVED' && (
-          <span className="transporter-row-vehicle-badge">
-            <VehicleIcon />
-            Pending Changes
-          </span>
-        )}
       </div>
 
       {/* Actions */}
       <div className="transporter-row-actions">
-        {/* View Documents Button */}
-        <button
-          className="transporter-row-action-btn view"
-          title="View documents"
-          onClick={onView}
-        >
-          <ViewIcon />
-        </button>
-
-        {/* Vehicle Change Requests Button - only for active transporters with pending changes */}
-        {hasVehicleChanges && status === 'APPROVED' && onViewVehicleChanges && (
+        {/* View Documents Button - always show */}
+        {onView && (
           <button
-            className="transporter-row-action-btn vehicle-change"
-            title="Pending vehicle change requests"
-            onClick={onViewVehicleChanges}
+            className="transporter-row-action-btn view"
+            title="View documents"
+            onClick={onView}
+            aria-label={`View documents for ${transporter.user_name}`}
           >
-            <VehicleIcon />
-            <span className="vehicle-change-badge">!</span>
-          </button>
-        )}
-
-        {/* Delete Button - for all transporters */}
-        {onDelete && (
-          <button
-            className="transporter-row-action-btn delete"
-            title="Delete transporter"
-            onClick={onDelete}
-          >
-            <DeleteIcon />
+            <ViewIcon />
           </button>
         )}
       </div>
-
     </div>
   );
 }

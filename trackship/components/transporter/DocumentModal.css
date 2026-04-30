@@ -45,7 +45,7 @@
 }
 
 /* ══════════════════════════════════════
-   ANIMATIONS
+   ANIMATIONS - STABLE
 ══════════════════════════════════════ */
 @keyframes dm-backdrop-in {
   from { opacity: 0; }
@@ -55,10 +55,6 @@
   from { opacity: 0; transform: translateY(16px) scale(0.976); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-@keyframes dm-card-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
 @keyframes dm-bar-slide {
   0%   { transform: translateX(-100%); }
   50%  { transform: translateX(0%); }
@@ -66,7 +62,7 @@
 }
 
 /* ══════════════════════════════════════
-   BACKDROP
+   BACKDROP - STABLE
 ══════════════════════════════════════ */
 .dm-backdrop {
   position: fixed;
@@ -80,10 +76,13 @@
   z-index: 1000;
   padding: 24px;
   animation: dm-backdrop-in 0.16s ease both;
+  /* Stability fixes */
+  will-change: opacity;
+  transform: translateZ(0);
 }
 
 /* ══════════════════════════════════════
-   MODAL SHELL
+   MODAL SHELL - STABLE
 ══════════════════════════════════════ */
 .dm-modal {
   background: var(--dm-card);
@@ -98,10 +97,14 @@
   font-family: var(--dm-font);
   animation: dm-modal-in 0.22s var(--dm-ease) both;
   overflow: hidden;
+  /* Stability fixes */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
 }
 
 /* ══════════════════════════════════════
-   HEADER
+   HEADER - STABLE
 ══════════════════════════════════════ */
 .dm-header {
   display: flex;
@@ -112,6 +115,8 @@
   background: var(--dm-surface);
   flex-shrink: 0;
   gap: 12px;
+  /* Stability - fixed height */
+  min-height: 82px;
 }
 
 .dm-header-left {
@@ -156,7 +161,7 @@
   text-overflow: ellipsis;
 }
 
-/* Status badge */
+/* Status badge - stable */
 .dm-status-badge {
   display: inline-flex;
   align-items: center;
@@ -196,7 +201,7 @@
 }
 .status-declined .dm-status-dot { background: var(--dm-red); }
 
-/* Close */
+/* Close button - stable */
 .dm-close-btn {
   width: 30px;
   height: 30px;
@@ -208,17 +213,19 @@
   justify-content: center;
   cursor: pointer;
   color: var(--dm-ink-20);
-  transition: all 0.13s ease;
+  transition: background 0.13s ease, border-color 0.13s ease, color 0.13s ease;
   flex-shrink: 0;
+  /* Remove transform transitions */
 }
 .dm-close-btn:hover {
   background: var(--dm-red-dim);
   border-color: var(--dm-red-border);
   color: var(--dm-red);
+  /* No transform */
 }
 
 /* ══════════════════════════════════════
-   BODY
+   BODY - STABLE SCROLLING
 ══════════════════════════════════════ */
 .dm-body {
   flex: 1;
@@ -229,12 +236,14 @@
   gap: 24px;
   scrollbar-width: thin;
   scrollbar-color: var(--dm-ink-10) transparent;
+  /* Stability */
+  contain: layout style;
 }
 .dm-body::-webkit-scrollbar { width: 4px; }
 .dm-body::-webkit-scrollbar-track { background: transparent; }
 .dm-body::-webkit-scrollbar-thumb { background: var(--dm-ink-10); border-radius: 4px; }
 
-/* ── Section ── */
+/* Sections */
 .dm-section {
   display: flex;
   flex-direction: column;
@@ -266,7 +275,7 @@
   border: 1px solid var(--dm-border);
 }
 
-/* ── Info grid ── */
+/* Info grid - stable */
 .dm-info-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -302,9 +311,7 @@
   font-family: var(--dm-mono);
 }
 
-/* ══════════════════════════════════════
-   LOADING
-══════════════════════════════════════ */
+/* Loading - stable */
 .dm-loading {
   display: flex;
   flex-direction: column;
@@ -335,9 +342,7 @@
   font-family: var(--dm-font);
 }
 
-/* ══════════════════════════════════════
-   EMPTY STATE
-══════════════════════════════════════ */
+/* Empty state - stable */
 .dm-empty {
   display: flex;
   flex-direction: column;
@@ -377,12 +382,20 @@
 }
 
 /* ══════════════════════════════════════
-   DOCUMENT GRID
+   DOCUMENT GRID - STABLE
 ══════════════════════════════════════ */
 .dm-doc-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
   gap: 12px;
+  /* Stability */
+  contain: layout style;
+}
+
+.dm-doc-wrapper {
+  position: relative;
+  /* Stability - fixed aspect ratio container */
+  contain: layout style;
 }
 
 .dm-doc-card {
@@ -394,7 +407,13 @@
   padding: 0;
   cursor: pointer;
   text-align: left;
-  animation: dm-card-in 0.22s var(--dm-ease) both;
+  width: 100%;
+  /* Remove animation that could cause shifting */
+}
+
+/* Remove individual card animations */
+.dm-doc-card {
+  animation: none;
 }
 
 .dm-doc-thumb {
@@ -481,7 +500,7 @@
 }
 
 /* ══════════════════════════════════════
-   FOOTER
+   FOOTER - STABLE
 ══════════════════════════════════════ */
 .dm-footer {
   display: flex;
@@ -493,6 +512,8 @@
   flex-shrink: 0;
   gap: 16px;
   flex-wrap: wrap;
+  /* Stability - fixed min-height */
+  min-height: 76px;
 }
 
 .dm-footer-hint {
@@ -510,6 +531,7 @@
   margin-left: auto;
 }
 
+/* Buttons - stable (no transform on hover) */
 .dm-btn-decline {
   display: inline-flex;
   align-items: center;
@@ -523,17 +545,16 @@
   font-weight: 600;
   color: var(--dm-red);
   cursor: pointer;
-  transition: all 0.13s ease;
+  transition: background 0.13s ease, border-color 0.13s ease, color 0.13s ease;
   letter-spacing: -0.01em;
 }
+
 .dm-btn-decline:hover {
   background: var(--dm-red);
   border-color: var(--dm-red);
   color: #fff;
-  transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(192,57,43,0.28);
+  /* Remove transform: translateY */
 }
-.dm-btn-decline:active { transform: translateY(0); }
 
 .dm-btn-approve {
   display: inline-flex;
@@ -548,19 +569,40 @@
   font-weight: 600;
   color: #fff;
   cursor: pointer;
-  transition: all 0.13s ease;
+  transition: background 0.13s ease;
   letter-spacing: -0.01em;
   box-shadow: 0 1px 6px rgba(212,146,10,0.32);
 }
+
 .dm-btn-approve:hover {
   background: #C4870A;
-  transform: translateY(-1px);
+  /* Remove transform: translateY */
   box-shadow: 0 4px 12px rgba(212,146,10,0.40);
 }
-.dm-btn-approve:active { transform: translateY(0); }
 
-/* Add these new styles to your existing CSS */
+.dm-btn-approve:disabled,
+.dm-btn-decline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
+/* Secondary button */
+.dm-btn-secondary {
+  padding: 8px 20px;
+  border: 1px solid #d1d5db;
+  background: white;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.13s ease;
+}
+
+.dm-btn-secondary:hover {
+  background: #f9fafb;
+}
+
+/* Badges and labels */
 .dm-badge-vehicle-change {
   display: inline-flex;
   align-items: center;
@@ -574,6 +616,20 @@
   font-weight: 500;
 }
 
+.dm-badge-view-only {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #6b728015;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+  margin-left: 8px;
+}
+
+/* Vehicle selector */
 .dm-vehicle-selector {
   display: flex;
   flex-direction: column;
@@ -590,7 +646,7 @@
   border-radius: 8px;
   background: white;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.13s ease;
 }
 
 .dm-vehicle-card:hover {
@@ -625,173 +681,7 @@
   font-weight: 500;
 }
 
-.dm-doc-wrapper {
-  position: relative;
-}
-
-.dm-pending-label {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  padding: 2px 6px;
-  background: #f59e0b;
-  color: white;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 600;
-}
-
-.dm-doc-actions {
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
-  display: flex;
-  gap: 4px;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.dm-doc-wrapper:hover .dm-doc-actions {
-  opacity: 1;
-}
-
-.dm-doc-action-approve,
-.dm-doc-action-reject {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s;
-}
-
-.dm-doc-action-approve {
-  background: #10b981;
-  color: white;
-}
-
-.dm-doc-action-approve:hover {
-  background: #059669;
-  transform: scale(1.05);
-}
-
-.dm-doc-action-reject {
-  background: #ef4444;
-  color: white;
-}
-
-.dm-doc-action-reject:hover {
-  background: #dc2626;
-  transform: scale(1.05);
-}
-
-.dm-btn-secondary {
-  padding: 8px 20px;
-  border: 1px solid #d1d5db;
-  background: white;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.dm-btn-secondary:hover {
-  background: #f9fafb;
-}
-
-/* Add to DocumentModal.css */
-
-.dm-doc-card.approved {
-  opacity: 0.7;
-  border-color: #22c55e;
-}
-
-.dm-doc-card.rejected {
-  opacity: 0.5;
-  border-color: #ef4444;
-}
-
-.dm-doc-status {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 10px;
-  margin-top: 4px;
-}
-
-.dm-doc-status.pending {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.dm-doc-status.approved {
-  background: #dcfce7;
-  color: #16a34a;
-}
-
-.dm-doc-status.rejected {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-.dm-doc-actions {
-  display: flex;
-  gap: 6px;
-  justify-content: center;
-  margin-top: 6px;
-}
-
-.dm-doc-action-approve,
-.dm-doc-action-reject {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.dm-doc-action-approve {
-  background: #22c55e;
-  color: white;
-}
-
-.dm-doc-action-approve:hover:not(:disabled) {
-  background: #16a34a;
-  transform: scale(1.05);
-}
-
-.dm-doc-action-reject {
-  background: #ef4444;
-  color: white;
-}
-
-.dm-doc-action-reject:hover:not(:disabled) {
-  background: #dc2626;
-  transform: scale(1.05);
-}
-
-.dm-doc-action-approve:disabled,
-.dm-doc-action-reject:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.dm-verified-badge {
-  font-size: 10px;
-  background: #22c55e;
-  color: white;
-  padding: 2px 6px;
-  border-radius: 10px;
-  margin-left: 8px;
-}
-
+/* Vehicle approved message */
 .dm-vehicle-approved-message {
   margin-top: 16px;
   padding: 10px 12px;
@@ -804,12 +694,41 @@
   font-size: 13px;
 }
 
-.dm-all-reviewed {
+.dm-vehicle-approved-message.success {
+  background: #22c55e10;
+  border-color: #22c55e;
   color: #16a34a;
+}
+/* Add to DocumentModal.css */
+
+.dm-approved-badge {
+  margin-left: auto;
+  padding: 2px 8px;
+  background: #22c55e20;
+  color: #16a34a;
+  border-radius: 12px;
+  font-size: 11px;
   font-weight: 500;
 }
+
+.dm-vehicle-approved-message.error {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* Document card status styles */
+.dm-doc-card.approved {
+  opacity: 0.8;
+  border-color: #22c55e;
+}
+
+.dm-doc-card.rejected {
+  opacity: 0.6;
+  border-color: #ef4444;
+}
+
 /* ══════════════════════════════════════
-   VIEWER MODAL
+   VIEWER MODAL - STABLE
 ══════════════════════════════════════ */
 .dm-viewer-backdrop {
   position: fixed;
@@ -823,6 +742,7 @@
   z-index: 1100;
   padding: 20px;
   animation: dm-backdrop-in 0.16s ease both;
+  transform: translateZ(0);
 }
 
 .dm-viewer-modal {
@@ -838,6 +758,7 @@
   font-family: var(--dm-font);
   animation: dm-modal-in 0.22s var(--dm-ease) both;
   overflow: hidden;
+  transform: translateZ(0);
 }
 
 .dm-viewer-header {
@@ -849,6 +770,7 @@
   background: var(--dm-surface);
   flex-shrink: 0;
   gap: 10px;
+  min-height: 56px;
 }
 
 .dm-viewer-back {
@@ -864,10 +786,11 @@
   font-family: var(--dm-font);
   color: var(--dm-ink-40);
   cursor: pointer;
-  transition: all 0.13s ease;
+  transition: background 0.13s ease, border-color 0.13s ease;
   letter-spacing: -0.01em;
   flex-shrink: 0;
 }
+
 .dm-viewer-back:hover {
   background: var(--dm-ink-05);
   color: var(--dm-ink);
@@ -898,9 +821,10 @@
   justify-content: center;
   cursor: pointer;
   color: var(--dm-ink-20);
-  transition: all 0.13s ease;
+  transition: background 0.13s ease, border-color 0.13s ease, color 0.13s ease;
   flex-shrink: 0;
 }
+
 .dm-viewer-close:hover {
   background: var(--dm-red-dim);
   border-color: var(--dm-red-border);
@@ -914,6 +838,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  contain: layout style;
 }
 
 .dm-viewer-pdf {
@@ -929,6 +854,20 @@
   object-fit: contain;
   display: block;
   border-radius: 4px;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .dm-backdrop,
+  .dm-modal,
+  .dm-viewer-backdrop,
+  .dm-viewer-modal,
+  .dm-loading-bar,
+  .dm-doc-card,
+  .dm-doc-thumb img {
+    animation: none;
+    transition: none;
+  }
 }
 
 /* ══════════════════════════════════════

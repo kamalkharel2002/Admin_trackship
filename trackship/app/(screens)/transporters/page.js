@@ -1,8 +1,8 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import TransporterHeader from '@/components/transporter/TransporterHeader';
 import TransporterTable from '@/components/transporter/TransporterTable';
-import { getTransporters } from '@/lib/api';
+import { getTransporters, getAllPendingVehicleRequests } from '@/lib/api';
 import './TransporterPage.css';
 
 const ACCENTS = [
@@ -19,16 +19,32 @@ export default function TransporterPage() {
   const [loadingStats, setLoadingStats] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeStatuses, setActiveStatuses] = useState([]);
+  const [pendingVehicleCount, setPendingVehicleCount] = useState(0);
+  
+  // Add ref to prevent multiple simultaneous fetches
+  const fetchingStatsRef = useRef(false);
+  const statsTimeoutRef = useRef(null);
 
-  useEffect(() => { fetchStats(); }, []);
-
-  async function fetchStats() {
+  // Fetch pending vehicle count
+  const fetchPendingVehicleCount = useCallback(async () => {
     try {
-      setLoadingStats(true);
-      // Get all transporters (no pagination params needed)
+      const requests = await getAllPendingVehicleRequests();
+      setPendingVehicleCount(requests?.length || 0);
+    } catch (err) {
+      console.error('Failed to fetch pending vehicle count:', err);
+    }
+  }, []);
+
+  // Debounced stats fetch to prevent rapid updates
+  const fetchStats = useCallback(async () => {
+    // Prevent multiple simultaneous fetches
+    if (fetchingStatsRef.current) return;
+    
+    fetchingStatsRef.current = true;
+    
+    try {
       const data = await getTransporters();
       
-      // Calculate statistics from transporter data
       const statusCounts = {
         'PENDING_VERIFICATION': 0,
         'APPROVED': 0,
@@ -43,7 +59,6 @@ export default function TransporterPage() {
         }
       });
       
-      // Merge ACTIVE into APPROVED count for display (since they're functionally the same)
       const approvedCount = statusCounts['APPROVED'] + statusCounts['ACTIVE'];
       
       const statsArray = [
@@ -52,38 +67,80 @@ export default function TransporterPage() {
         { status: 'Declined', key: 'DECLINED', count: statusCounts['DECLINED'], color: '#EF4444' }
       ];
       
-      setStats(statsArray);
+      // Only update if stats actually changed
+      setStats(prevStats => {
+        const prevTotal = prevStats.reduce((sum, s) => sum + s.count, 0);
+        const newTotal = statsArray.reduce((sum, s) => sum + s.count, 0);
+        if (prevTotal !== newTotal) {
+          return statsArray;
+        }
+        return prevStats;
+      });
     } catch (err) {
       console.error('Failed to fetch stats:', err);
-      // Set empty stats on error
-      setStats([
-        { status: 'Pending', key: 'PENDING_VERIFICATION', count: 0, color: '#F97316' },
-        { status: 'Approved', key: 'APPROVED', count: 0, color: '#22C55E' },
-        { status: 'Declined', key: 'DECLINED', count: 0, color: '#EF4444' }
-      ]);
     } finally {
+      fetchingStatsRef.current = false;
       setLoadingStats(false);
     }
-  }
+  }, []);
 
-  function handleStatusToggle(statusId) {
+  // Fetch all data
+  const fetchAllData = useCallback(async () => {
+    await Promise.all([
+      fetchStats(),
+      fetchPendingVehicleCount()
+    ]);
+  }, [fetchStats, fetchPendingVehicleCount]);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchAllData();
+  }, [fetchAllData]);
+
+  // Debounced handleStatusToggle to prevent rapid re-renders
+  const handleStatusToggle = useCallback((statusId) => {
+    if (statsTimeoutRef.current) {
+      clearTimeout(statsTimeoutRef.current);
+    }
+    
     if (statusId === null) {
       setActiveStatuses([]);
       return;
     }
+    
     setActiveStatuses(prev =>
       prev.includes(statusId)
         ? prev.filter(s => s !== statusId)
         : [...prev, statusId]
     );
-  }
+  }, []);
 
-  // Handle search from header
-  function handleSearch(searchValue) {
-    setSearchQuery(searchValue);
-  }
+  // Debounced search
+  const handleSearch = useCallback((searchValue) => {
+    if (statsTimeoutRef.current) {
+      clearTimeout(statsTimeoutRef.current);
+    }
+    
+    statsTimeoutRef.current = setTimeout(() => {
+      setSearchQuery(searchValue);
+    }, 300);
+  }, []);
+
+  // Cleanup timeout
+  useEffect(() => {
+    return () => {
+      if (statsTimeoutRef.current) {
+        clearTimeout(statsTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const totalTransporters = stats.reduce((sum, s) => sum + (Number(s.count) || 0), 0);
+
+  // Memoize the update handler to prevent recreation
+  const handleUpdate = useCallback(() => {
+    fetchAllData();
+  }, [fetchAllData]);
 
   return (
     <div className="transporter-page">
@@ -100,38 +157,42 @@ export default function TransporterPage() {
         </div>
       </div>
 
-      {/* ── Stat cards ── */}
-      {loadingStats ? (
-        <div className="transporter-page-stats-loading">
-          {[...Array(3)].map((_, i) => <div key={i} className="transporter-page-stat-skeleton" />)}
-        </div>
-      ) : stats.length > 0 ? (
-        <div className="transporter-page-stats">
-          {stats.map((s, i) => {
-            const { accent, glow } = ACCENTS[i % ACCENTS.length];
-            return (
-              <div 
-                key={s.key} 
-                className="transporter-page-stat-card"
-                style={{ '--tp-card-accent': accent, '--tp-card-glow': glow }}
-              >
-                <div className="transporter-page-stat-status">{s.status}</div>
-                <div className="transporter-page-stat-number">{s.count}</div>
-                <div className="transporter-page-stat-sub">
-                  <span className="transporter-page-stat-pill" style={{ background: `${s.color}15`, color: s.color }}>
-                    <svg width="7" height="7" viewBox="0 0 10 10" fill="currentColor">
-                      <path d="M5 1l4 8H1z"/>
-                    </svg>
-                  </span>
-                  transporters
+      {/* ── Stat cards with stable heights ── */}
+      <div className="transporter-page-stats-container" style={{ minHeight: '120px' }}>
+        {loadingStats ? (
+          <div className="transporter-page-stats-loading">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="transporter-page-stat-skeleton" />
+            ))}
+          </div>
+        ) : stats.length > 0 ? (
+          <div className="transporter-page-stats">
+            {stats.map((s, i) => {
+              const { accent, glow } = ACCENTS[i % ACCENTS.length];
+              return (
+                <div 
+                  key={s.key} 
+                  className="transporter-page-stat-card"
+                  style={{ '--tp-card-accent': accent, '--tp-card-glow': glow }}
+                >
+                  <div className="transporter-page-stat-status">{s.status}</div>
+                  <div className="transporter-page-stat-number">{s.count}</div>
+                  <div className="transporter-page-stat-sub">
+                    <span className="transporter-page-stat-pill" style={{ background: `${s.color}15`, color: s.color }}>
+                      <svg width="7" height="7" viewBox="0 0 10 10" fill="currentColor">
+                        <path d="M5 1l4 8H1z"/>
+                      </svg>
+                    </span>
+                    transporters
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="transporter-page-stats-empty">No transporter data available</div>
-      )}
+              );
+            })}
+          </div>
+        ) : (
+          <div className="transporter-page-stats-empty">No transporter data available</div>
+        )}
+      </div>
 
       {/* ── Table section ── */}
       <div className="transporter-page-table-section">
@@ -152,9 +213,11 @@ export default function TransporterPage() {
         <TransporterTable
           selected={selected}
           setSelected={setSelected}
-          onUpdate={fetchStats}
+          onUpdate={handleUpdate}
           searchQuery={searchQuery}
           statusFilter={activeStatuses}
+          autoRefresh={true}
+          refreshInterval={30000}
         />
       </div>
 
