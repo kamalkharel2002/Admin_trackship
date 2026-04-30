@@ -115,7 +115,7 @@ export default function DashboardPage() {
       <main className={s.main}>
         <TopBar
           user={user}
-          title="Shipment Statistics"
+          title="Admin Dashboard"
           subtitle={getSubtitle()}
           hasNotifs={transporters.length > 0 || vehicleDocuments.length > 0}
         />
