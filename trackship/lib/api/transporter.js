@@ -63,10 +63,8 @@ function normalizeTransporterDocuments(raw) {
   }
   
   // Debug logging
-  console.log('Raw transporter docs:', raw?.transporter_documents?.map(d => d.doc_type));
-  console.log('Raw vehicle docs:', raw?.vehicle_documents?.map(d => d.doc_type));
-  console.log('All docs combined:', allDocs.map(d => d.doc_type));
-  console.log('Insurance found in allDocs?', allDocs.some(d => d.doc_type === 'insurance'));
+  console.log('Raw transporter docs:', raw?.transporter_documents?.map(d => ({ doc_type: d.doc_type, status: d.status })));
+  console.log('Raw vehicle docs:', raw?.vehicle_documents?.map(d => ({ doc_type: d.doc_type, status: d.status })));
   
   const documents = {};
   const fileList = [];
@@ -74,17 +72,16 @@ function normalizeTransporterDocuments(raw) {
   allDocs.forEach(doc => {
     documents[doc.doc_type] = doc.file;
     fileList.push({
-      doc_type: doc.doc_type,      // CRITICAL: Use 'doc_type' not 'type'
+      doc_type: doc.doc_type,
       file: doc.file,
       document_id: doc.document_id,
       uploaded_at: doc.uploaded_at,
-      status: doc.status || null,
+      status: doc.status || (doc.doc_type?.includes('vehicle') ? 'PENDING' : 'ACTIVE'), // Preserve status from backend
       vehicle_id: doc.vehicle_id || null
     });
   });
   
-  console.log('Final fileList types:', fileList.map(f => f.doc_type));
-  console.log('Insurance in fileList?', fileList.some(f => f.doc_type === 'insurance'));
+  console.log('Final fileList with status:', fileList.map(f => ({ doc_type: f.doc_type, status: f.status })));
   
   return {
     documents,
@@ -113,8 +110,7 @@ function normalizePendingVehicleDocuments(raw) {
     arr = [];
   }
   
-  console.log('Raw pending docs:', arr.map(d => d.doc_type));
-  console.log('Insurance in pending raw?', arr.some(d => d.doc_type === 'insurance'));
+  console.log('Raw pending docs with status:', arr.map(d => ({ doc_type: d.doc_type, status: d.status })));
   
   // Deduplicate by document_id
   const uniqueMap = new Map();
@@ -132,7 +128,7 @@ function normalizePendingVehicleDocuments(raw) {
           doc_type: doc.doc_type,
           uploaded_at: doc.uploaded_at,
           file: doc.file,
-          status: doc.status || 'PENDING',
+          status: doc.status || 'PENDING', // Preserve status
         });
       }
       return;
@@ -147,14 +143,13 @@ function normalizePendingVehicleDocuments(raw) {
         doc_type: doc.doc_type,
         uploaded_at: doc.uploaded_at,
         file: doc.file,
-        status: doc.status || 'PENDING',
+        status: doc.status || 'PENDING', // Preserve status
       });
     }
   });
   
   const result = Array.from(uniqueMap.values());
-  console.log('Deduped pending docs:', result.map(d => d.doc_type));
-  console.log('Insurance in deduped?', result.some(d => d.doc_type === 'insurance'));
+  console.log('Deduped pending docs with status:', result.map(d => ({ doc_type: d.doc_type, status: d.status })));
   
   return result;
 }
@@ -201,6 +196,7 @@ function normalizePendingVehicleRequests(raw) {
     transporter_id: item.transporter_id,
     user_name: item.user_name,
     email: item.email,
+    license_no: item.license_no,
     documents: item.documents || []
   }));
 }
@@ -246,6 +242,23 @@ export async function verifyTransporter(transporterId, action, reason = null) {
     method: 'POST',
     body: { action, reason },
   });
+}
+
+// ============= FULL APPROVAL FUNCTIONS =============
+
+// Full approval for transporter with all documents and vehicles
+export async function approveTransporterFull(transporterId) {
+  try {
+    const url = ENDPOINTS.transporters.approveFull(transporterId);
+    const response = await request(url, {
+      method: 'POST',
+      body: {},
+    });
+    return response;
+  } catch (error) {
+    console.error('Failed to approve transporter fully:', error);
+    throw error;
+  }
 }
 
 export async function deleteTransporter(transporterId) {

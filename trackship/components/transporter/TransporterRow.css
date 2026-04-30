@@ -35,23 +35,25 @@
   grid-template-columns: 44px 1fr 1.2fr 1fr 1fr 100px 108px;
   align-items: center;
   padding: 0 20px;
-  height: 54px;
+  min-height: 54px; /* Fixed min-height instead of height */
   border-bottom: 1px solid var(--tr-border-soft);
   transition: background 0.12s ease;
   gap: 4px;
   font-family: var(--tr-font);
-  animation: tr-row-in 0.22s ease both;
+  
+  /* Stability fixes - prevent layout shifts */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  contain: layout style;
+  will-change: auto;
 }
 
-@keyframes tr-row-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+/* Remove animation that could cause shifting */
+.transporter-row {
+  animation: none;
 }
 
-.transporter-row:last-child {
-  border-bottom: none;
-}
-
+/* Keep hover effect without transform */
 .transporter-row:hover {
   background: var(--tr-amber-hover);
 }
@@ -60,11 +62,13 @@
   background: var(--tr-amber-dim);
 }
 
-/* Checkbox */
+/* Checkbox - stable dimensions */
 .transporter-row-check {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 15px;
+  height: 15px;
 }
 
 .transporter-row-checkbox {
@@ -77,6 +81,8 @@
   background: #fff;
   transition: all 0.13s ease;
   position: relative;
+  margin: 0;
+  flex-shrink: 0;
 }
 
 .transporter-row-checkbox:checked {
@@ -97,12 +103,17 @@
   transform: rotate(45deg);
 }
 
-/* Name cell */
+.transporter-row-checkbox:hover:not(:checked) {
+  border-color: var(--tr-amber);
+}
+
+/* Name cell - stable */
 .transporter-row-name-cell {
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 0;
+  overflow: hidden;
 }
 
 .transporter-row-avatar {
@@ -123,6 +134,8 @@
 
 .transporter-row-name-info {
   min-width: 0;
+  overflow: hidden;
+  flex: 1;
 }
 
 .transporter-row-name {
@@ -136,7 +149,7 @@
   letter-spacing: -0.01em;
 }
 
-/* Data cells */
+/* Data cells - stable text overflow */
 .transporter-row-email {
   font-size: 0.80rem;
   font-weight: 400;
@@ -157,7 +170,14 @@
   letter-spacing: -0.01em;
 }
 
-/* Status badge */
+/* Status badge - stable */
+.transporter-row-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .transporter-row-badge {
   display: inline-flex;
   align-items: center;
@@ -193,16 +213,10 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
+  flex-shrink: 0;
 }
 
-/* Status cell enhancements */
-.transporter-row-status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
+/* Vehicle badge */
 .transporter-row-vehicle-badge {
   display: inline-flex;
   align-items: center;
@@ -220,9 +234,10 @@
 .transporter-row-vehicle-badge svg {
   width: 12px;
   height: 12px;
+  flex-shrink: 0;
 }
 
-/* Actions */
+/* Actions - stable button sizes */
 .transporter-row-actions {
   display: flex;
   align-items: center;
@@ -238,10 +253,12 @@
   justify-content: center;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.13s var(--tr-ease);
+  transition: background 0.13s var(--tr-ease), color 0.13s var(--tr-ease);
   font-size: 0.75rem;
   font-weight: 600;
   font-family: var(--tr-font);
+  flex-shrink: 0;
+  /* Remove transform transitions that cause movement */
 }
 
 /* View button */
@@ -255,7 +272,7 @@
   background: var(--tr-amber);
   color: #fff;
   border-color: var(--tr-amber);
-  transform: scale(1.06);
+  /* Remove transform: scale() to prevent shaking */
   box-shadow: 0 2px 8px rgba(212,146,10,0.30);
 }
 
@@ -270,7 +287,7 @@
   background: var(--tr-green);
   color: #fff;
   border-color: var(--tr-green);
-  transform: scale(1.06);
+  /* Remove transform: scale() to prevent shaking */
   box-shadow: 0 2px 8px rgba(26,158,92,0.30);
 }
 
@@ -285,7 +302,7 @@
   background: var(--tr-red);
   color: #fff;
   border-color: var(--tr-red);
-  transform: scale(1.06);
+  /* Remove transform: scale() to prevent shaking */
   box-shadow: 0 2px 8px rgba(192,57,43,0.30);
 }
 
@@ -301,7 +318,7 @@
   background: #f59e0b;
   color: #fff;
   border-color: #f59e0b;
-  transform: scale(1.06);
+  /* Remove transform: scale() to prevent shaking */
   box-shadow: 0 2px 8px rgba(245,158,11,0.30);
 }
 
@@ -321,27 +338,9 @@
   justify-content: center;
 }
 
-/* Delete button */
-.transporter-row-action-btn.delete {
-  background: transparent;
-  color: var(--tr-ink-20);
-  border-color: transparent;
-}
-
-.transporter-row-action-btn.delete:hover {
-  background: var(--tr-red-dim);
-  color: var(--tr-red);
-  border-color: var(--tr-red-border);
-  transform: scale(1.06);
-}
-
-/* Row hover enhancements */
-.transporter-row:hover {
-  background: var(--tr-amber-hover);
-}
-
-.transporter-row.checked {
-  background: var(--tr-amber-dim);
+/* Last row no border */
+.transporter-row:last-child {
+  border-bottom: none;
 }
 
 /* Responsive adjustments */
@@ -351,7 +350,7 @@
   }
   
   .transporter-row-vehicle-badge {
-    display: none; /* Hide on smaller screens to save space */
+    display: none;
   }
 }
 
@@ -380,8 +379,12 @@
   .transporter-row > *:nth-child(5) {
     display: none;
   }
-  
-  .transporter-row-action-btn span {
-    display: none;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .transporter-row,
+  .transporter-row-action-btn {
+    transition: none;
   }
 }

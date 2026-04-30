@@ -2,6 +2,7 @@
 /* ════════════════════════════════════════════
    TRANSPORTER PAGE — fully standalone
    No global CSS dependencies
+   FIXED: No layout shifts or shaking
 ════════════════════════════════════════════ */
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -43,6 +44,9 @@
   background: var(--tp-page-bg);
   min-height: 100%;
   font-family: var(--tp-font);
+  
+  /* Prevent layout shifts */
+  contain: layout style;
 }
 
 /* ── Keyframes ── */
@@ -85,16 +89,6 @@
   margin: 0;
 }
 
-.transporter-page-stat-card.active-filter {
-  border-color: var(--tp-card-accent);
-  box-shadow: 0 0 0 2px var(--tp-card-glow), var(--tp-shadow-sm);
-  background: linear-gradient(135deg, var(--tp-card) 0%, var(--tp-card-glow) 100%);
-}
-
-.transporter-page-stat-card[role="button"] {
-  cursor: pointer;
-}
-
 /* Breadcrumb */
 .transporter-page-breadcrumb {
   display: flex;
@@ -118,8 +112,14 @@
 }
 
 /* ══════════════════════════════════
-   STAT CARDS GRID
+   STAT CARDS CONTAINER - FIXED HEIGHT
 ══════════════════════════════════ */
+.transporter-page-stats-container {
+  min-height: 130px;
+  position: relative;
+}
+
+/* STAT CARDS GRID */
 .transporter-page-stats {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
@@ -140,35 +140,37 @@
   position: relative;
   overflow: hidden;
   cursor: default;
+  min-height: 108px;
   transition:
-    transform   0.22s var(--tp-ease),
     box-shadow  0.22s var(--tp-ease);
+  /* Remove transform transition to prevent movement */
 }
 
 .transporter-page-stat-card:hover {
-  transform: translateY(-3px);
   box-shadow: var(--tp-shadow-md);
+  /* Remove transform to prevent shaking */
 }
 
-/* Left accent bar */
+/* Active filter state */
+.transporter-page-stat-card.active-filter {
+  border-color: var(--tp-card-accent, var(--tp-yellow));
+  box-shadow: 0 0 0 2px var(--tp-card-glow, rgba(245,183,0,0.09)), var(--tp-shadow-sm);
+  background: linear-gradient(135deg, var(--tp-card) 0%, var(--tp-card-glow, rgba(245,183,0,0.05)) 100%);
+}
+
+/* Left accent bar - static, no hover animation */
 .transporter-page-stat-card::before {
   content: '';
   position: absolute;
   left: 0;
-  top: 18%;
-  height: 64%;
+  top: 10%;
+  height: 80%;
   width: 3px;
   border-radius: 0 3px 3px 0;
   background: var(--tp-card-accent, var(--tp-yellow));
-  transition: height 0.22s var(--tp-ease), top 0.22s var(--tp-ease);
 }
 
-.transporter-page-stat-card:hover::before {
-  top: 10%;
-  height: 80%;
-}
-
-/* Glow blob top-right */
+/* Glow blob top-right - static */
 .transporter-page-stat-card::after {
   content: '';
   position: absolute;
@@ -195,7 +197,7 @@
   font-size: 1.85rem;
   font-weight: 800;
   color: var(--tp-text);
-  line-height: 1;
+  line-height: 1.2;
   letter-spacing: -0.04em;
 }
 
@@ -219,22 +221,23 @@
   font-family: var(--tp-font);
 }
 
-/* ── Skeleton loading ── */
+/* ── Skeleton loading with fixed height ── */
 .transporter-page-stats-loading {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
   gap: 14px;
+  min-height: 108px;
 }
 
 .transporter-page-stat-skeleton {
-  height: 92px;
+  height: 108px;
   border-radius: 14px;
   background: linear-gradient(90deg, #ede8e0 25%, #f5f2ec 50%, #ede8e0 75%);
   background-size: 200% 100%;
   animation: tp-shimmer 1.6s infinite;
 }
 
-/* ── Empty ── */
+/* ── Empty state with fixed height ── */
 .transporter-page-stats-empty {
   padding: 20px;
   background: var(--tp-card);
@@ -244,20 +247,35 @@
   font-size: 0.8rem;
   color: var(--tp-muted);
   font-family: var(--tp-font);
+  min-height: 108px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ══════════════════════════════════
-   TABLE SECTION
+   TABLE SECTION - STABLE
 ══════════════════════════════════ */
 .transporter-page-table-section {
   animation: tp-fade-up 0.4s var(--tp-ease) 0.12s both;
+  background: white;
+  border-radius: 20px;
+  padding: 20px 20px 0 20px;
+  box-shadow: var(--tp-shadow-sm);
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  contain: layout style;
 }
 
 .transporter-page-section-label {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-height: 36px;
 }
 
 .transporter-page-section-title {
@@ -272,6 +290,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  min-height: 28px;
 }
 
 .transporter-page-section-count {
@@ -295,6 +314,18 @@
   font-family: var(--tp-font);
 }
 
+/* ── Remove hover transforms on stat cards that cause shaking ── */
+@media (prefers-reduced-motion: reduce) {
+  .transporter-page-stat-card {
+    transition: none;
+  }
+  
+  .transporter-page-stats-loading,
+  .transporter-page-stat-skeleton {
+    animation: none;
+  }
+}
+
 /* ══════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════ */
@@ -315,10 +346,23 @@
   
   .transporter-page-stat-card {
     padding: 14px 16px;
+    min-height: 96px;
+  }
+  
+  .transporter-page-stat-skeleton {
+    height: 96px;
+  }
+  
+  .transporter-page-stats-empty {
+    min-height: 96px;
   }
   
   .transporter-page-stat-number {
     font-size: 1.5rem;
+  }
+  
+  .transporter-page-table-section {
+    padding: 16px 16px 0 16px;
   }
 }
 
@@ -336,4 +380,39 @@
     align-items: flex-start;
     gap: 8px;
   }
+  
+  .transporter-page-table-section {
+    padding: 12px 12px 0 12px;
+  }
+}
+
+/* ══════════════════════════════════
+   ADDITIONAL STABILITY FIXES
+══════════════════════════════════ */
+
+/* Prevent any content from causing horizontal scroll */
+.transporter-page * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Ensure consistent scrollbar behavior */
+html {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
+/* Prevent reflow on stat number changes */
+.transporter-page-stat-number {
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}
+
+/* Smooth but stable transitions */
+.transporter-page-stat-card,
+.transporter-page-table-section,
+.transporter-page-stats-container {
+  will-change: auto;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }

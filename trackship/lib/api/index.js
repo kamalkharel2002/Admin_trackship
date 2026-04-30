@@ -33,6 +33,7 @@ export {
   deleteTransporter,
   getAdminTransporterDocuments,
   verifyTransporter,
+  approveTransporterFull,
   // Vehicle management (updated)
   getPendingVehicleDocuments,
   getAllPendingVehicleRequests,

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import './TransporterHeader.css';
 
 const SearchIcon = () => (
@@ -35,9 +35,10 @@ const CloseSmIcon = () => (
 );
 
 const STATUS_OPTIONS = [
-  { id: 'PENDING_VERIFICATION', label: 'Pending',  color: '#C05621' },
-  { id: 'APPROVED',             label: 'Approved', color: '#1A9E5C' },
-  { id: 'DECLINED',             label: 'Declined', color: '#C0392B' },
+  { id: 'PENDING_VERIFICATION', label: 'Pending', color: '#C05621' },
+  { id: 'APPROVED', label: 'Approved', color: '#1A9E5C' },
+  { id: 'DECLINED', label: 'Declined', color: '#C0392B' },
+  { id: 'ACTIVE', label: 'Active', color: '#1A9E5C' }, // Added ACTIVE status
 ];
 
 export default function TransporterHeader({
@@ -45,10 +46,13 @@ export default function TransporterHeader({
   onSearch,
   activeStatuses = [],
   onStatusToggle,
+  searchPlaceholder = "Search by name, email, license…",
+  showSelectedCount = true,
 }) {
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const wrapRef = useRef(null);
+  const searchTimeoutRef = useRef(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -61,14 +65,24 @@ export default function TransporterHeader({
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // Debounced search to avoid too many updates
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onSearch?.(searchValue);
+  // Debounced search with cleanup
+  const handleSearchDebounced = useCallback((value) => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    searchTimeoutRef.current = setTimeout(() => {
+      onSearch?.(value);
     }, 300);
-    
-    return () => clearTimeout(timer);
-  }, [searchValue, onSearch]);
+  }, [onSearch]);
+
+  useEffect(() => {
+    handleSearchDebounced(searchValue);
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchValue, handleSearchDebounced]);
 
   const handleSearchChange = (e) => {
     setSearchValue(e.target.value);
@@ -88,23 +102,40 @@ export default function TransporterHeader({
     onStatusToggle?.(statusId);
   };
 
+  // Reset search
+  const handleClearSearch = () => {
+    setSearchValue('');
+    onSearch?.('');
+  };
+
   return (
     <div className="transporter-header">
 
       {/* Search */}
       <div className="transporter-header-search-wrap">
-        <span className="transporter-header-search-icon"><SearchIcon /></span>
+        <span className="transporter-header-search-icon">
+          <SearchIcon />
+        </span>
         <input
           className="transporter-header-search"
-          placeholder="Search by name, email, license…"
+          placeholder={searchPlaceholder}
           value={searchValue}
           onChange={handleSearchChange}
           aria-label="Search transporters"
         />
+        {searchValue && (
+          <button
+            className="transporter-header-search-clear"
+            onClick={handleClearSearch}
+            aria-label="Clear search"
+          >
+            <CloseSmIcon />
+          </button>
+        )}
       </div>
 
       {/* Selected count */}
-      {selected?.length > 0 && (
+      {showSelectedCount && selected?.length > 0 && (
         <span className="transporter-header-selected-pill">
           <span className="transporter-header-selected-dot" />
           {selected.length} selected
@@ -129,14 +160,18 @@ export default function TransporterHeader({
             <FilterIcon />
             Filter
             {activeStatuses.length > 0 && (
-              <span className="transporter-header-filter-badge">{activeStatuses.length}</span>
+              <span className="transporter-header-filter-badge">
+                {activeStatuses.length}
+              </span>
             )}
             <ChevronIcon className={`transporter-header-chevron${open ? ' flipped' : ''}`} />
           </button>
 
           {open && (
             <div className="transporter-header-dropdown" role="menu">
-              <div className="transporter-header-dropdown-header">Filter by status</div>
+              <div className="transporter-header-dropdown-header">
+                Filter by status
+              </div>
               <div className="transporter-header-dropdown-list">
                 {STATUS_OPTIONS.map(status => {
                   const isActive = activeStatuses.includes(status.id);
