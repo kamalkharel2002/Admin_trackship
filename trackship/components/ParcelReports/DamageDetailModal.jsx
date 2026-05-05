@@ -179,6 +179,7 @@ export default function DamageDetailModal({ report, onClose, onResolved }) {
               <div className={s.secTitle}><Truck size={11} /> Transporter Details</div>
               <div className={s.infoGrid}>
                 <InfoCard icon={User}     label="Driver"     value={report.transporter_name} />
+                <InfoCard icon={Phone}    label="Contact No"     value={report.transporter_phone} />
                 <InfoCard icon={Truck}    label="Vehicle"    value={`${report.vehicle_model ?? '—'} · ${report.vehicle_type ?? '—'}`} />
                 <InfoCard icon={Hash}     label="Plate No"   value={report.vehicle_no} />
                 <InfoCard icon={Calendar} label="Trip Date"  value={fmt(report.trip_date)} />
