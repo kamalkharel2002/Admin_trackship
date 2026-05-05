@@ -1,7 +1,7 @@
 // lib/config.js
 
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.65:3000/api';
+  process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.64:3000/api';
 
 export const REQUEST_TIMEOUT = 15000;
 
@@ -20,13 +20,12 @@ export const ENDPOINTS = {
     pending:   `${API_BASE}/admin/transporters/pending`,
     all:       `${API_BASE}/admin/transporters/all`,
     list:      `${API_BASE}/admin/transporters`,
-    documents: (id) => `${API_BASE}/admin/transporters/${id}/documents`,
-    verify:    (id) => `${API_BASE}/admin/transporters/${id}/verify`,
-    approveFull: (id) => `${API_BASE}/admin/transporters/${id}/approve-full`,
-    // Vehicle document endpoints
-    pendingVehicleDocs: (id) => `${API_BASE}/admin/transporters/${id}/vehicle-documents/pending`,
-    verifyVehicle: (vehicleId) => `${API_BASE}/admin/vehicles/${vehicleId}/verify`,
-    allPendingVehicleRequests: `${API_BASE}/admin/vehicles/pending`,
+    documents:                (id) => `${API_BASE}/admin/transporters/${id}/documents`,
+    verify:                   (id) => `${API_BASE}/admin/transporters/${id}/verify`,
+    approveFull:              (id) => `${API_BASE}/admin/transporters/${id}/approve-full`,
+    pendingVehicleDocs:       (id) => `${API_BASE}/admin/transporters/${id}/vehicle-documents/pending`,
+    verifyVehicle:      (vehicleId) => `${API_BASE}/admin/vehicles/${vehicleId}/verify`,
+    allPendingVehicleRequests:       `${API_BASE}/admin/vehicles/pending`,
     vehicleApprovalStatus: (vehicleId) => `${API_BASE}/admin/vehicles/${vehicleId}/status`,
   },
   setting: {
@@ -82,10 +81,15 @@ export const ENDPOINTS = {
     exportRevenueCSV:    `${API_BASE}/admin/report/export/revenue-csv`,
     exportShipmentCSV:   `${API_BASE}/admin/report/export/shipment-csv`,
   },
-  // ─── Pricing ──────────────────────────────────────────────────────────────
   pricing: {
-    list:           `${API_BASE}/admin/pricing`,
+    list:            `${API_BASE}/admin/pricing`,
     update: (key) => `${API_BASE}/admin/pricing/${key}`,
+  },
+  // ─── Damage / Parcel Reports ───────────────────────────────────────────────
+  damage: {
+    list:            `${API_BASE}/admin/damage`,
+    byId:   (id) => `${API_BASE}/admin/damage/${id}`,
+    status: (id) => `${API_BASE}/admin/damage/${id}/status`,
   },
 };
 

@@ -33,7 +33,6 @@ export {
   getAdminTransporterDocuments,
   verifyTransporter,
   approveTransporterFull,
-  // Vehicle management (updated)
   getPendingVehicleDocuments,
   getAllPendingVehicleRequests,
   getVehicleApprovalStatus,
@@ -64,3 +63,8 @@ export {
   getPricingConfig,
   updatePricingConfig,
 } from './pricing';
+export {
+  getDamageReports,
+  getDamageById,
+  updateDamageStatus,
+} from './damage';

@@ -7,28 +7,28 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Users, Package, Warehouse,
   Truck, CreditCard, BarChart3, Settings,
-  LogOut, Menu, X, Tag,
+  LogOut, Menu, X, Tag, AlertTriangle,
 } from 'lucide-react';
 import s from './Sidebar.module.css';
 import logoPlaceholder from '../../assets/logo-placeholder.png';
 
 const NAV = [
-  { href: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard'        },
-  { href: '/users',        icon: Users,           label: 'Users'            },
-  { href: '/shipments',    icon: Package,         label: 'Shipments'        },
-  { href: '/pricing',      icon: Tag,             label: 'Price Management' },
-  { href: '/hubs',         icon: Warehouse,       label: 'Hubs'             },
-  { href: '/transporters', icon: Truck,           label: 'Transporters', badgeKey: 'transporters' },
-  { href: '/payments',     icon: CreditCard,      label: 'Payments'         },
-  { href: '/reports',      icon: BarChart3,       label: 'Reports'          },
-  { href: '/settings',     icon: Settings,        label: 'Settings'         },
+  { href: '/dashboard',      icon: LayoutDashboard, label: 'Dashboard'        },
+  { href: '/users',          icon: Users,           label: 'Users'            },
+  { href: '/shipments',      icon: Package,         label: 'Shipments'        },
+  { href: '/parcel-reports', icon: AlertTriangle,   label: 'Parcel Reports'   },
+  { href: '/pricing',        icon: Tag,             label: 'Price Management' },
+  { href: '/hubs',           icon: Warehouse,       label: 'Hubs'             },
+  { href: '/transporters',   icon: Truck,           label: 'Transporters', badgeKey: 'transporters' },
+  { href: '/payments',       icon: CreditCard,      label: 'Payments'         },
+  { href: '/reports',        icon: BarChart3,       label: 'Reports'          },
+  { href: '/settings',       icon: Settings,        label: 'Settings'         },
 ];
 
 export default function Sidebar({ user, badgeCounts = {}, onLogout }) {
   const path = usePathname();
   const [open,    setOpen]    = useState(false);
   const [mounted, setMounted] = useState(false);
-
   useEffect(() => { setMounted(true); }, []);
 
   let initials = 'AD';
@@ -54,14 +54,11 @@ export default function Sidebar({ user, badgeCounts = {}, onLogout }) {
       <button className={s.mobileToggle} onClick={() => setOpen((o) => !o)} aria-label="Toggle menu">
         {open ? <X size={20} /> : <Menu size={20} />}
       </button>
-
       {open && <div className={s.overlay} onClick={() => setOpen(false)} />}
-
       <aside className={`${s.sidebar} ${open ? s.open : ''}`}>
         <div className={s.logo}>
           <Image src={logoPlaceholder} alt="TrackShip" width={140} height={36} className={s.logoImg} priority />
         </div>
-
         <nav className={s.nav}>
           <span className={s.navLabel}>Main Menu</span>
           {NAV.map(({ href, icon: Icon, label, badgeKey }) => {
@@ -81,7 +78,6 @@ export default function Sidebar({ user, badgeCounts = {}, onLogout }) {
             );
           })}
         </nav>
-
         <div className={s.bottomUser} onClick={onLogout} title="Logout">
           <div className={s.avatar}>{initials}</div>
           <div className={s.userInfo}>
