@@ -46,6 +46,23 @@ function Field({ label, value }) {
   );
 }
 
+/* ───────── STATUS BADGE FOR DAMAGE/DELAY ───────── */
+function StatusBadge({ label, status }) {
+  if (!status || status === 'Not Damaged' || status === 'Not Delayed') return null;
+  
+  const isDamaged = status === 'Damaged';
+  const isDelayed = status === 'Delayed';
+  
+  return (
+    <div className={`sr-status-badge ${isDamaged ? 'sr-status-damaged' : 'sr-status-delayed'}`}>
+      <span className="sr-status-icon">
+        {isDamaged ? '⚠️' : '🕒'}
+      </span>
+      <span className="sr-status-text">{label}: {status}</span>
+    </div>
+  );
+}
+
 /* ───────── HELPER TO GET ROUTE ───────── */
 function getRouteFromShipment(shipmentData) {
   // First priority: direct route string if available
@@ -198,6 +215,21 @@ export default function ShipmentRow({ shipment, checked, onToggle, onClick }) {
                   <Field label="Delivery Mode" value={data.delivery_mode} />
                   <Field label="Source Hub" value={data.source_hub_name} />
                   <Field label="Destination Hub" value={data.destination_hub_name} />
+                  
+                  {/* Conditional Status Badges */}
+                  {data.damage_status === 'Damaged' && (
+                    <div className="sr-field">
+                      <span className="sr-field-label">Damage Status</span>
+                      <span className="sr-field-value sr-value-damaged">⚠️ Damaged</span>
+                    </div>
+                  )}
+                  
+                  {data.delay_status === 'Delayed' && (
+                    <div className="sr-field">
+                      <span className="sr-field-label">Delay Status</span>
+                      <span className="sr-field-value sr-value-delayed">🕒 Delayed</span>
+                    </div>
+                  )}
                 </div>
               </div>
 

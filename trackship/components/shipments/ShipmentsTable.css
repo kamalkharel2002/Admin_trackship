@@ -89,9 +89,6 @@
   0%   { background-position: -300% 0; }
   100% { background-position: 300% 0; }
 }
-
-.sh-skeleton-wrap {}
-
 .sh-skeleton-row {
   display: grid;
   grid-template-columns: 46px 128px 1fr 1fr 1.4fr 140px 1fr;

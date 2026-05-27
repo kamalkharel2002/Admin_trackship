@@ -1,5 +1,4 @@
 /* app/(screens)/parcel-reports/page.module.css */
-
 .page {
   padding: 32px 28px;
   min-height: 100vh;
@@ -17,9 +16,6 @@
   gap: 16px;
   flex-wrap: wrap;
 }
-
-.titleBlock {}
-
 .pageTitle {
   font-size: 26px;
   font-weight: 800;
@@ -27,7 +23,6 @@
   font-family: var(--font-head);
   line-height: 1.1;
 }
-
 .pageSub {
   font-size: 13px;
   color: var(--text-muted);
@@ -49,7 +44,120 @@
   gap: 8px;
 }
 
+/* ── Section divider ── */
+.sectionDivider {
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.sectionTitle {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: var(--font-head);
+  line-height: 1.1;
+  margin: 0 0 2px;
+}
+.sectionSub {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+}
+
+/* ── List card: wraps the list table + footer in one border ── */
+.listCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden; /* keeps children inside the rounded corners */
+}
+
+/*
+  The list components (ParcelReportsList / DelayedShipmentsList) must
+  have their own outer border/shadow removed when inside .listCard,
+  since the card now provides the container. If those components use a
+  wrapping div with a border, add this to their own module.css:
+
+    .wrap { border: none; box-shadow: none; border-radius: 0; }
+
+  — or simply let .listCard override visually; overflow:hidden handles
+  the corners either way.
+*/
+
+/* ── Pagination footer — flush to the bottom of .listCard ── */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-page);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.footerCount {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+}
+.footerCount strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+/* ── Pagination controls ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.pageBtn {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 7px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-card);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.13s;
+}
+.pageBtn:hover:not(:disabled) {
+  background: var(--bg-page);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+.pageBtn.active {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+  color: #fff;
+  font-weight: 700;
+}
+.pageBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.pageDots {
+  min-width: 28px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .page { padding: 72px 12px 24px; }
+}
+@media (max-width: 540px) {
+  .footer { flex-direction: column; align-items: flex-start; }
 }

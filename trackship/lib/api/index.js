@@ -58,6 +58,7 @@ export {
   getShipmentStatusDistribution,
   exportRevenueCSV,
   exportShipmentCSV,
+  getDamagedDelayedCount,
 } from './report';
 export {
   getPricingConfig,
@@ -67,4 +68,6 @@ export {
   getDamageReports,
   getDamageById,
   updateDamageStatus,
+  getDelayReports,
+  updateDelayStatus,
 } from './damage';

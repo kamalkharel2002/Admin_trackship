@@ -30,15 +30,6 @@ function SkeletonRow() {
 export default function ParcelReportsList({ reports, loading, onSelect }) {
   return (
     <div className={s.section}>
-      <div className={s.sectionHeader}>
-        <div className={s.sectionTitle}>
-          <Package size={14} /> All Reports
-        </div>
-        {!loading && (
-          <span className={s.countBadge}>{reports.length} total</span>
-        )}
-      </div>
-
       <div className={s.tableWrap}>
         <table className={s.table}>
           <thead>

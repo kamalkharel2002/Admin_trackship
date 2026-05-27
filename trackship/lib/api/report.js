@@ -22,6 +22,10 @@ export async function getShipmentStatusDistribution(params = {}) {
   return request(`${ENDPOINTS.reports.statusDistribution}${qs}`, { method: 'GET' });
 }
 
+export async function getDamagedDelayedCount(params = {}) {
+  const qs = buildQueryString(params);
+  return request(`${ENDPOINTS.reports.damagedDelayedCount}${qs}`, { method: 'GET' });
+}
 /**
  * CSV exports — use fetch directly with credentials:'include' (same cookie auth
  * as the rest of the app) instead of going through request() which returns JSON.

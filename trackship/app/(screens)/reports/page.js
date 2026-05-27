@@ -1,52 +1,55 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { getTotalRevenue, getTotalDeliveredShipments } from '@/lib/api';
+import { getTotalRevenue, getTotalDeliveredShipments, getDamagedDelayedCount } from '@/lib/api';
 import ReportStatCard from '@/components/report/ReportStatCard';
-import RevenueChart   from '@/components/report/RevenueChart';
+import RevenueChart from '@/components/report/RevenueChart';
 import StatusPieChart from '@/components/report/StatusPieChart';
-import CSVExport      from '@/components/report/CSVExport';
+import CSVExport from '@/components/report/CSVExport';
 import styles from './report.module.css';
 
-const MONTHS_SHORT  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const MONTHS_FULL   = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const NOW           = new Date();
-const CURRENT_YEAR  = NOW.getFullYear();
+const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTHS_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const NOW = new Date();
+const CURRENT_YEAR = NOW.getFullYear();
 
 function fmtCurrency(n) {
   if (n == null) return '—';
   if (n >= 1_000_000) return `Nu ${(n / 1_000_000).toFixed(2)}M`;
-  if (n >= 1_000)     return `Nu ${(n / 1_000).toFixed(1)}k`;
+  if (n >= 1_000) return `Nu ${(n / 1_000).toFixed(1)}k`;
   return `Nu ${Number(n).toLocaleString()}`;
 }
 
 export default function ReportPage() {
   // pending = what's in the dropdowns
   const [selMonth, setSelMonth] = useState('');  // '' = all months
-  const [selYear,  setSelYear]  = useState('');  // '' = all years (FIXED)
+  const [selYear, setSelYear] = useState('');  // '' = all years (FIXED)
 
   // applied = what was last fetched
   const [appliedMonth, setAppliedMonth] = useState(null);
-  const [appliedYear,  setAppliedYear]  = useState(null); // (FIXED)
+  const [appliedYear, setAppliedYear] = useState(null); // (FIXED)
 
-  const [revenue,       setRevenue]       = useState(null);
-  const [delivered,     setDelivered]     = useState(null);
-  const [prevRevenue,   setPrevRevenue]   = useState(null);
+  const [damaged, setDamaged] = useState(null);
+  const [delayed, setDelayed] = useState(null);
+
+  const [revenue, setRevenue] = useState(null);
+  const [delivered, setDelivered] = useState(null);
+  const [prevRevenue, setPrevRevenue] = useState(null);
   const [prevDelivered, setPrevDelivered] = useState(null);
-  const [loading,       setLoading]       = useState(true);
-  const [isApplying,    setIsApplying]    = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [isApplying, setIsApplying] = useState(false);
 
   const isFiltered = appliedMonth !== null || appliedYear !== null;
 
   const load = useCallback(async (month, year, showLoading = true) => {
     if (showLoading) setLoading(true);
-    
+
     // Don't include year if it's null/undefined
-    const params = month 
-      ? { month, year } 
-      : year 
-        ? { year } 
+    const params = month
+      ? { month, year }
+      : year
+        ? { year }
         : {}; // Empty params for all-time total
-    
+
     // For previous period comparison
     const prevParams = month
       ? { month: month === 1 ? 12 : month - 1, year: month === 1 ? year - 1 : year }
@@ -54,22 +57,31 @@ export default function ReportPage() {
         ? { year: year - 1 }
         : {}; // Empty for all-time comparison
 
-    const [rev, del, pRev, pDel] = await Promise.allSettled([
+    const [rev, del, pRev, pDel, dgmDly] = await Promise.allSettled([
       getTotalRevenue(params),
       getTotalDeliveredShipments(params),
       year ? getTotalRevenue(prevParams) : Promise.resolve(null), // Skip prev comparison for all-time
       year ? getTotalDeliveredShipments(prevParams) : Promise.resolve(null),
+      getDamagedDelayedCount(params),
     ]);
 
     setRevenue(rev.status === 'fulfilled' ? rev.value?.data?.total_revenue ?? null : null);
     setDelivered(del.status === 'fulfilled' ? del.value?.data?.total_delivered ?? null : null);
     setPrevRevenue(pRev.status === 'fulfilled' ? pRev.value?.data?.total_revenue ?? null : null);
     setPrevDelivered(pDel.status === 'fulfilled' ? pDel.value?.data?.total_delivered ?? null : null);
+    setDamaged(
+      dgmDly.status === 'fulfilled'
+        ? (dgmDly.value?.data?.damageData?.damageCount
+          ?? dgmDly.value?.data?.damageData?.damagedCount
+          ?? null)
+        : null
+    );
+    setDelayed(dgmDly.status === 'fulfilled' ? dgmDly.value?.data?.delayedData?.delayCount ?? null : null);
     if (showLoading) setLoading(false);
   }, []);
 
   // Default: all-time totals (FIXED)
-  useEffect(() => { 
+  useEffect(() => {
     load(null, null); // Pass null for both params to get all-time totals
   }, [load]);
 
@@ -93,18 +105,20 @@ export default function ReportPage() {
 
   function calcDelta(curr, prev) {
     if (curr == null || prev == null || Number(prev) === 0) return null;
-    return +((( Number(curr) - Number(prev)) / Number(prev)) * 100).toFixed(1);
+    return +(((Number(curr) - Number(prev)) / Number(prev)) * 100).toFixed(1);
   }
 
   const revDelta = calcDelta(revenue, prevRevenue);
   const delDelta = calcDelta(delivered, prevDelivered);
 
   // (FIXED) periodLabel and vsLabel
-  const periodLabel = appliedMonth
+  const periodLabel = appliedMonth && appliedYear
     ? `${MONTHS_SHORT[appliedMonth - 1]} ${appliedYear}`
-    : appliedYear
-      ? `Full year ${appliedYear}`
-      : 'All time';
+    : appliedMonth
+      ? MONTHS_SHORT[appliedMonth - 1]
+      : appliedYear
+        ? `Full year ${appliedYear}`
+        : 'All time';
 
   const vsLabel = appliedMonth
     ? `vs ${MONTHS_SHORT[(appliedMonth === 1 ? 12 : appliedMonth - 1) - 1]}`
@@ -115,21 +129,21 @@ export default function ReportPage() {
   // Filter icon component
   const FilterIcon = () => (
     <svg className={styles.filterIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M4 4h16v2l-6 7v7l-4-2v-5l-6-7V4z"/>
+      <path d="M4 4h16v2l-6 7v7l-4-2v-5l-6-7V4z" />
     </svg>
   );
 
   // Checkmark icon component
   const CheckIcon = () => (
     <svg className={styles.btnIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M20 6L9 17l-5-5"/>
+      <path d="M20 6L9 17l-5-5" />
     </svg>
   );
 
   // Close icon component
   const CloseIcon = () => (
     <svg className={styles.btnIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M18 6L6 18M6 6l12 12"/>
+      <path d="M18 6L6 18M6 6l12 12" />
     </svg>
   );
 
@@ -155,9 +169,9 @@ export default function ReportPage() {
           <div className={styles.filterControls}>
             <div className={styles.filterGroup}>
               <label className={styles.filterGroupLabel}>Month</label>
-              <select 
-                className={styles.sel} 
-                value={selMonth} 
+              <select
+                className={styles.sel}
+                value={selMonth}
                 onChange={(e) => setSelMonth(e.target.value)}
                 aria-label="Select month"
               >
@@ -170,10 +184,10 @@ export default function ReportPage() {
 
             <div className={styles.filterGroup}>
               <label className={styles.filterGroupLabel}>Year</label>
-              <select 
-                className={styles.sel} 
-                value={selYear} 
-                onChange={(e) => setSelYear(e.target.value ? +e.target.value : '')} 
+              <select
+                className={styles.sel}
+                value={selYear}
+                onChange={(e) => setSelYear(e.target.value ? +e.target.value : '')}
                 aria-label="Select year"
               >
                 <option value=''>All years</option> {/* (FIXED) Added option */}
@@ -184,8 +198,8 @@ export default function ReportPage() {
             </div>
 
             <div className={styles.filterActions}>
-              <button 
-                className={`${styles.applyBtn} ${isApplying ? styles.loading : ''}`} 
+              <button
+                className={`${styles.applyBtn} ${isApplying ? styles.loading : ''}`}
                 onClick={handleApply}
                 disabled={isApplying}
                 aria-label="Apply filters"
@@ -195,8 +209,8 @@ export default function ReportPage() {
               </button>
 
               {isFiltered && (
-                <button 
-                  className={styles.clearBtn} 
+                <button
+                  className={styles.clearBtn}
                   onClick={handleClear}
                   aria-label="Clear filters"
                 >
@@ -244,6 +258,24 @@ export default function ReportPage() {
           delta={delDelta}
           sub={delDelta != null ? `${delDelta >= 0 ? '+' : ''}${delDelta}% ${vsLabel}` : periodLabel}
           accent="var(--accent-green)"
+          loading={loading}
+        />
+        <ReportStatCard
+          icon="⚠️"
+          label="Damaged Parcels"
+          value={damaged != null ? Number(damaged).toLocaleString() : '—'}
+          delta={null}
+          sub={periodLabel}
+          accent="var(--accent-red, #EF4444)"
+          loading={loading}
+        />
+        <ReportStatCard
+          icon="🕐"
+          label="Delayed Parcels"
+          value={delayed != null ? Number(delayed).toLocaleString() : '—'}
+          delta={null}
+          sub={periodLabel}
+          accent="var(--accent-orange, #F97316)"
           loading={loading}
         />
       </div>

@@ -1,4 +1,4 @@
-/* components/ParcelReports/ParcelReportsList.module.css */
+/* components/ParcelReports/DelayedShipmentsList.module.css */
 
 .section {
   background: #ffffff;
@@ -71,43 +71,28 @@
   text-transform: capitalize;
 }
 
+.route {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.hub {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.arrow {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
 .cell {
   font-size: 13px;
   color: #475569;
   white-space: nowrap;
-}
-
-.parcelCount {
-  font-size: 13px;
-  font-weight: 700;
-  color: #1e293b;
-  font-family: var(--font-head);
-}
-
-.parcelLabel {
-  font-weight: 400;
-  color: #94a3b8;
-  font-size: 12px;
-}
-
-.sevBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  font-family: var(--font-head);
-  border: 1px solid transparent;
-  white-space: nowrap;
-}
-
-.sevDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
 }
 
 .dateText {
@@ -119,16 +104,21 @@
 .statusBadge {
   display: inline-flex;
   align-items: center;
+  gap: 5px;
   padding: 3px 10px;
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
-  text-transform: capitalize;
   font-family: var(--font-head);
+  white-space: nowrap;
 }
 
-.statusBadge.pending { background: #FEF3C7; color: #92400E; }
-.statusBadge.solved  { background: #D1FAE5; color: #065F46; }
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
 
 .viewBtn {
   display: inline-flex;
@@ -154,7 +144,7 @@
 }
 
 .empty {
-  padding: 60px 20px;
+  padding: 48px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -163,14 +153,14 @@
 }
 
 .emptyIcon {
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  background: #FEF3C7;
+  background: #ECFDF5;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #D97706;
+  color: #059669;
   margin-bottom: 4px;
 }
 

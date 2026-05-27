@@ -100,6 +100,9 @@ function normalizeShipments(raw) {
 
     rejection_reason: s.rejection_reason,
     rejected_at: s.rejected_at,
+
+    damage_status: s.damage_status,
+    delay_status: s.delay_status,
   }));
 }
 function normalizeCounts(raw) {
@@ -191,6 +194,8 @@ export async function getShipmentById(shipmentId) {
       rejected_at: s.rejected_at,
       created_at: s.created_at,
       trip_id: s.trip_id,
+      damage_status: s.damage_status || 'N/A',
+      delay_status: s.delay_status || 'N/A',
     };
   }
   

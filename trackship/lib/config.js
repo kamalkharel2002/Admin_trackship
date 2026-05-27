@@ -1,7 +1,7 @@
 // lib/config.js
 
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.64:3000/api';
+  process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.65:3000/api';
 
 export const REQUEST_TIMEOUT = 15000;
 
@@ -80,6 +80,7 @@ export const ENDPOINTS = {
     statusDistribution:  `${API_BASE}/admin/report/shipments/status-distribution`,
     exportRevenueCSV:    `${API_BASE}/admin/report/export/revenue-csv`,
     exportShipmentCSV:   `${API_BASE}/admin/report/export/shipment-csv`,
+    damagedDelayedCount: `${API_BASE}/admin/report/shipments/damaged-delayed/count`,
   },
   pricing: {
     list:            `${API_BASE}/admin/pricing`,
@@ -91,6 +92,10 @@ export const ENDPOINTS = {
     byId:   (id) => `${API_BASE}/admin/damage/${id}`,
     status: (id) => `${API_BASE}/admin/damage/${id}/status`,
   },
+  delay: {
+  list:            `${API_BASE}/admin/delay`,
+  status: (id) => `${API_BASE}/admin/delay/${id}/status`,
+},
 };
 
 export function buildQueryString(params = {}) {

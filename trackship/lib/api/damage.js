@@ -15,3 +15,12 @@ export const updateDamageStatus = (id, resolutionStatus, notes = '') =>
     method: 'PATCH',
     body:   { resolutionStatus, notes },
   });
+
+export const getDelayReports = () =>
+  request(ENDPOINTS.delay.list);
+
+export const updateDelayStatus = (id, resolutionStatus, adminNotes = '') =>
+  request(ENDPOINTS.delay.status(id), {
+    method: 'PATCH',
+    body:   { resolutionStatus, adminNotes },
+  });
